@@ -555,18 +555,20 @@ export function LetterRearrangementExercise({
 
   // Одна картка практики — спільне для плаского режиму (інлайн-картка
   // сцени: старий рядок статусу під карткою, крок 5 — тепер 2-колонкова
-  // сітка з довгими словами на col-span-2, flatLayout нижче) і
-  // сцена-вигляду блоків (крок 3c: "варіант 3 — крапки спроб", усередині
-  // картки). Два зовсім різні рендери під sceneStyle.
+  // сітка з довгими словами в кінці списку, flatLayout нижче, БЕЗ
+  // col-span: довге слово просто переносить свої плитки на другий рядок
+  // усередині звичайної половинної картки, той самий принцип, що
+  // сцена-вигляд блоків) і сцена-вигляду блоків (крок 3c: "варіант 3 —
+  // крапки спроб", усередині картки). Два зовсім різні рендери під
+  // sceneStyle.
   function renderPracticeItem(
     wi: number,
     pos: number,
     sceneStyle = false,
-    // Крок 5 (флет-режим, "довгі слова в кінці, col-span-2") —
-    // displayNumber/long з layoutFlatPracticeItems замінюють pos+1/
-    // відсутній col-span; undefined для sceneStyle (там нумерація й сітка
-    // лишаються позиційними, не перепорядкованими).
-    flatLayout?: { displayNumber: number; long: boolean }
+    // Крок 5 (флет-режим, "довгі слова в кінці списку") — displayNumber з
+    // layoutFlatPracticeItems замінює pos+1; undefined для sceneStyle (там
+    // нумерація лишається позиційною, не перепорядкованою).
+    flatLayout?: { displayNumber: number }
   ) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
@@ -616,7 +618,7 @@ export function LetterRearrangementExercise({
     }
 
     return (
-      <div key={wi} className={`flex flex-col gap-1.5 ${flatLayout?.long ? "col-span-2" : ""}`}>
+      <div key={wi} className="flex flex-col gap-1.5">
         {renderWordCard(wi, {
           detail: undefined,
           locked: false,
@@ -719,8 +721,12 @@ export function LetterRearrangementExercise({
     // Крок 5 — флет-режим (інлайн-картка сцени, error-review-block.tsx
     // БЕЗ openMode): довгий список однорядкових full-width карток
     // замінюється на 2-колонкову сітку (та сама TWO_COLUMN_GRID_CLASS, що
-    // сцена-вигляд блоків), з довгими словами в кінці на col-span-2 —
-    // layoutFlatPracticeItems (flat-practice-layout.ts) рахує
+    // сцена-вигляд блоків), з довгими словами в кінці списку — БЕЗ
+    // col-span, довге слово просто переносить плитки на другий рядок
+    // усередині своєї звичайної половинної картки (той самий принцип, що
+    // сцена-вигляд блоків), тож непарна кількість коротких одразу
+    // продовжується першим довгим у тому самому рядку сітки, без порожньої
+    // клітинки. layoutFlatPracticeItems (flat-practice-layout.ts) рахує
     // короткі-спочатку/довгі-в-кінці порядок і наскрізну нумерацію;
     // wi (id) лишається джерелом для submitPractice/перевірки нижче,
     // лише порядок рендеру й видимі номери міняються.

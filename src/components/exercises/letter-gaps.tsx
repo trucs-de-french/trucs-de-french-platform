@@ -710,11 +710,10 @@ export function LetterGapsExercise({
     pos: number,
     gapOrder: GapKey[],
     hideReveal = false,
-    // Крок 5 (флет-режим, "довгі слова в кінці, col-span-2") —
-    // displayNumber/long з layoutFlatPracticeItems замінюють pos+1/
-    // відсутній col-span; undefined для сцена-вигляду (hideReveal=true),
-    // там нумерація й сітка лишаються позиційними.
-    flatLayout?: { displayNumber: number; long: boolean }
+    // Крок 5 (флет-режим, "довгі слова в кінці списку") — displayNumber з
+    // layoutFlatPracticeItems замінює pos+1; undefined для сцена-вигляду
+    // (hideReveal=true), там нумерація лишається позиційною.
+    flatLayout?: { displayNumber: number }
   ) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
@@ -752,7 +751,7 @@ export function LetterGapsExercise({
     }
 
     return (
-      <div key={wi} className={`flex flex-col gap-1.5 ${flatLayout?.long ? "col-span-2" : ""}`}>
+      <div key={wi} className="flex flex-col gap-1.5">
         {renderWordCard(wi, {
           detail: undefined,
           locked: false,
@@ -915,12 +914,17 @@ export function LetterGapsExercise({
     // Крок 5 — флет-режим (інлайн-картка сцени, error-review-block.tsx
     // БЕЗ openMode): довгий список однорядкових full-width карток
     // замінюється на 2-колонкову сітку (та сама TWO_COLUMN_GRID_CLASS, що
-    // сцена-вигляд блоків), з довгими словами в кінці на col-span-2 —
-    // layoutFlatPracticeItems (flat-practice-layout.ts). length —
-    // word.chars.length (ВСІ символи слова, включно з видимими літерами,
-    // не лише приховані gaps — саме так ТЗ описує "довжину слова" тут,
-    // бо й видимі літери, й gaps однаково займають місце в рядку картки).
-    // wi (id) лишається джерелом для submitPractice/перевірки нижче.
+    // сцена-вигляд блоків), з довгими словами в кінці списку — БЕЗ
+    // col-span, довге слово просто переносить свої одиниці на другий
+    // рядок усередині своєї звичайної половинної картки (той самий
+    // принцип, що сцена-вигляд блоків), тож непарна кількість коротких
+    // одразу продовжується першим довгим у тому самому рядку сітки, без
+    // порожньої клітинки. layoutFlatPracticeItems (flat-practice-layout.ts).
+    // length — word.chars.length (ВСІ символи слова, включно з видимими
+    // літерами, не лише приховані gaps — саме так ТЗ описує "довжину
+    // слова" тут, бо й видимі літери, й gaps однаково займають місце в
+    // рядку картки). wi (id) лишається джерелом для submitPractice/
+    // перевірки нижче.
     const flatPracticeLayout = layoutFlatPracticeItems(
       practiceWordIndices.map((wi) => ({ id: wi, length: config.words[wi].chars.length }))
     );

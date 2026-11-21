@@ -25,18 +25,16 @@ assert(FLAT_PRACTICE_LONG_WORD_THRESHOLD === 8, "threshold derived from the layo
   ]);
   assert(out.map((i) => i.id).join(",") === "b,d,a,c", "short items keep their original order and come first, long items follow in their original order");
   assert(out.map((i) => i.displayNumber).join(",") === "1,2,3,4", "display numbers are renumbered sequentially in the new order");
-  assert(out.map((i) => i.long).join(",") === "false,false,true,true", "long flag matches which items exceeded the threshold");
 }
 
-// --- threshold boundary ----------------------------------------------------
+// --- threshold boundary (affects ordering, not a per-item flag) -----------
 
 {
   const out = layoutFlatPracticeItems([
-    { id: "exact", length: FLAT_PRACTICE_LONG_WORD_THRESHOLD },
     { id: "over", length: FLAT_PRACTICE_LONG_WORD_THRESHOLD + 1 },
+    { id: "exact", length: FLAT_PRACTICE_LONG_WORD_THRESHOLD },
   ]);
-  assert(out.find((i) => i.id === "exact")?.long === false, "an item exactly at the threshold is short, not long");
-  assert(out.find((i) => i.id === "over")?.long === true, "an item one longer than the threshold is long");
+  assert(out.map((i) => i.id).join(",") === "exact,over", "an item exactly at the threshold is short (sorts before an over-threshold item), not long");
 }
 
 // --- all-short -------------------------------------------------------------
@@ -47,7 +45,6 @@ assert(FLAT_PRACTICE_LONG_WORD_THRESHOLD === 8, "threshold derived from the layo
     { id: "y", length: 4 },
   ]);
   assert(out.map((i) => i.id).join(",") === "x,y", "all-short input keeps its original order unchanged");
-  assert(out.every((i) => !i.long), "no item is marked long when every item is under the threshold");
 }
 
 // --- all-long ----------------------------------------------------------------
@@ -58,7 +55,21 @@ assert(FLAT_PRACTICE_LONG_WORD_THRESHOLD === 8, "threshold derived from the layo
     { id: "q", length: 15 },
   ]);
   assert(out.map((i) => i.id).join(",") === "p,q", "all-long input keeps its original order unchanged");
-  assert(out.every((i) => i.long), "every item is marked long when every item is over the threshold");
+}
+
+// --- continuous flow: an odd short count is followed by the first long item
+// in the same grid row (no span, no empty cell) -----------------------------
+
+{
+  const threshold = FLAT_PRACTICE_LONG_WORD_THRESHOLD;
+  const out = layoutFlatPracticeItems([
+    { id: "s1", length: 2 },
+    { id: "s2", length: 3 },
+    { id: "s3", length: 1 },
+    { id: "l1", length: threshold + 1 },
+  ]);
+  assert(out.map((i) => i.id).join(",") === "s1,s2,s3,l1", "3 short items (odd) are immediately followed by the long item, no gap in the flow");
+  assert(out.map((i) => i.displayNumber).join(",") === "1,2,3,4", "numbering stays sequential across the short/long boundary");
 }
 
 // --- empty list --------------------------------------------------------------
@@ -68,7 +79,7 @@ assert(FLAT_PRACTICE_LONG_WORD_THRESHOLD === 8, "threshold derived from the layo
   assert(out.length === 0, "an empty list produces an empty list, not a crash");
 }
 
-// --- ids are passed through untouched, only order/numbering/long change ----
+// --- ids are passed through untouched, only order/numbering change ---------
 
 {
   const items = [{ id: 42, length: 1 }, { id: 7, length: 50 }];

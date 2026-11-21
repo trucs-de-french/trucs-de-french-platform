@@ -1,16 +1,18 @@
 import { FIXED_CELL_PX, FIXED_CELL_GAP_PX } from "@/components/exercises/use-working-tile-layout";
 import { CARD_PADDING_PX, COLUMN_GAP_PX } from "@/components/exercises/use-working-tile-layout";
 
-// Сценова сторінка (летер_rearrangement/letter_gaps, флет/інлайн-картка
-// "Робота над помилками" error-review-block.tsx, БЕЗ openMode) — рахує,
-// скільки плиток/клітинок влазить в один рядок ПОЛОВИНИ картки на
-// десктопі під реальною шириною контейнера, щоб "довгі" слова (що інакше
-// перенеслись би на другий рядок у двоколонковій сітці) займали col-span-2
-// і лишались в один рядок. Статична константа (НЕ useWorkingTileLayout's
-// живий ResizeObserver) — рахується один раз при імпорті з РЕАЛЬНИХ чисел
-// верстки, задокументованих нижче, той самий принцип формули, що
-// useWorkingTileLayout.perLineFor (use-working-tile-layout.ts), аби не
-// розійтись із живим вимірюванням на реальних ширинах.
+// Сценова сторінка (letter_rearrangement/letter_gaps, флет/інлайн-картка
+// "Робота над помилками" error-review-block.tsx, БЕЗ openMode) — "довгі"
+// слова (що не влазять в один рядок ПОЛОВИНИ картки на десктопі й
+// переносять свої плитки на другий рядок усередині картки — звичайна
+// поведінка, як у сцена-вигляду блоків, тиловий col-span тут більше НЕ
+// застосовується) сортуються в кінець списку, короткі — на початок,
+// обидві групи у вихідному порядку. Порогове значення "довгого" слова —
+// статична константа (НЕ useWorkingTileLayout's живий ResizeObserver),
+// рахується один раз при імпорті з РЕАЛЬНИХ чисел верстки, задокументованих
+// нижче, той самий принцип формули, що useWorkingTileLayout.perLineFor
+// (use-working-tile-layout.ts), аби не розійтись із живим вимірюванням на
+// реальних ширинах.
 //
 // Сценова сторінка (src/app/courses/[productId]/scenes/[sceneId]/page.tsx):
 // <main className="mx-auto w-full max-w-3xl p-6"> — max-w-3xl = 768px,
@@ -51,18 +53,21 @@ export const FLAT_PRACTICE_LONG_WORD_THRESHOLD = Math.max(
 );
 
 export type FlatPracticeItemInput<Id> = { id: Id; length: number };
-export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number; long: boolean };
+export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number };
 
 // Слово "довге" (не влазить в один рядок половини картки на десктопі) —
 // length (кількість плиток letter_rearrangement / кількість символів
 // chars.length letter_gaps, включно з видимими літерами) понад порогове
 // значення вище. Короткі — спочатку, у вихідному порядку; довгі — в кінці,
 // теж у вихідному порядку (Array.prototype.filter гарантовано стабільний,
-// жодного явного сортування не потрібно). Номери карток (displayNumber)
-// рахуються заново в цьому відображуваному порядку, 1-based — id
-// (використовується для перевірки/збереження/API) лишається незмінним.
+// жодного явного сортування не потрібно), в ОДНІЙ і тій самій сітці —
+// жодного col-span: непарна кількість коротких одразу продовжується
+// першим довгим в тому самому рядку, без порожньої клітинки. Номери карток
+// (displayNumber) рахуються заново в цьому відображуваному порядку,
+// 1-based — id (використовується для перевірки/збереження/API) лишається
+// незмінним.
 export function layoutFlatPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatPracticeLayoutItem<Id>[] {
   const isLong = (item: FlatPracticeItemInput<Id>) => item.length > FLAT_PRACTICE_LONG_WORD_THRESHOLD;
   const ordered = [...items.filter((item) => !isLong(item)), ...items.filter(isLong)];
-  return ordered.map((item, i) => ({ id: item.id, displayNumber: i + 1, long: isLong(item) }));
+  return ordered.map((item, i) => ({ id: item.id, displayNumber: i + 1 }));
 }
