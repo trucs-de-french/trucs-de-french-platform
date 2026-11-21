@@ -738,8 +738,7 @@ export function LetterGapsExercise({
                 />
               ))}
             </span>
-            <span className="practice-attempt-label">{t("status.tryAgainShort")}</span>
-            <span className="sr-only">{t("aria.attemptNumber", { n: attempts })}</span>
+            <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
           </div>
         ) : undefined;
       return renderWordCard(wi, {

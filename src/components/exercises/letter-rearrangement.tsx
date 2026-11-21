@@ -592,8 +592,7 @@ export function LetterRearrangementExercise({
               />
             ))}
           </span>
-          <span className="practice-attempt-label">{t("status.tryAgainShort")}</span>
-          <span className="sr-only">{t("aria.attemptNumber", { n: attempts })}</span>
+          <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
           <button
             type="button"
             onClick={() => practiceCheck.reveal(key, true)}

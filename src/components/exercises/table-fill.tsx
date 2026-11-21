@@ -402,8 +402,7 @@ export function TableFillExercise({
                   />
                 ))}
               </span>
-              <span className="practice-attempt-label">{tt("status.tryAgainShort")}</span>
-              <span className="sr-only">{tt("aria.attemptNumber", { n: attempts })}</span>
+              <span className="practice-attempt-label">{tt("status.failedAttemptShort", { n: attempts })}</span>
             </div>
           )
         ) : (
