@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { Eye } from "lucide-react";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
@@ -30,6 +31,7 @@ import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { usePracticeCheck } from "./use-practice-check";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { estimateLetterRearrangementCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
+import { buildRevealedWordDetail, type RevealedWordDetail } from "@/lib/exercises/format-reveal-answer";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -402,6 +404,18 @@ export function LetterRearrangementExercise({
       // Практика (пілот, частина 4) — лампочка "поставити наступну літеру"
       // вимкнена, той самий принцип, що letter-gaps.tsx hintDisabled.
       hintDisabled?: boolean;
+      // Сцена-вигляд практики (крок 3c) — синтетичний per-word detail,
+      // побудований з practice/reveal (buildRevealedWordDetail), не з
+      // gradeAnswer: дає ТОЧНО той самий вигляд підсвічування
+      // плиток+рядка "Правильне слово", що й детейл реальної вправи,
+      // без дублювання розмітки нижче. undefined для всіх інших
+      // викликачів (флет-практика, реальна вправа) — behavior НЕЗМІННА.
+      revealedWordDetail?: RevealedWordDetail;
+      // Сцена-вигляд практики (крок 3c) — футер "спроби" (крапки+пілюля
+      // "Відповідь"), рендериться ОДИН раз тут, під плитками, усередині
+      // картки. undefined (флет-практика/реальна вправа) — нічого не
+      // рендериться.
+      practiceFooter?: ReactNode;
     }
   ) {
     const word = config.words[wi];
@@ -409,7 +423,7 @@ export function LetterRearrangementExercise({
     // відкинутий — див. коментар над blockDisplayOrder вище): пропускаємо
     // замість кидати, а не покладаємось лише на фільтр на вході.
     if (!word) return null;
-    const wordDetail = opts.detail?.words[wi];
+    const wordDetail = opts.detail?.words[wi] ?? opts.revealedWordDetail;
 
     function tileState(i: number): "correct" | "incorrect" | undefined {
       if (!wordDetail) return undefined;
@@ -474,6 +488,7 @@ export function LetterRearrangementExercise({
             />
           </div>
         </div>
+        {opts.practiceFooter}
         {wordDetail && !wordDetail.isCorrect && (
           <p className="text-sm dark:text-[var(--text-muted-caption)]">
             <span className="correct-answer-label">{t("answer.correctWordLabel")} </span>
@@ -528,15 +543,59 @@ export function LetterRearrangementExercise({
     );
   }
 
-  // Одна картка практики + рядок статусу під нею — спільне для плаского
-  // режиму (інлайн-картка сцени, НЕЗМІННО) і сцена-вигляду блоків (крок 4):
-  // та сама розмітка, лише інше джерело списку (practiceWordIndices
-  // проти одного блоку, нижче).
-  function renderPracticeItem(wi: number, pos: number) {
+  // Одна картка практики — спільне для плаского режиму (інлайн-картка
+  // сцени, НЕЗМІННО, старий рядок статусу під карткою) і сцена-вигляду
+  // блоків (крок 3c: "варіант 3 — крапки спроб", усередині картки). Два
+  // зовсім різні рендери під sceneStyle — флет-гілка нижче НЕ ЗМІНЕНА.
+  function renderPracticeItem(wi: number, pos: number, sceneStyle = false) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
     const itemRevealed = practiceCheck.revealed[key];
+
+    if (sceneStyle) {
+      // Розкрите слово — підсвічування плиток+рядок "Правильне слово"
+      // через ТОЙ САМИЙ renderWordCard, що реальна вправа (opts.
+      // revealedWordDetail), а не окремий текст. Поки не розкрите (і не
+      // виправлене) — футер "спроби" (крапки+пілюля), лише коли вже є
+      // бодай одна невдала спроба; коректний елемент — узагалі без
+      // футера й без тексту (зелені/кольорові плитки й так це показують).
+      const revealedWordDetail = itemRevealed ? buildRevealedWordDetail(itemRevealed[0], orders[wi]) : undefined;
+      const showFooter = isCorrect === false && !itemRevealed;
+      const footer = showFooter ? (
+        <div className="practice-attempt-footer">
+          <span className="practice-attempt-dots" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+              />
+            ))}
+          </span>
+          <span className="practice-attempt-label">{t("status.tryAgainShort")}</span>
+          <span className="sr-only">{t("aria.attemptNumber", { n: attempts })}</span>
+          <button
+            type="button"
+            onClick={() => practiceCheck.reveal(key, true)}
+            disabled={!!practiceCheck.revealPending[key]}
+            aria-label={t("button.showAnswer")}
+            className="practice-reveal-pill"
+          >
+            <Eye size={14} aria-hidden="true" />
+            {t("button.answerShort")}
+          </button>
+        </div>
+      ) : undefined;
+      return renderWordCard(wi, {
+        detail: undefined,
+        locked: false,
+        hintDisabled: true,
+        cardNumber: pos + 1,
+        revealedWordDetail,
+        practiceFooter: footer,
+      });
+    }
+
     return (
       <div key={wi} className="flex flex-col gap-1.5">
         {renderWordCard(wi, {
@@ -621,13 +680,13 @@ export function LetterRearrangementExercise({
             checkButton={sceneCheckButtonEl}
           >
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
+              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, true))}
             </div>
           </BlockNavigation>
         ) : (
           <>
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
+              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, true))}
             </div>
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>

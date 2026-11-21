@@ -8708,6 +8708,147 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 10px;
 }
 
+/* "Робота над помилками", сцена-вигляд практики (крок 3c, "варіант 3 -
+   крапки спроб") — футер усередині .word-card (letter_rearrangement/
+   letter_gaps/table_fill), ПІД плитками/полями: 0.5px золота волосна
+   лінія + 3 крапки спроб + коротка підказка "Ще раз" + (лише типи без
+   власної панелі відповідей, нині letter_rearrangement) пілюля
+   "Відповідь" з іконкою. flex-wrap — на вузькому екрані пілюля
+   переноситься на свій рядок (п.8 задачі), а не стискає крапки. */
+.practice-attempt-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding-top: 8px;
+  margin-top: 2px;
+  border-top: 1px solid rgba(220, 189, 110, 0.45);
+}
+.dark .practice-attempt-footer {
+  border-top-color: #27338f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .practice-attempt-footer {
+    border-top-color: #27338f;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .practice-attempt-footer {
+    border-top-color: transparent;
+    box-shadow: inset 0 0.5px 0 0 #2f3da8;
+  }
+}
+@media (prefers-color-scheme: dark) and (min-resolution: 2dppx), (prefers-color-scheme: dark) and (-webkit-min-device-pixel-ratio: 2) {
+  :root:not(.light) .practice-attempt-footer {
+    border-top-color: transparent;
+    box-shadow: inset 0 0.5px 0 0 #2f3da8;
+  }
+}
+.practice-attempt-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.practice-attempt-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(220, 189, 110, 0.25);
+  border: 1px solid rgba(220, 189, 110, 0.55);
+}
+.dark .practice-attempt-dot {
+  background: rgba(39, 51, 143, 0.3);
+  border-color: #27338f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .practice-attempt-dot {
+    background: rgba(39, 51, 143, 0.3);
+    border-color: #27338f;
+  }
+}
+.practice-attempt-dot--filled {
+  background: #c94f4f;
+  border-color: #c94f4f;
+}
+.dark .practice-attempt-dot--filled {
+  background: #e2807f;
+  border-color: #e2807f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .practice-attempt-dot--filled {
+    background: #e2807f;
+    border-color: #e2807f;
+  }
+}
+.practice-attempt-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted-caption);
+  flex-shrink: 0;
+}
+.practice-reveal-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  background: #fffdf6;
+  border: 1px solid #d9b765;
+  color: #3b36c4;
+  transition: filter 150ms;
+}
+.practice-reveal-pill:hover {
+  filter: brightness(0.97);
+}
+.practice-reveal-pill:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .practice-reveal-pill {
+  background: transparent;
+  border: 1px solid #27338f;
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .practice-reveal-pill {
+    background: transparent;
+    border: 1px solid #27338f;
+    color: #f6dc8e;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .practice-reveal-pill {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+@media (prefers-color-scheme: dark) and (min-resolution: 2dppx), (prefers-color-scheme: dark) and (-webkit-min-device-pixel-ratio: 2) {
+  :root:not(.light) .practice-reveal-pill {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+.dark .practice-reveal-pill:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .practice-reveal-pill:focus-visible {
+    outline: 2px solid var(--cabinet-focus-ring);
+  }
+}
+@media (max-width: 640px) {
+  .practice-reveal-pill {
+    min-height: 40px;
+  }
+}
+
 /* Єдина клітинка letter_gaps (поле-пропуск + видима літера) і
    letter_rearrangement (плитка-літера) — ОДИН фіксований розмір на всю
    вправу й на всі ширини екрана (ширина/висота/шрифт/радіус/проміжок

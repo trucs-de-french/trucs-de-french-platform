@@ -5,6 +5,7 @@ import {
   buildGapRowsFromReveal,
   buildTableFillAnswerRowsFromReveal,
   buildMatchingPairRowsFromReveal,
+  buildRevealedWordDetail,
 } from "./format-reveal-answer";
 
 let failures = 0;
@@ -75,6 +76,32 @@ function assert(condition: boolean, label: string) {
   const out = buildMatchingPairRowsFromReveal(["chien", "chat"], idByLeft, revealed);
   assert(out[0].left === "chien" && out[0].right === "dog", "revealed pair gets its right text");
   assert(out[1].left === "chat" && out[1].right === "", "not-yet-revealed pair falls back to an empty right, not a crash");
+}
+
+// --- buildRevealedWordDetail (letter_rearrangement) ----------------------
+
+{
+  const detail = buildRevealedWordDetail("chien", ["c", "h", "i", "x", "n"]);
+  assert(detail.letters.length === 5, "one letter entry per character of the revealed word");
+  assert(
+    detail.letters.map((l) => l.isCorrect).join(",") === "true,true,true,false,true",
+    "each position compares the student's current tile against the revealed letter at that position"
+  );
+  assert(detail.isCorrect === false, "overall isCorrect is false when any position is wrong");
+  assert(detail.letters.every((l, i) => l.text === "chien"[i]), "text at every position is the revealed (correct) letter, not the student's tile");
+}
+
+{
+  const detail = buildRevealedWordDetail("chat", ["c", "h", "a", "t"]);
+  assert(detail.isCorrect === true, "overall isCorrect is true when the student's current order already matches");
+}
+
+{
+  // Поточний порядок коротший за розкрите слово (студент ще не
+  // розставив усі плитки) — undefined !== text, позиція просто
+  // неправильна, не crash.
+  const detail = buildRevealedWordDetail("chat", ["c", "h"]);
+  assert(detail.letters[2].isCorrect === false && detail.letters[3].isCorrect === false, "missing tiles compare as incorrect, not a crash");
 }
 
 if (failures > 0) {

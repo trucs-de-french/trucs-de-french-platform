@@ -11,6 +11,21 @@
 // САМЕ її форму (повне слово / рядок [лівеЯкщоПрихована, правеЯкщоПрихована]
 // / право однієї пари), а не детейл.
 
+export type RevealedWordDetail = { letters: { text: string; isCorrect: boolean }[]; isCorrect: boolean };
+
+// letter_rearrangement — єдиний тип без колапс-панелі відповідей (крок 3c):
+// розкриття одного слова (practice/reveal, answer[0] — повне правильне
+// слово) має виглядати в картці ТОЧНО як звичайна вправа (renderWordCard:
+// підсвічування плиток за позицією + рядок "Правильне слово"), а не
+// просто текстом збоку. currentOrder — поточний порядок плиток студента
+// (orders[wi], живий стан, не зафіксована відповідь) — порівнюється
+// позиційно з розкритим словом, той самий принцип, що gradeLetterRearrangement
+// (grade.ts), лише джерело правильної літери інше (reveal, не config).
+export function buildRevealedWordDetail(revealedWord: string, currentOrder: string[]): RevealedWordDetail {
+  const letters = revealedWord.split("").map((text, i) => ({ text, isCorrect: currentOrder[i] === text }));
+  return { letters, isCorrect: letters.every((l) => l.isCorrect) };
+}
+
 export type GapAnswerRow = { number: number; parts: (string | { word: string })[] };
 
 // letter_gaps (позиційний, chars/hiddenLetters) — reveal повертає ПОВНЕ

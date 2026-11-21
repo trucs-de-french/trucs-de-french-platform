@@ -381,30 +381,54 @@ export function TableFillExercise({
             {cellField("right", row.right)}
           </div>
         </div>
-        {isCorrect === true && (
-          <p className="text-xs font-medium text-green-600 dark:text-green-400">{tt("status.correct")}</p>
-        )}
-        {isCorrect === false && (
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-red-600 dark:text-red-400">
-              {tt("status.incorrectRetryCount", { n: attempts })}
-            </span>
-            {!hideReveal && !revealedAnswer && (
-              <button
-                type="button"
-                onClick={() => practiceCheck.reveal(row.id, true)}
-                disabled={!!practiceCheck.revealPending[row.id]}
-                className={STUDENT_BUTTON_SECONDARY_TOUCH}
-              >
-                {tt("button.showAnswer")}
-              </button>
+        {hideReveal ? (
+          // Сцена-вигляд (крок 3c, "варіант 3 — крапки спроб") — футер
+          // усередині картки, без пілюлі "Відповідь" (панель "Правильні
+          // відповіді", renderBlock() нижче, уже дає відповіді);
+          // коректний рядок — без футера й без тексту "Правильно"
+          // (зелені поля й так це показують).
+          isCorrect === false && (
+            <div className="practice-attempt-footer">
+              <span className="practice-attempt-dots" aria-hidden="true">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+                  />
+                ))}
+              </span>
+              <span className="practice-attempt-label">{tt("status.tryAgainShort")}</span>
+              <span className="sr-only">{tt("aria.attemptNumber", { n: attempts })}</span>
+            </div>
+          )
+        ) : (
+          <>
+            {isCorrect === true && (
+              <p className="text-xs font-medium text-green-600 dark:text-green-400">{tt("status.correct")}</p>
             )}
-          </div>
-        )}
-        {!hideReveal && revealedAnswer && (
-          <p className="text-xs italic text-amber-700 dark:text-amber-400">
-            <span className="exercise-answer-label">{tt("answer.correctAnswerLabel")}</span> {revealedAnswer.join(" / ")}
-          </p>
+            {isCorrect === false && (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="text-red-600 dark:text-red-400">
+                  {tt("status.incorrectRetryCount", { n: attempts })}
+                </span>
+                {!revealedAnswer && (
+                  <button
+                    type="button"
+                    onClick={() => practiceCheck.reveal(row.id, true)}
+                    disabled={!!practiceCheck.revealPending[row.id]}
+                    className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                  >
+                    {tt("button.showAnswer")}
+                  </button>
+                )}
+              </div>
+            )}
+            {revealedAnswer && (
+              <p className="text-xs italic text-amber-700 dark:text-amber-400">
+                <span className="exercise-answer-label">{tt("answer.correctAnswerLabel")}</span> {revealedAnswer.join(" / ")}
+              </p>
+            )}
+          </>
         )}
       </div>
     );

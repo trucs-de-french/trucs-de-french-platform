@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -495,6 +495,12 @@ export function LetterGapsExercise({
       // (інший, непов'язаний механізм підказки, недоречний у ремедіальному
       // повторі помилок).
       hintDisabled?: boolean;
+      // Сцена-вигляд практики (крок 3c) — футер "спроби" (крапки, без
+      // пілюлі "Відповідь": letter_gaps уже має панель "Правильні
+      // відповіді", renderPracticeItem нижче), рендериться усередині
+      // картки, під полями. undefined (флет-практика/реальна вправа) —
+      // нічого не рендериться.
+      practiceFooter?: ReactNode;
     }
   ) {
     const word = config.words[wi];
@@ -626,6 +632,7 @@ export function LetterGapsExercise({
             </div>
           </div>
         </div>
+        {opts.practiceFooter}
       </div>
     );
   }
@@ -698,6 +705,38 @@ export function LetterGapsExercise({
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
     const itemRevealed = practiceCheck.revealed[key];
+
+    if (hideReveal) {
+      // Сцена-вигляд (крок 3c, "варіант 3 — крапки спроб") — футер
+      // усередині картки, без пілюлі "Відповідь" (панель "Правильні
+      // відповіді", renderBlock() нижче, уже дає відповіді); коректний
+      // елемент — без футера й без тексту "Правильно" (зелені поля й так
+      // це показують).
+      const footer =
+        isCorrect === false ? (
+          <div className="practice-attempt-footer">
+            <span className="practice-attempt-dots" aria-hidden="true">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+                />
+              ))}
+            </span>
+            <span className="practice-attempt-label">{t("status.tryAgainShort")}</span>
+            <span className="sr-only">{t("aria.attemptNumber", { n: attempts })}</span>
+          </div>
+        ) : undefined;
+      return renderWordCard(wi, {
+        detail: undefined,
+        locked: false,
+        gapOrder,
+        hintDisabled: true,
+        cardNumber: pos + 1,
+        practiceFooter: footer,
+      });
+    }
+
     return (
       <div key={wi} className="flex flex-col gap-1.5">
         {renderWordCard(wi, {
@@ -715,7 +754,7 @@ export function LetterGapsExercise({
             <span className="text-red-600 dark:text-red-400">
               {t("status.incorrectRetryCount", { n: attempts })}
             </span>
-            {!hideReveal && !itemRevealed && (
+            {!itemRevealed && (
               <button
                 type="button"
                 onClick={() => practiceCheck.reveal(key, true)}
@@ -727,7 +766,7 @@ export function LetterGapsExercise({
             )}
           </div>
         )}
-        {!hideReveal && itemRevealed && (
+        {itemRevealed && (
           <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
             <span className="exercise-answer-label">{t("answer.correctWordLabel")}</span> {itemRevealed.join(", ")}
           </p>
