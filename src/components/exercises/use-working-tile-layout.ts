@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 // Картка-слово (WORD_CARD, word-list-layout.ts): p-3.5 = 14px з обох боків.
-const CARD_PADDING_PX = 28;
+// Експортовано — flat-practice-layout.ts рахує той самий half-card-inner
+// на статичній ширині сценової сторінки (а не на живому ResizeObserver, як
+// тут), тим самим константами, без дублювання магічних чисел.
+export const CARD_PADDING_PX = 28;
 // Грід-обгортка карток (letter-gaps.tsx/letter-rearrangement.tsx): gap-3 = 12px.
-const COLUMN_GAP_PX = 12;
+export const COLUMN_GAP_PX = 12;
 
 // ОДИН фіксований розмір клітинки на обидві вправи — літера-поле-пропуск і
 // видима літера letter_gaps, плитка-літера letter_rearrangement — НІКОЛИ не

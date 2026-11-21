@@ -32,6 +32,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { estimateLetterRearrangementCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
 import { buildRevealedWordDetail, type RevealedWordDetail } from "@/lib/exercises/format-reveal-answer";
+import { layoutFlatPracticeItems } from "@/lib/exercises/flat-practice-layout";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -553,10 +554,20 @@ export function LetterRearrangementExercise({
   }
 
   // Одна картка практики — спільне для плаского режиму (інлайн-картка
-  // сцени, НЕЗМІННО, старий рядок статусу під карткою) і сцена-вигляду
-  // блоків (крок 3c: "варіант 3 — крапки спроб", усередині картки). Два
-  // зовсім різні рендери під sceneStyle — флет-гілка нижче НЕ ЗМІНЕНА.
-  function renderPracticeItem(wi: number, pos: number, sceneStyle = false) {
+  // сцени: старий рядок статусу під карткою, крок 5 — тепер 2-колонкова
+  // сітка з довгими словами на col-span-2, flatLayout нижче) і
+  // сцена-вигляду блоків (крок 3c: "варіант 3 — крапки спроб", усередині
+  // картки). Два зовсім різні рендери під sceneStyle.
+  function renderPracticeItem(
+    wi: number,
+    pos: number,
+    sceneStyle = false,
+    // Крок 5 (флет-режим, "довгі слова в кінці, col-span-2") —
+    // displayNumber/long з layoutFlatPracticeItems замінюють pos+1/
+    // відсутній col-span; undefined для sceneStyle (там нумерація й сітка
+    // лишаються позиційними, не перепорядкованими).
+    flatLayout?: { displayNumber: number; long: boolean }
+  ) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
@@ -606,12 +617,12 @@ export function LetterRearrangementExercise({
     }
 
     return (
-      <div key={wi} className="flex flex-col gap-1.5">
+      <div key={wi} className={`flex flex-col gap-1.5 ${flatLayout?.long ? "col-span-2" : ""}`}>
         {renderWordCard(wi, {
           detail: undefined,
           locked: false,
           hintDisabled: true,
-          cardNumber: pos + 1,
+          cardNumber: flatLayout ? flatLayout.displayNumber : pos + 1,
         })}
         {isCorrect === true && (
           <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
@@ -706,6 +717,17 @@ export function LetterRearrangementExercise({
   }
 
   if (isPractice) {
+    // Крок 5 — флет-режим (інлайн-картка сцени, error-review-block.tsx
+    // БЕЗ openMode): довгий список однорядкових full-width карток
+    // замінюється на 2-колонкову сітку (та сама TWO_COLUMN_GRID_CLASS, що
+    // сцена-вигляд блоків), з довгими словами в кінці на col-span-2 —
+    // layoutFlatPracticeItems (flat-practice-layout.ts) рахує
+    // короткі-спочатку/довгі-в-кінці порядок і наскрізну нумерацію;
+    // wi (id) лишається джерелом для submitPractice/перевірки нижче,
+    // лише порядок рендеру й видимі номери міняються.
+    const flatPracticeLayout = layoutFlatPracticeItems(
+      practiceWordIndices.map((wi) => ({ id: wi, length: config.words[wi].shuffledLetters.length }))
+    );
     return (
       <div className={EXERCISE_STACK}>
         {/* Задача "Lettres en désordre: add swap hint (uk/fr/en)" — той
@@ -724,8 +746,8 @@ export function LetterRearrangementExercise({
         <p className="tap-swap-hint-desktop text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
           {t("letterrearr.swapHintDesktop")}
         </p>
-        <div className="flex flex-col gap-3">
-          {practiceWordIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
+        <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
+          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item.displayNumber - 1, false, item))}
         </div>
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}

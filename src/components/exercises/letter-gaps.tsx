@@ -28,6 +28,7 @@ import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
 import { estimateLetterGapsCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
+import { layoutFlatPracticeItems } from "@/lib/exercises/flat-practice-layout";
 import { buildGapRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
@@ -304,7 +305,6 @@ export function LetterGapsExercise({
   const practiceWordIndices = isPractice
     ? config.words.map((_, wi) => wi).filter((wi) => practice!.onlyItemIds.includes(String(wi)))
     : [];
-  const practiceGapOrder = gapOrderFor(practiceWordIndices);
   const practiceCheck = usePracticeCheck(taskId);
   // Сцена-вигляд (крок 4) — попередньо "вирішені" елементи (виправлені
   // ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds,
@@ -697,15 +697,25 @@ export function LetterGapsExercise({
   }
 
   // Одна картка практики + рядок статусу під нею — спільне для плаского
-  // режиму (інлайн-картка сцени, НЕЗМІННО) і сцена-вигляду блоків (крок 4):
-  // та сама розмітка, лише інше джерело gapOrder/списку (practiceGapOrder
-  // проти gapOrderFor активного блоку, нижче). hideReveal — лише
+  // режиму (інлайн-картка сцени: крок 5 — 2-колонкова сітка з
+  // layoutFlatPracticeItems, flatGapOrder) і сцена-вигляду блоків (крок 4:
+  // gapOrderFor активного блоку, нижче). hideReveal — лише
   // сцена-вигляд (крок 3b): інлайн-кнопка "Показати відповідь"+розкритий
   // текст замінюються на спільну панель "Правильні відповіді" під блоком
   // (showToggle-картка TaskResult, той самий компонент, що звичайна
   // вправа), щоб не дублювати відповідь у двох місцях; лічильник спроб
   // лишається — у звичайної вправи нема свого еквівалента цього рядка.
-  function renderPracticeItem(wi: number, pos: number, gapOrder: GapKey[], hideReveal = false) {
+  function renderPracticeItem(
+    wi: number,
+    pos: number,
+    gapOrder: GapKey[],
+    hideReveal = false,
+    // Крок 5 (флет-режим, "довгі слова в кінці, col-span-2") —
+    // displayNumber/long з layoutFlatPracticeItems замінюють pos+1/
+    // відсутній col-span; undefined для сцена-вигляду (hideReveal=true),
+    // там нумерація й сітка лишаються позиційними.
+    flatLayout?: { displayNumber: number; long: boolean }
+  ) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
@@ -743,13 +753,13 @@ export function LetterGapsExercise({
     }
 
     return (
-      <div key={wi} className="flex flex-col gap-1.5">
+      <div key={wi} className={`flex flex-col gap-1.5 ${flatLayout?.long ? "col-span-2" : ""}`}>
         {renderWordCard(wi, {
           detail: undefined,
           locked: false,
           gapOrder,
           hintDisabled: true,
-          cardNumber: pos + 1,
+          cardNumber: flatLayout ? flatLayout.displayNumber : pos + 1,
         })}
         {isCorrect === true && (
           <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
@@ -903,10 +913,31 @@ export function LetterGapsExercise({
   }
 
   if (isPractice) {
+    // Крок 5 — флет-режим (інлайн-картка сцени, error-review-block.tsx
+    // БЕЗ openMode): довгий список однорядкових full-width карток
+    // замінюється на 2-колонкову сітку (та сама TWO_COLUMN_GRID_CLASS, що
+    // сцена-вигляд блоків), з довгими словами в кінці на col-span-2 —
+    // layoutFlatPracticeItems (flat-practice-layout.ts). length —
+    // word.chars.length (ВСІ символи слова, включно з видимими літерами,
+    // не лише приховані gaps — саме так ТЗ описує "довжину слова" тут,
+    // бо й видимі літери, й gaps однаково займають місце в рядку картки).
+    // wi (id) лишається джерелом для submitPractice/перевірки нижче.
+    const flatPracticeLayout = layoutFlatPracticeItems(
+      practiceWordIndices.map((wi) => ({ id: wi, length: config.words[wi].chars.length }))
+    );
+    // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,
+    // вище): перераховується на ВІДОБРАЖУВАНИЙ порядок слів (flatPracticeLayout
+    // замінив practiceWordIndices), інакше Enter/Tab-навігація між
+    // пропусками (updateLetter/handleBackspace: "наступний gap у gapOrder")
+    // стрибала б за СТАРИМ позиційним порядком, не за тим, що студент бачить
+    // на екрані.
+    const flatGapOrder = gapOrderFor(flatPracticeLayout.map((item) => item.id));
     return (
       <div className={EXERCISE_STACK}>
-        <div className="flex flex-col gap-3">
-          {practiceWordIndices.map((wi, pos) => renderPracticeItem(wi, pos, practiceGapOrder))}
+        <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
+          {flatPracticeLayout.map((item) =>
+            renderPracticeItem(item.id, item.displayNumber - 1, flatGapOrder, false, item)
+          )}
         </div>
 
         {diacritics.rect && diacritics.activeKey && (
@@ -914,7 +945,7 @@ export function LetterGapsExercise({
             rect={diacritics.rect}
             onPick={(ch) => {
               const [wi, gi] = diacritics.activeKey!.split(",").map(Number);
-              updateLetter(wi, gi, ch, practiceGapOrder);
+              updateLetter(wi, gi, ch, flatGapOrder);
             }}
           />
         )}
