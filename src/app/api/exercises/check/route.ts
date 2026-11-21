@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     Date.now() - new Date(existingProgress.last_attempt_at).getTime() < DUPLICATE_SUBMIT_WINDOW_MS;
 
   if (!isDuplicateSubmit) {
-    await recordTaskAttempt(supabase, user.id, task.id, {
+    await recordTaskAttempt(supabase, user.id, task.id, task.type, {
       correct: result.correct,
       score: result.score,
       studentAnswer: answer,

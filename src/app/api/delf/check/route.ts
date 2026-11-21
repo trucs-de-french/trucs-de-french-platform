@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       studentAnswer: answer,
     });
 
-    await recordTaskAttempt(supabase, user.id, task.id, {
+    await recordTaskAttempt(supabase, user.id, task.id, "essay_check", {
       correct: result.correct,
       score: result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0,
       studentAnswer: answer,
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     exerciseNumber: config.exerciseNumber,
   });
 
-  await recordTaskAttempt(supabase, user.id, task.id, {
+  await recordTaskAttempt(supabase, user.id, task.id, "essay_check", {
     correct: result.correct,
     score: Math.round((result.totalScore / result.maxScore) * 100),
     studentAnswer: answer,

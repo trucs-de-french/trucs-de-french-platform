@@ -1,4 +1,5 @@
 import type { createClient } from "@/lib/supabase/server";
+import { idsToClearAfterMistake } from "@/lib/exercises/error-review";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -18,6 +19,10 @@ export async function recordTaskAttempt(
   supabase: SupabaseServerClient,
   userId: string,
   taskId: string,
+  // Потрібен лише для idsToClearAfterMistake нижче (яка з ERROR_REVIEW
+  // гілок застосовна) — саме збереження прогресу/mistakes від типу
+  // завдання не залежить.
+  taskType: string,
   result: {
     correct: boolean;
     score: number;
@@ -73,5 +78,27 @@ export async function recordTaskAttempt(
           : JSON.stringify(result.studentAnswer ?? null),
       ai_feedback: result.detail ?? null,
     });
+
+    // "Застарілі виправлення ховають нову помилку" (аудит, Case A) —
+    // елементи, що щойно знову стали неправильними, перестають рахуватись
+    // "виправленими" (RPC clear_mistake_corrections, 0071; helper —
+    // idsToClearAfterMistake, error-review.ts). Best-effort, той самий
+    // принцип, що cleanupAvatarFolder (avatar-storage.ts): провал НЕ
+    // повинен валити саме збереження спроби (mistakes-рядок вище вже
+    // записаний) — лише логується, зокрема коли міграція 0071 ще не
+    // застосована (функція в БД відсутня).
+    const idsToClear = idsToClearAfterMistake(taskType, result.detail, result.correct);
+    if (idsToClear.length > 0) {
+      try {
+        const { error } = await supabase.rpc("clear_mistake_corrections", {
+          p_user_id: userId,
+          p_task_id: taskId,
+          p_item_ids: idsToClear,
+        });
+        if (error) console.error("[recordTaskAttempt] clear_mistake_corrections failed:", error.message);
+      } catch (err) {
+        console.error("[recordTaskAttempt] clear_mistake_corrections unexpected failure:", err);
+      }
+    }
   }
 }

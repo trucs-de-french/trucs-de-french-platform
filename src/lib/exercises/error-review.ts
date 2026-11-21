@@ -260,6 +260,38 @@ export function mistakeItemIds(taskType: string, detail: unknown): string[] | nu
   return null;
 }
 
+// "Застарілі виправлення ховають нову помилку" (аудит, Case A) —
+// recordTaskAttempt (progress.ts) викликає це ПІСЛЯ вставки нового рядка
+// mistakes, щоб одразу прибрати ці id з mistake_corrections.
+// corrected_item_ids/failed_attempts (RPC clear_mistake_corrections,
+// 0071): інакше елемент, що колись був виправлений у режимі практики, а
+// потім знову провалений у ЗВИЧАЙНІЙ (не практичній) перевірці, назавжди
+// лишався б "виправленим" у buildErrorReviewEntry (remainingItemIds =
+// wrongItemIds.filter(id => !correctedSet.has(id)) вище — correctedSet
+// ніколи сам не зменшується) — те саме читають practice/check
+// (remainingItemIds там) і всі споживачі buildErrorReviewEntry
+// (scene-error-review.ts, mistakes-overview.ts), тож досить виправити
+// дані, UI-код не чіпається.
+//
+// items-типи — ті самі id, що mistakeItemIds вище (і що aggregateWrongItems
+// зрештою використовує): detail щойно прийшов зі свіжої gradeAnswer-
+// перевірки проти АКТУАЛЬНОГО config, тож тут не потрібна додаткова
+// звірка на "привидів" (currentIdBasedIds/positionalCount), яку робить
+// aggregateWrongItems для СТАРИХ рядків mistakes. whole-типи з реальною
+// практикою — єдиний синтетичний id (WHOLE_TASK_ITEM_ID), вирішується
+// лише прапорцем correct (у detail немає універсальної "список елементів"
+// форми для всіх whole-типів). Решта (виключені типи, ще не реалізовані
+// whole-типи) — нічого очищати.
+export function idsToClearAfterMistake(taskType: string, detail: unknown, correct: boolean): string[] {
+  if (isPracticeItemsTaskType(taskType)) {
+    return mistakeItemIds(taskType, detail) ?? [];
+  }
+  if (isWholePracticeTaskType(taskType) && !correct) {
+    return [WHOLE_TASK_ITEM_ID];
+  }
+  return [];
+}
+
 // Усі ідентифікатори елементів, присутні в цьому detail (правильні й ні) —
 // визначає, які елементи цей конкретний mistakes-рядок "покриває" (весь
 // запис чи лише один блок вправи).
