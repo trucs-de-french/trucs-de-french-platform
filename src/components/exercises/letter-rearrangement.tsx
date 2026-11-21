@@ -288,9 +288,18 @@ export function LetterRearrangementExercise({
     });
     setPracticeFailedAttempts(result.failedAttempts);
     if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
-    for (const r of result.results) {
-      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-        practiceCheck.reveal(r.itemId, false);
+    // Автоматичне розкриття після 2 невдалих спроб — лише флет-режим
+    // (інлайн-картка сцени, старий продуктовий принцип, use-practice-
+    // check.ts fromButton=false коментар). Сцена-вигляд (крок 3c) має
+    // власний контракт: відповідь показується ЛИШЕ по натисканню пілюлі
+    // "Відповідь" — автовиклик тут раніше й розкривав картку сам, без
+    // натискання, щойно result.failedAttempts (із сервера, через
+    // router.refresh() чи напряму з відповіді) сягав 2.
+    if (!isSceneMode) {
+      for (const r of result.results) {
+        if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+          practiceCheck.reveal(r.itemId, false);
+        }
       }
     }
   }

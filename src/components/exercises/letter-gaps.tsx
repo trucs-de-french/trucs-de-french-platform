@@ -359,9 +359,14 @@ export function LetterGapsExercise({
     });
     setPracticeFailedAttempts(result.failedAttempts);
     if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
-    for (const r of result.results) {
-      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-        practiceCheck.reveal(r.itemId, false);
+    // Автоматичне розкриття після 2 невдалих спроб — лише флет-режим,
+    // той самий принцип, що letter-rearrangement.tsx: сцена-вигляд
+    // показує відповідь лише через панель "Правильні відповіді"/пілюлю.
+    if (!isSceneMode) {
+      for (const r of result.results) {
+        if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+          practiceCheck.reveal(r.itemId, false);
+        }
       }
     }
   }
