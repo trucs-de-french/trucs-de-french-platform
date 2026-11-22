@@ -639,12 +639,23 @@ export default async function ScenePage({
       // прихованого зв'язку), у matching right-варіанти не прив'язані до
       // left публічно (секрет) — лише сервер, маючи повний (несанітизований)
       // config, може звузити left/right саме до пар review.remainingItemIds.
+      // perBlockShuffle=true (задача "flat matching groups of 5 з
+      // пунктирним розділювачем") — той самий прапорець, що вже передає
+      // scene-error-review.ts для сцена-вигляду: без нього right
+      // перемішувався б ОДНИМ суцільним shuffle на всю вправу (sanitize.ts:
+      // sanitizeMatchingForPractice), і matching.tsx (isPractice, нижче),
+      // чанкуючи config.right тим самим chunk(), що й config.left, міг би
+      // дістати в групу i правий варіант пари, чий лівий елемент насправді
+      // в групі j — perBlockShuffle групує й перемішує right ВСЕРЕДИНІ
+      // кожного chunk() окремо, тож права колонка групи i лишається
+      // виключно з пар цієї самої групи.
       config:
         review.mode === "items"
           ? taskType === "matching"
             ? sanitizeMatchingForPractice(
                 (taskConfigById.get(m.task_id) ?? {}) as unknown as MatchingConfig,
-                review.remainingItemIds
+                review.remainingItemIds,
+                true
               )
             : taskType === "drag_drop"
               ? sanitizeDragDropForPractice(

@@ -40,6 +40,30 @@ function sizes(blocks: unknown[][]): number[] {
   );
 }
 
+// matching, флет/інлайн-картка сцени (error-review-block.tsx БЕЗ
+// openMode, matching.tsx isPractice) — ті самі порогові приклади, що
+// задача наводить явно: той самий chunk(pairs, EXERCISE_BLOCK_SIZE/2),
+// що й сцена-вигляд блоків вище, лише тут немає extracted-helper'а, що
+// потребував би ОКРЕМОГО тесту — пряме викликання chunk(), тож покриття
+// тут і там одне й те саме, лише ці конкретні межі (12/5/0) раніше не
+// були явно перевірені.
+{
+  const pairs = Array.from({ length: 12 }, (_, i) => `pair-${i}`);
+  const blocks = chunk(pairs, EXERCISE_BLOCK_SIZE / 2);
+  assert(JSON.stringify(sizes(blocks)) === JSON.stringify([5, 5, 2]), "matching flat groups: 12 pairs chunk into 5,5,2");
+}
+
+{
+  const pairs = Array.from({ length: 5 }, (_, i) => `pair-${i}`);
+  const blocks = chunk(pairs, EXERCISE_BLOCK_SIZE / 2);
+  assert(JSON.stringify(sizes(blocks)) === JSON.stringify([5]), "matching flat groups: 5 pairs stay a single group");
+}
+
+{
+  const blocks = chunk([] as string[], EXERCISE_BLOCK_SIZE / 2);
+  assert(blocks.length === 0, "matching flat groups: 0 pairs produce no groups, not a crash");
+}
+
 // letter_gaps/letter_rearrangement/table_fill — ЕЛЕМЕНТ = слово/рядок,
 // EXERCISE_BLOCK_SIZE = 10 напряму (без ділення навпіл).
 {

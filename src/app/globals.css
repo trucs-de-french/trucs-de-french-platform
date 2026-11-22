@@ -10505,6 +10505,30 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* "Робота над помилками", флет/інлайн-картка (error-review-block.tsx БЕЗ
+   openMode, matching.tsx isPractice БЕЗ isSceneMode) — розділювач між
+   групами по EXERCISE_BLOCK_SIZE/2 пар (chunk(), matching.tsx). Той самий
+   gold-border токен, що .matching-card--fr вище (--gold-border-80 світла/
+   --gold-border-dark-35 темна) — не власна палітра. Пунктир НЕ можна
+   намалювати через box-shadow (inset box-shadow завжди суцільний), тож
+   звичного для цього проєкту трюку "0.5px на Retina через прозору рамку +
+   inset box-shadow" тут немає — лишається border-style: dashed 1px на всіх
+   щільностях екрана.
+   margin: 18px 0 — "видимий проміжок" над і під лінією (вимога задачі),
+   а не просто border-top на самій картці. */
+.matching-flat-group-divider {
+  border-top: 1px dashed var(--gold-border-80);
+  margin: 18px 0;
+}
+.dark .matching-flat-group-divider {
+  border-top-color: var(--gold-border-dark-35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-flat-group-divider {
+    border-top-color: var(--gold-border-dark-35);
+  }
+}
+
 /* word_choice (word-choice.tsx) — inline option pills ("roi / prince /
    maître") усередині речення. Світла тема — крем-плитки (той самий
    #f6efd9/rgba(217,183,101,.85), що інші крем-елементи платформи), ТЕМНА

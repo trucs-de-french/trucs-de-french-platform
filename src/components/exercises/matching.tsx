@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
@@ -634,22 +634,48 @@ export function MatchingExercise({
   }
 
   if (isPractice) {
+    // Флет/інлайн-картка сцени (error-review-block.tsx БЕЗ openMode) —
+    // довгий список пар розбивається на групи по EXERCISE_BLOCK_SIZE/2
+    // (той самий chunk(), що й leftBlocks/rightBlocks звичайної вправи та
+    // practiceLeftBlocks/practiceRightBlocks сцена-вигляду вище, НЕ нова
+    // константа): кожна група — своя пара leftGroup/rightGroup, тож обидві
+    // колонки лишаються узгодженими МІЖ групами (праві варіанти групи i —
+    // лише ті, що й самі пари групи i, perBlockShuffle уже гарантує це на
+    // сервері, sanitizeMatchingForPractice). На відміну від сцена-вигляду
+    // блоків (isSceneMode, вище) — БЕЗ BlockTabs/BlockNavigation: усі групи
+    // рендеряться одна під одною одразу, і на десктопі, і на мобільному
+    // (вимога задачі), розділені пунктирною лінією (.matching-flat-group-
+    // divider, globals.css) лише МІЖ групами (i>0), не навколо першої/
+    // останньої. MatchingBoard/дошка/крапки/вибір/з'єднання — той самий
+    // компонент з тими самими пропсами, що раніше рендерився ОДИН раз на
+    // весь config.left/right — лише leftItems/rightItems тепер звужені до
+    // групи, решта (pairs/selectedLeft/onClick*/statusForLeft/usedRights)
+    // незмінні.
+    const leftGroups = chunk(config.left, EXERCISE_BLOCK_SIZE / 2);
+    const rightGroups = chunk(config.right, EXERCISE_BLOCK_SIZE / 2);
     return (
       <div className={EXERCISE_STACK}>
-        <MatchingBoard
-          leftItems={config.left}
-          rightItems={config.right}
-          pairs={practicePairs}
-          selectedLeft={selectedLeftPractice}
-          onClickLeft={practiceClickLeft}
-          onClickRight={practiceClickRight}
-          disabled={false}
-          statusForLeft={(left) => {
-            const isCorrect = practiceResultByLeft[left];
-            return isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : undefined;
-          }}
-          usedRights={usedRightsPractice}
-        />
+        <div className="flex flex-col">
+          {leftGroups.map((leftGroup, i) => (
+            <Fragment key={i}>
+              {i > 0 && <div className="matching-flat-group-divider" aria-hidden="true" />}
+              <MatchingBoard
+                leftItems={leftGroup}
+                rightItems={rightGroups[i] ?? []}
+                pairs={practicePairs}
+                selectedLeft={selectedLeftPractice}
+                onClickLeft={practiceClickLeft}
+                onClickRight={practiceClickRight}
+                disabled={false}
+                statusForLeft={(left) => {
+                  const isCorrect = practiceResultByLeft[left];
+                  return isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : undefined;
+                }}
+                usedRights={usedRightsPractice}
+              />
+            </Fragment>
+          ))}
+        </div>
 
         {renderPracticeStatusList(config.left)}
 
