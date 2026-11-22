@@ -54,29 +54,83 @@ const SPLIT_THRESHOLD = 10;
 type Row = TableFillPublic["rows"][number];
 type TableFillResult = Extract<GradeResult, { detail: TableFillDetail }>;
 
-// Одна колонка вправи — або половина рядків, або вся вправа одним
-// стовпцем; завжди зі своїм рядком підписів колонок (прибирається (CSS,
-// table-fill-col-header--secondary) на вузьких екранах, де половини
-// складаються в один стовпець — показуємо підписи лише раз, над першою).
+// "Variant B" (рестайл) — текст ДАНОЇ (нередагованої) клітинки, спільний
+// для РЕАЛЬНОЇ вправи (renderCell нижче) і практики (renderPracticeRow:
+// cellField) — та сама типографіка в усіх трьох місцях (сцена, флет-картка
+// сцени, сцена-вигляд /cabinet/mistakes/[sceneId]), без колишньої fr/uk
+// розбіжності кольору/шрифту чипа (просто текст, не чип).
+function tableFillGivenText(value: string, cellLang: string) {
+  return (
+    <span
+      lang={cellLang}
+      className="font-content text-[16px] text-[#1a1640] dark:text-[var(--card-ink-2)] [overflow-wrap:anywhere]"
+    >
+      {frenchNbsp(value)}
+    </span>
+  );
+}
+
+// "Variant B" (рестайл) — спільна картка-рядок для РЕАЛЬНОЇ вправи
+// (TableFillColumn нижче) і практики (renderPracticeRow: флет-картка
+// сцени ТА сцена-вигляд /cabinet/mistakes/[sceneId]) — усі три місця
+// рендерять рівно ЦЕЙ компонент, тож лишаються пікселево однаковими.
+// Чисто презентаційна обгортка: leftContent/rightContent — уже готовий
+// ReactNode (сам текст/інпут/лампочка/aria — логіка кожного викликача,
+// тут НЕ міняється), лише номер+грід+стрілка (desktop) чи "дано, потім
+// інпут" (<=640px, globals.css) — порядок на мобільному визначає
+// leftValue/rightValue (null = інпут, не-null = дано) через data-атрибут
+// data-row-fill-slot, зіставлений із grid-area в CSS, а не припущення
+// "ліва сторона завжди дано".
+function TableFillRowCard({
+  number,
+  numberAriaLabel,
+  leftValue,
+  rightValue,
+  leftContent,
+  rightContent,
+  footer,
+}: {
+  number: number;
+  numberAriaLabel: string;
+  leftValue: string | null;
+  rightValue: string | null;
+  leftContent: ReactNode;
+  rightContent: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <div className="table-fill-row-b">
+      <div className="table-fill-row-b-grid">
+        <span className="table-fill-row-b-num" aria-label={numberAriaLabel}>
+          {number}
+        </span>
+        <div data-row-fill-slot={leftValue !== null ? "given" : "input"}>{leftContent}</div>
+        <span className="table-fill-row-b-arrow" aria-hidden="true">
+          →
+        </span>
+        <div data-row-fill-slot={rightValue !== null ? "given" : "input"}>{rightContent}</div>
+      </div>
+      {footer}
+    </div>
+  );
+}
+
+// Одна колонка вправи — половина рядків чи вся вправа одним стовпцем.
 // numberOffset — глобальний порядковий номер (у config.rows, не у межах
 // цієї половини/блоку) першого рядка цієї колонки, щоб нумерація йшла
 // 1..N наскрізно по обох половинах і збігалась із "Рядок N" у списку
 // помилок під вправою (той самий config.rows.findIndex нижче).
 function TableFillColumn({
   rows,
-  columnLabels,
   renderCell,
   rowPointsLabel,
   numberOffset,
-  secondaryHeader,
   itemsGapClass,
 }: {
   rows: Row[];
-  columnLabels: [string, string];
   renderCell: (rowId: string, side: "left" | "right", value: string | null, points: number) => ReactNode;
   rowPointsLabel: (row: Row) => ReactNode;
   numberOffset: number;
-  secondaryHeader?: boolean;
   // Чи ХОЧ ОДИН рядок цієї вправи взагалі може показати пілюлю балів
   // (isDelf чи нетиповий бал серед рядків — рахує батько, TableFillExercise):
   // звужує відступ gap-[22px]→EXERCISE_BODY_ITEMS_GAP, коли жодна пілюля
@@ -85,28 +139,24 @@ function TableFillColumn({
 }) {
   const { t } = useT();
   return (
-    <div className="flex flex-col gap-2.5">
-      <div className={`table-fill-col-header ${secondaryHeader ? "table-fill-col-header--secondary" : ""}`}>
-        <span className="table-fill-col-header-cell">{columnLabels[0]}</span>
-        <span className="table-fill-col-header-cell">{columnLabels[1]}</span>
-      </div>
-      <div className={`flex flex-col ${itemsGapClass} pt-3`}>
-        {rows.map((row, i) => {
-          const tab = rowPointsLabel(row);
-          return (
-            <div key={row.id} className={`row-points-tab-wrap ${tab ? "row-points-tab-wrap--has-tab" : ""}`}>
-              {tab}
-              <div className="table-fill-row glass-item-card">
-                <span className="item-number-badge table-fill-row-num" aria-label={t("aria.row", { n: numberOffset + i + 1 })}>
-                  {numberOffset + i + 1}
-                </span>
-                <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left, row.points)}</div>
-                <div className="table-fill-row-cell">{renderCell(row.id, "right", row.right, row.points)}</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+    <div className={`flex flex-col ${itemsGapClass}`}>
+      {rows.map((row, i) => {
+        const tab = rowPointsLabel(row);
+        const number = numberOffset + i + 1;
+        return (
+          <div key={row.id} className={`row-points-tab-wrap ${tab ? "row-points-tab-wrap--has-tab" : ""}`}>
+            {tab}
+            <TableFillRowCard
+              number={number}
+              numberAriaLabel={t("aria.row", { n: number })}
+              leftValue={row.left}
+              rightValue={row.right}
+              leftContent={renderCell(row.id, "left", row.left, row.points)}
+              rightContent={renderCell(row.id, "right", row.right, row.points)}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -346,7 +396,7 @@ export function TableFillExercise({
   // відповіді" під блоком (showToggle-картка TaskResult, той самий
   // компонент, що звичайна вправа); лічильник спроб лишається — у
   // звичайної вправи нема свого еквівалента цього рядка.
-  function renderPracticeRow(row: Row, hideReveal = false) {
+  function renderPracticeRow(row: Row, number: number, hideReveal = false) {
     const isCorrect = practiceResults[row.id];
     const locked = isCorrect !== undefined;
     const attempts = practiceFailedAttempts[row.id] ?? 0;
@@ -360,81 +410,76 @@ export function TableFillExercise({
     }
 
     function cellField(side: "left" | "right", value: string | null) {
-      if (value !== null) return <span>{frenchNbsp(value)}</span>;
+      if (value !== null) return tableFillGivenText(value, side === "left" ? "fr" : lang);
       return (
         <input
           value={answers[cellKey(row.id, side)] ?? ""}
           onChange={(e) => updateAnswer(row.id, side, e.target.value)}
           disabled={locked}
-          className={`w-full rounded border px-2 py-1 text-base ${practiceInputClass()}`}
+          className={`h-[34px] w-full rounded-lg border text-center text-[15px] ${practiceInputClass()}`}
         />
       );
     }
 
-    return (
-      <div
-        key={row.id}
-        className="flex flex-col gap-1.5 rounded border-[1.5px] dark:border-[1.5px] glass-chip glass-gap-shadow bg-white dark:bg-[var(--card-bg)] p-2 dark:border-[var(--card-border)]"
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{columnLabels[0]}</p>
-            {cellField("left", row.left)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{columnLabels[1]}</p>
-            {cellField("right", row.right)}
-          </div>
+    // hideReveal — лише сцена-вигляд (крок 3c, "варіант 3 — крапки спроб"):
+    // футер усередині картки, без пілюлі "Відповідь" (панель "Правильні
+    // відповіді", renderBlock() нижче, уже дає відповіді); коректний рядок —
+    // без футера й без тексту "Правильно" (зелені поля й так це показують).
+    const footer = hideReveal ? (
+      isCorrect === false && (
+        <div className="practice-attempt-footer">
+          <span className="practice-attempt-dots" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+              />
+            ))}
+          </span>
+          <span className="practice-attempt-label">{tt("status.failedAttemptShort", { n: attempts })}</span>
         </div>
-        {hideReveal ? (
-          // Сцена-вигляд (крок 3c, "варіант 3 — крапки спроб") — футер
-          // усередині картки, без пілюлі "Відповідь" (панель "Правильні
-          // відповіді", renderBlock() нижче, уже дає відповіді);
-          // коректний рядок — без футера й без тексту "Правильно"
-          // (зелені поля й так це показують).
-          isCorrect === false && (
-            <div className="practice-attempt-footer">
-              <span className="practice-attempt-dots" aria-hidden="true">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-                  />
-                ))}
-              </span>
-              <span className="practice-attempt-label">{tt("status.failedAttemptShort", { n: attempts })}</span>
-            </div>
-          )
-        ) : (
-          <>
-            {isCorrect === true && (
-              <p className="text-xs font-medium text-green-600 dark:text-green-400">{tt("status.correct")}</p>
-            )}
-            {isCorrect === false && (
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="text-red-600 dark:text-red-400">
-                  {tt("status.incorrectRetryCount", { n: attempts })}
-                </span>
-                {!revealedAnswer && (
-                  <button
-                    type="button"
-                    onClick={() => practiceCheck.reveal(row.id, true)}
-                    disabled={!!practiceCheck.revealPending[row.id]}
-                    className={STUDENT_BUTTON_SECONDARY_TOUCH}
-                  >
-                    {tt("button.showAnswer")}
-                  </button>
-                )}
-              </div>
-            )}
-            {revealedAnswer && (
-              <p className="text-xs italic text-amber-700 dark:text-amber-400">
-                <span className="exercise-answer-label">{tt("answer.correctAnswerLabel")}</span> {revealedAnswer.join(" / ")}
-              </p>
-            )}
-          </>
+      )
+    ) : (
+      <>
+        {isCorrect === true && (
+          <p className="text-xs font-medium text-green-600 dark:text-green-400">{tt("status.correct")}</p>
         )}
-      </div>
+        {isCorrect === false && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-red-600 dark:text-red-400">
+              {tt("status.incorrectRetryCount", { n: attempts })}
+            </span>
+            {!revealedAnswer && (
+              <button
+                type="button"
+                onClick={() => practiceCheck.reveal(row.id, true)}
+                disabled={!!practiceCheck.revealPending[row.id]}
+                className={STUDENT_BUTTON_SECONDARY_TOUCH}
+              >
+                {tt("button.showAnswer")}
+              </button>
+            )}
+          </div>
+        )}
+        {revealedAnswer && (
+          <p className="text-xs italic text-amber-700 dark:text-amber-400">
+            <span className="exercise-answer-label">{tt("answer.correctAnswerLabel")}</span> {revealedAnswer.join(" / ")}
+          </p>
+        )}
+      </>
+    );
+
+    return (
+      <TableFillRowCard
+        key={row.id}
+        number={number}
+        numberAriaLabel={tt("aria.row", { n: number })}
+        leftValue={row.left}
+        rightValue={row.right}
+        leftContent={cellField("left", row.left)}
+        rightContent={cellField("right", row.right)}
+        footer={footer}
+      />
     );
   }
 
@@ -500,14 +545,7 @@ export function TableFillExercise({
     locked: boolean
   ) {
     if (value !== null) {
-      return (
-        <span
-          lang={side === "left" ? "fr" : lang}
-          className={`table-fill-chip chip-text-fit ${side === "left" ? "table-fill-chip-fr" : "table-fill-chip-uk"}`}
-        >
-          {frenchNbsp(value)}
-        </span>
-      );
+      return tableFillGivenText(value, side === "left" ? "fr" : lang);
     }
     const key = cellKey(rowId, side);
     const blank = detail?.blanks.find((b) => b.rowId === rowId && b.side === side);
@@ -520,38 +558,35 @@ export function TableFillExercise({
     // читалки.
     const ariaResultLabel = blank && !shouldShowRowScorePill(points) ? rowResultAriaLabel(blank.isCorrect, lang) : undefined;
     return (
-      <div className="flex flex-col gap-1">
-        <div className="relative table-fill-cell-wrap">
-          <input
-            ref={diacritics.fieldRef(key)}
-            value={answers[key] ?? ""}
-            onChange={(e) => updateAnswer(rowId, side, e.target.value)}
-            onFocus={() => diacritics.onFocus(key)}
-            onBlur={diacritics.onBlur}
-            disabled={locked}
-            aria-label={ariaResultLabel}
-            className={`table-fill-cell-input h-10 w-full rounded-[10px] border text-center text-[15px] max-[640px]:text-[14px] ${hasValue ? "px-[12px] max-[640px]:px-[8px]" : "px-[40px] max-[640px]:px-[34px]"} ${inputClass(rowId, side, detail)}`}
+      <div className="relative table-fill-cell-wrap">
+        <input
+          ref={diacritics.fieldRef(key)}
+          value={answers[key] ?? ""}
+          onChange={(e) => updateAnswer(rowId, side, e.target.value)}
+          onFocus={() => diacritics.onFocus(key)}
+          onBlur={diacritics.onBlur}
+          disabled={locked}
+          aria-label={ariaResultLabel}
+          className={`h-[34px] w-full rounded-lg border text-center text-[15px] ${hasValue ? "px-[12px]" : "px-[40px]"} ${inputClass(rowId, side, detail)}`}
+        />
+        {/* Лампочка-підказка ВСЕРЕДИНІ поля — той самий золотий гурток, що
+            ClueCardHeader кросворду, абсолютно позиційований у .relative-
+            обгортці вище; той самий принцип, що letter-gaps.tsx (завжди
+            видима, не залежить від фокуса/попапу діакритики — колишня
+            лампочка DiacriticsPopup (onHint) з'являлась лише коли попап
+            відкритий, тут навмисно інакше). Зникає повністю, щойно в полі
+            є текст (а не стискається) — не рендериться взагалі, тож не в
+            DOM, не в tab-порядку, не в a11y-дереві. */}
+        {!locked && !isDelf && !hasValue && (
+          <HintBulb
+            state={hintedCells.has(key) ? "used" : "available"}
+            label={tt("tablefill.hintOpenFirstLetter")}
+            disabled={hintedCells.has(key) || hintPending}
+            onClick={() => applyHint(rowId, side)}
+            className="table-fill-input-lamp"
           />
-          {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
-              самий золотий гурток, що ClueCardHeader кросворду,
-              абсолютно позиційований у .relative-
-              обгортці вище; той самий принцип, що letter-gaps.tsx (завжди
-              видима, не залежить від фокуса/попапу діакритики — колишня
-              лампочка DiacriticsPopup (onHint) з'являлась лише коли попап
-              відкритий, тут навмисно інакше). Зникає повністю, щойно в полі
-              є текст (а не стискається) — не рендериться взагалі, тож не в
-              DOM, не в tab-порядку, не в a11y-дереві. */}
-          {!locked && !isDelf && !hasValue && (
-            <HintBulb
-              state={hintedCells.has(key) ? "used" : "available"}
-              label={tt("tablefill.hintOpenFirstLetter")}
-              disabled={hintedCells.has(key) || hintPending}
-              onClick={() => applyHint(rowId, side)}
-              className="table-fill-input-lamp"
-            />
-          )}
-          {hintUsed && <HintUsedBadge />}
-        </div>
+        )}
+        {hintUsed && <HintUsedBadge />}
       </div>
     );
   }
@@ -718,13 +753,11 @@ export function TableFillExercise({
     return (
       <div className="flex flex-col gap-3">
         <TableFillColumnsGrid multiColumn={blockColumns.length > 1}>
-          {blockColumns.map((col, i) => (
+          {blockColumns.map((col) => (
             <TableFillColumn
               key={col.key}
               rows={col.rows}
-              columnLabels={columnLabels}
               numberOffset={col.numberOffset}
-              secondaryHeader={i > 0}
               renderCell={(rowId, side, value, points) => renderCell(rowId, side, value, points, blockDetail, !!blockResult)}
               rowPointsLabel={(row) => rowPointsLabel(row, blockDetail)}
               itemsGapClass={itemsGapClass}
@@ -843,12 +876,16 @@ export function TableFillExercise({
             onChangeBlock={setPracticeActiveBlock}
             checkButton={sceneCheckButtonEl}
           >
-            <div className="flex flex-col gap-2">{activeRows.map((row) => renderPracticeRow(row, true))}</div>
+            <div className="flex flex-col gap-2">
+              {activeRows.map((row, i) => renderPracticeRow(row, practiceBlockBase + i + 1, true))}
+            </div>
             {answersPanel}
           </BlockNavigation>
         ) : (
           <>
-            <div className="flex flex-col gap-2">{activeRows.map((row) => renderPracticeRow(row, true))}</div>
+            <div className="flex flex-col gap-2">
+              {activeRows.map((row, i) => renderPracticeRow(row, practiceBlockBase + i + 1, true))}
+            </div>
             {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
@@ -860,7 +897,7 @@ export function TableFillExercise({
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
-        <div className="flex flex-col gap-2">{practiceRows.map((row) => renderPracticeRow(row))}</div>
+        <div className="flex flex-col gap-2">{practiceRows.map((row, i) => renderPracticeRow(row, i + 1))}</div>
         <div className="flex flex-col gap-2">
           <button
             type="button"
@@ -944,13 +981,11 @@ export function TableFillExercise({
       {!useBlocks ? (
         <>
           <TableFillColumnsGrid multiColumn={columns.length > 1}>
-            {columns.map((col, i) => (
+            {columns.map((col) => (
               <TableFillColumn
                 key={col.key}
                 rows={col.rows}
-                columnLabels={columnLabels}
                 numberOffset={col.numberOffset}
-                secondaryHeader={i > 0}
                 renderCell={(rowId, side, value, points) => renderCell(rowId, side, value, points, singleDetail, !!single.result)}
                 rowPointsLabel={(row) => rowPointsLabel(row, singleDetail)}
                 itemsGapClass={itemsGapClass}

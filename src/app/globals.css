@@ -399,7 +399,8 @@
    від порядку правил у файлі. */
 .dark .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
 .dark .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
-.dark .glass-reading-passage .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
+.dark .glass-reading-passage .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
+.dark .table-fill-row-b .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
   background: var(--dark-surface-fill);
   border-color: var(--card-field-border);
 }
@@ -464,7 +465,8 @@
   }
   :root:not(.light) .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
   :root:not(.light) .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
-  :root:not(.light) .glass-reading-passage .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
+  :root:not(.light) .glass-reading-passage .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
+  :root:not(.light) .table-fill-row-b .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
     background: var(--dark-surface-fill);
     border-color: var(--card-field-border);
   }
@@ -8098,86 +8100,131 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* Табличний диктант (table_fill), мокап "варіант 1" — рядкові картки з
-   чипами замість <table>. .glass-item-card (вище) уже дає градієнтну
-   рамку/фон/тінь (світла й темна теми обидві токенізовані), тут лише
-   внутрішнє розкладання рядка та кольори чипів/номера/заголовка колонок —
-   їх немає в токен-системі .glass-*, бо чипи специфічні саме для
-   французько/українських колонок цього типу задач. */
-.table-fill-row {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1fr);
-  /* stretch (не center): коли слово переноситься на 2 рядки (<768px),
-     обидві комірки рядка мають вирівнятись по висоті найвищої — див.
-     .table-fill-row-cell, де сам вміст все одно центрується по вертикалі
-     всередині вже розтягнутої комірки. */
-  align-items: stretch;
-  gap: 8px;
-  /* Симетричний падінг (рівний верх/низ) — клітинки центруються в
-     картці. +6px зверху лише коли РЯДОК реально показує вкладку балів
-     (RowPointsTab) — див. .row-points-tab-wrap--has-tab нижче; раніше
-     цей запас був безумовним (14px завжди), хоча вкладка в
-     звичайному (не DELF/без нерівних балів) рядку взагалі не рендериться
-     — звідси й нерівний відступ зверху/знизу картки. */
-  padding: 8px;
-}
-/* Запас під вкладку балів (RowPointsTab, .row-points-tab-wrap), що
-   виступає над верхньою рамкою картки, — лише для рядків, де вона
-   реально рендериться (tab truthy в TableFillColumn, table-fill.tsx). */
-.row-points-tab-wrap--has-tab .table-fill-row {
-  padding-top: 14px;
-}
-/* Позиція-виняток: бейдж — комірка grid-рядка (не inline-рядок), тож
-   лише self-alignment тут — форма/колір/шрифт з .item-number-badge. */
-.table-fill-row-num {
-  align-self: center;
-}
-.table-fill-row-cell {
+/* Табличний диктант (table_fill), "варіант B" (рестайл, заміна мокапу
+   "варіант 1" — старі класи .table-fill-row, .table-fill-row-cell,
+   .table-fill-col-header, .table-fill-chip видалені разом із цим блоком,
+   їх більше нема в table-fill.tsx) — компактна картка-рядок без підпису
+   колонок
+   (вони повторювались у КОЖНІЙ картці практики, task "variant B restyle":
+   номер+дано+інпут самодостатні без підпису). Один спільний компонент
+   рядка (TableFillRowCard, table-fill.tsx) для РЕАЛЬНОЇ вправи (єдина й
+   блокова гілки) і для практики (флет-картка сцени ТА сцена-вигляд
+   /cabinet/mistakes/[sceneId]) — усі три місця лишаються пікселево
+   однаковими. */
+.table-fill-row-b {
   display: flex;
-  align-items: center;
-  flex: 1 1 0%;
-  min-width: 0;
-  min-height: 40px;
-  box-sizing: border-box;
-}
-/* Єдина пряма дитина комірки — або чип (дано), або обгортка інпута
-   (пусто) — завжди розтягується на всю ширину комірки, інакше
-   justify-content був би потрібен і стискав би чип/інпут до ширини
-   тексту замість рівної ширини обох комірок. */
-.table-fill-row-cell > * {
-  width: 100%;
-}
-/* Відступ зліва = padding картки (8px) + ширина номера (20px) + gap
-   (8px) рядка нижче, щоб підписи колонок стояли РІВНО над чипами, не
-   над номером рядка. */
-.table-fill-col-header {
-  display: flex;
+  flex-direction: column;
+  justify-content: center;
   gap: 8px;
-  padding: 0 8px 0 36px;
+  min-height: 50px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid #dcbd6e;
+  background: #fff;
 }
-.table-fill-col-header-cell {
-  flex: 1 1 0%;
-  min-width: 0;
-  text-align: center;
-  font-family: var(--font-heading);
-  font-size: 11.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #8a7a52;
-}
-.dark .table-fill-col-header-cell {
-  color: rgba(220, 219, 243, 0.7);
+.dark .table-fill-row-b {
+  background: var(--card-bg);
+  border-color: #27338f;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .table-fill-col-header-cell {
-    color: rgba(220, 219, 243, 0.7);
+  :root:not(.light) .table-fill-row-b {
+    background: var(--card-bg);
+    border-color: #27338f;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .table-fill-row-b {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+@media (prefers-color-scheme: dark) and (min-resolution: 2dppx), (prefers-color-scheme: dark) and (-webkit-min-device-pixel-ratio: 2) {
+  :root:not(.light) .table-fill-row-b {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+/* Запас під вкладку балів (RowPointsTab, .row-points-tab-wrap), що
+   виступає над верхньою рамкою картки, — лише для рядків, де вона реально
+   рендериться (tab truthy в TableFillColumn, table-fill.tsx; практика
+   пілюлі балів не показує взагалі, тому тут не зустрічається). */
+.row-points-tab-wrap--has-tab .table-fill-row-b {
+  padding-top: 16px;
+}
+/* Внутрішня сітка одного рядка — [номер][ліва клітинка][стрілка][права
+   клітинка] на десктопі, стрілка між клітинками завжди за порядком даних
+   (ліва = французька, права = переклад), незалежно від того, яка сторона
+   зараз інпут. На мобільному (<=640px, той самий злам, що решта
+   table_fill) рядок стає двома рівнями: номер+ДАНО на першому, ІНПУТ на
+   весь рядок на другому — стрілка ховається, а порядок визначає не DOM
+   (той завжди left,arrow,right), а grid-area, яку кожна клітинка отримує
+   data-атрибутом (data-row-fill-slot="given"|"input", TableFillRowCard) —
+   тож незалежно від того, left чи right є інпутом цього конкретного
+   рядка, читацький порядок на телефоні завжди "дано, потім відповідь". */
+.table-fill-row-b-grid {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 18px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: center;
+}
+@media (max-width: 640px) {
+  .table-fill-row-b-grid {
+    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-areas: "num given" "input input";
+    row-gap: 6px;
+  }
+  .table-fill-row-b-arrow {
+    display: none;
+  }
+  .table-fill-row-b-grid [data-row-fill-slot="given"] {
+    grid-area: given;
+  }
+  .table-fill-row-b-grid [data-row-fill-slot="input"] {
+    grid-area: input;
+  }
+}
+.table-fill-row-b-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ebebfa;
+  color: #3b36c4;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.dark .table-fill-row-b-num {
+  background: rgba(91, 86, 230, 0.22);
+  color: #c7c4ff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .table-fill-row-b-num {
+    background: rgba(91, 86, 230, 0.22);
+    color: #c7c4ff;
+  }
+}
+.table-fill-row-b-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--gold-border-80);
+}
+.dark .table-fill-row-b-arrow {
+  color: var(--gold-border-dark-35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .table-fill-row-b-arrow {
+    color: var(--gold-border-dark-35);
   }
 }
 /* Стек за шириною ВІКНА (не контейнера) — .table-fill-columns-container
    лишається простою обгорткою (без container-type/container-name); дві
-   половини поруч від 768px, одна колонка нижче — той самий порід, що й у
-   .table-fill-chip-fr/.table-fill-chip-uk нижче. */
+   половини поруч від 768px, одна колонка нижче. */
 .table-fill-columns-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -8187,163 +8234,12 @@ button.scene-bar:active .scene-bar-toggle {
     grid-template-columns: 1fr 1fr;
   }
 }
-/* Коли половини складаються в один стовпець (<768px), заголовок другої
-   половини прибираємо — показуємо лише один раз над першою. */
 @media (max-width: 767.98px) {
-  .table-fill-col-header--secondary {
-    display: none;
-  }
-  /* Половини складаються в один стовпець (grid-template-columns:1fr вище) —
-     gap-y-6 (24px) між двома .table-fill-columns-grid-дітьми раптом стає
-     вертикальним проміжком МІЖ останнім рядком першої половини й першим
-     рядком другої, зверху ще pt-3 (12px) другої половини (запас під її
-     заголовок колонок, який щойно сховали рядком вище) — разом це давало
-     набагато більший розрив, ніж між звичайними рядками (itemsGapClass).
-     pt-3 другої половини більше не потрібен тут, бо немає заголовка, під
-     який резервувати місце — це й лишається нуль-падінгом. Але сам
-     зовнішній row-gap грид-контейнера не можна лишати 0 — межа між
-     групами (рядок 5/6) мусить мати ТОЙ САМИЙ розрив, що й звичайні
-     рядки всередині колонки (itemsGapClass у table-fill.tsx: gap-4 (16px)
-     звично, gap-[22px] (22px), коли хоч один рядок показує RowPointsTab —
-     тоді кожному рядку й так потрібен більший проміжок під вкладку балів).
-     Значення не хардкодимо подвійно: :has() читає, який із двох класів
-     itemsGapClass реально вставив у DOM цей рендер, і дублює те саме
-     число — тож тут нема незалежної "магічної" константи. */
   .table-fill-columns-grid {
     row-gap: 16px;
   }
   .table-fill-columns-grid:has(.gap-\[22px\]) {
     row-gap: 22px;
-  }
-  .table-fill-col-header--secondary + div {
-    padding-top: 0;
-  }
-}
-.table-fill-chip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  min-height: 40px;
-  box-sizing: border-box;
-  max-width: 100%;
-  border-radius: 10px;
-  padding: 7px 10px;
-  overflow-wrap: anywhere;
-}
-.table-fill-chip-fr {
-  background: #f6efd9;
-  color: #1a1640;
-  font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 800;
-}
-.table-fill-chip-uk {
-  background: #eeeefb;
-  color: #3b3566;
-  font-family: var(--font-body);
-  font-size: 15px;
-}
-/* На ширині, де половини стоять поруч (md: і вище), слово не має
-   розбиватись, доки є місце — переносимо лише коли стовпці складені
-   (нижче, медіа-запит під 768px повертає normal wrapping). */
-@media (min-width: 768px) {
-  .table-fill-chip-fr,
-  .table-fill-chip-uk {
-    white-space: nowrap;
-  }
-}
-.dark .table-fill-chip-fr {
-  background: rgba(8, 10, 40, 0.28);
-  border: 1px solid rgba(130, 160, 240, 0.25);
-  color: #f6dc8e;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .table-fill-chip-fr {
-    background: rgba(8, 10, 40, 0.28);
-    border: 1px solid rgba(130, 160, 240, 0.25);
-    color: #f6dc8e;
-  }
-}
-.dark .table-fill-chip-uk {
-  background: rgba(8, 10, 40, 0.28);
-  border: 1px solid rgba(130, 160, 240, 0.25);
-  color: #f5ecd0;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .table-fill-chip-uk {
-    background: rgba(8, 10, 40, 0.28);
-    border: 1px solid rgba(130, 160, 240, 0.25);
-    color: #f5ecd0;
-  }
-}
-@media (max-width: 767px) {
-  .table-fill-chip-fr,
-  .table-fill-chip-uk {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  .table-fill-chip-fr {
-    font-size: 15px;
-  }
-  .table-fill-chip-uk {
-    font-size: 14.5px;
-  }
-}
-/* ЕТАП S — "couramment"/"quelconque" не вміщались у французький чип
-   (ламались як "courammen"+"t") на вузьких телефонах: колонка fr/uk
-   рядка була РІВНО 50/50 (grid-template-columns 1fr 1fr вище), а
-   overflow-wrap:anywhere (блок @767px вище) ламало слово де попало,
-   щойно воно не влазило. Фікс — вузький @640px: (1) колонки 45/55
-   (fr/відповідь) замість 50/50 — більше місця саме французькому слову;
-   (2) номер-гурток 26→20px (ширший простір лишається колонкам); (3) чип і
-   поле — менший горизонтальний padding; (4) overflow-wrap/word-break
-   повертаються на normal (переносити ЛИШЕ по пробілах, не всередині
-   слова) — .chip-text-fit вище додає контрольований hyphens:auto як
-   запасний варіант, а не anywhere/break-all. */
-@media (max-width: 640px) {
-  /* Задача "Table fill (mobile): symmetric row padding, vertically
-     centred cells" — padding: 12px 6px 6px тут лишався з часу ЕТАП S
-     (горизонтальна 45/55-колонка/font-size фікс вище, коментар не про
-     вертикальний падінг взагалі) ЩЕ ДО десктопного симетричного фіксу
-     (731aa67/21532af/42286c1, .table-fill-row { padding: 8px } +
-     .row-points-tab-wrap--has-tab { padding-top: 14px } лише коли є
-     вкладка): мобільний блок після того фіксу лишився незмінним і тому
-     одним верхнім 12px/нижнім 6px для УСІХ рядків, незалежно від вкладки
-     балів. 10px 6px — той самий принцип, що в .drag-drop-row.glass-item-
-     card нижче (12px 14px 12px, симетрично): вертикальний padding рівний
-     зверху/знизу, горизонтальний 6px (ЕТАП S) не зачіпається. */
-  .table-fill-row {
-    grid-template-columns: 20px minmax(0, 0.82fr) minmax(0, 1fr);
-    gap: 6px;
-    padding: 10px 6px;
-  }
-  /* +6px зверху лише коли РЯДОК реально показує вкладку балів
-     (RowPointsTab) — той самий принцип і те саме +6px, що десктопне
-     правило (.row-points-tab-wrap--has-tab .table-fill-row вище, 8→14) і
-     мобільний drag-drop (12→18) нижче. */
-  .row-points-tab-wrap--has-tab .table-fill-row {
-    padding-top: 16px;
-  }
-  .item-number-badge.table-fill-row-num {
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
-  }
-  .table-fill-chip {
-    /* ЕТАП — 6px було МЕНШЕ гарантованого внутрішнього відступу 8px, що
-       задача вимагає скрізь, де є чип слова (аудит, task-result/
-       matching-картки отримали той самий мінімум). */
-    padding: 8px 8px;
-  }
-  .table-fill-chip-fr,
-  .table-fill-chip-uk {
-    overflow-wrap: normal;
-    word-break: normal;
-  }
-  .table-fill-chip-fr,
-  .table-fill-chip-uk {
-    font-size: 14px;
   }
 }
 /* Лампочка-підказка ВСЕРЕДИНІ поля (не окремою кнопкою поряд) — те саме
