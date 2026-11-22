@@ -21722,6 +21722,195 @@ button.cabinet-nav-item {
   outline: 2px solid var(--cabinet-focus-ring);
 }
 
+/* Редизайн навігації мистейки-сторінки (/cabinet/mistakes/[sceneId]) —
+   пілюля "На Робота над помилками" над заголовком (замінює старий круглий
+   бек-лінк PageHeader — див. коментар у page.tsx про невідповідні ліві
+   краї). Кремовий фон (--cabinet-panel-bg, той самий токен, що панель
+   кабінету), золота рамка (--cabinet-line), індиго-текст лінка (та сама
+   пара кольорів, що .cabinet-back-link). */
+.mistakes-scene-back-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  color: #3b37c4;
+  background: var(--cabinet-panel-bg);
+  border: 1px solid var(--cabinet-line);
+  transition: border-color 150ms;
+}
+.mistakes-scene-back-pill:hover {
+  border-color: #d9b765;
+}
+.mistakes-scene-back-pill:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .mistakes-scene-back-pill {
+  color: #f3d98b;
+  background: var(--cabinet-panel-bg);
+  border-color: #27338f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .mistakes-scene-back-pill {
+    color: #f3d98b;
+    background: var(--cabinet-panel-bg);
+    border-color: #27338f;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .mistakes-scene-back-pill {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+@media (prefers-color-scheme: dark) and (min-resolution: 2dppx), (prefers-color-scheme: dark) and (-webkit-min-device-pixel-ratio: 2) {
+  :root:not(.light) .mistakes-scene-back-pill {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+.dark .mistakes-scene-back-pill:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .mistakes-scene-back-pill:focus-visible {
+    outline: 2px solid var(--cabinet-focus-ring);
+  }
+}
+
+/* Чипи-перемикач вправ (openMode="scene", error-review-block.tsx) — над
+   плашкою типу/панеллю, показується лише коли якась вправа відкрита.
+   Горизонтальний скрол на мобільному (overflow-x, прихований скролбар,
+   scroll-snap) замість переносу рядків — довгий список вправ не ламає
+   високоту заголовка. */
+.mistakes-chip-row-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+}
+.mistakes-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x proximity;
+}
+.mistakes-chip-row::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.mistakes-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  border: 1px solid var(--cabinet-line);
+  background: var(--cabinet-panel-bg);
+  color: #3b37c4;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+.mistakes-chip:hover {
+  border-color: #d9b765;
+}
+.mistakes-chip:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .mistakes-chip {
+  background: var(--cabinet-panel-bg);
+  border-color: #27338f;
+  color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .mistakes-chip {
+    background: var(--cabinet-panel-bg);
+    border-color: #27338f;
+    color: #f3d98b;
+  }
+}
+.dark .mistakes-chip:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .mistakes-chip:focus-visible {
+    outline: 2px solid var(--cabinet-focus-ring);
+  }
+}
+/* Поточна (відкрита зараз) вправа — залита індиго, той самий градієнт, що
+   .cabinet-btn-primary/.cabinet-chip--selected. */
+.mistakes-chip--current {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.mistakes-chip--current:hover {
+  border-color: transparent;
+  filter: brightness(1.06);
+}
+.dark .mistakes-chip--current {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .mistakes-chip--current {
+    background: linear-gradient(160deg, #f3d98b, #d9b765);
+    color: #1a1640;
+  }
+}
+/* Виправлена вправа — приглушена золота, cursor не pointer (не клікабельна,
+   aria-disabled у розмітці), check-іконка замість кліку. */
+.mistakes-chip--fixed {
+  cursor: default;
+  border-color: var(--cabinet-line);
+  background: rgba(217, 183, 101, 0.22);
+  color: var(--cabinet-muted);
+}
+.mistakes-chip--fixed:hover {
+  border-color: var(--cabinet-line);
+}
+.dark .mistakes-chip--fixed {
+  background: rgba(217, 183, 101, 0.14);
+  border-color: #27338f;
+  color: var(--cabinet-muted);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .mistakes-chip--fixed {
+    background: rgba(217, 183, 101, 0.14);
+    border-color: #27338f;
+    color: var(--cabinet-muted);
+  }
+}
+.mistakes-chip-remaining {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cabinet-muted);
+  margin: 0;
+  flex-shrink: 0;
+}
+
 .mistakes-scenes-grid {
   display: grid;
   grid-template-columns: 1fr;

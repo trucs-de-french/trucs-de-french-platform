@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { t } from "@/lib/i18n/t";
@@ -9,7 +9,6 @@ import { loadSceneErrorReviewEntries } from "@/lib/cabinet/scene-error-review";
 import { ErrorReviewBlock } from "@/components/exercises/error-review-block";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
-import { PageHeader } from "@/components/cabinet/page-header";
 import type { Profile } from "@/lib/supabase/profile";
 
 // "Робота над помилками", крок 2 — та сама картка виправлення (ErrorReviewBlock),
@@ -58,26 +57,33 @@ export default async function CabinetMistakesScenePage({
   return (
     <div>
       <CabinetMobileHeader />
-      <PageHeader
-        title={scene.title}
-        subtitle={courseTitle}
-        backHref="/cabinet/mistakes"
-        backLabel={t(lang, "cabinet.nav.mistakes")}
-      />
 
-      {/* Та сама ширина/центрування, що <main className="mx-auto w-full
-          max-w-3xl p-6"> сторінки сцени (scenes/[sceneId]/page.tsx) — без
-          цього вправи в ErrorReviewBlock рахують свою ширину (плитки
-          letter_rearrangement/matching/table_fill/image_match тощо) від
-          повної ширини .cabinet-panel (без max-width), а не 768px сторінки
-          сцени, і виглядають значно більшими. GlassBlock+EXERCISE_STACK
-          тепер рендерить САМ ErrorReviewBlock (openMode="scene" нижче) —
-          і для списку карток, і для відкритої задачі (сцена-вигляд,
-          плашка типу + панель, як на сторінці сцени) потрібна РІВНО одна
-          панель без вкладеності, а яка саме це панель — залежить від
-          клієнтського expandedTaskId-стану, якого тут, на сервері, ще
-          немає. */}
+      {/* Редизайн навігації (аудит: старий круглий бек-лінк жив у
+          PageHeader, повношириннім <header> ПОЗА цією обгорткою — на
+          широкому екрані .cabinet-panel (flex:1, без max-width) ширший за
+          max-w-3xl, тож PageHeader лишався притиснутим до краю панелі,
+          а цей центрований max-w-3xl-блок — відсунутим ВСЕРЕДИНУ; звідси
+          й різні ліві краї title/pill проти плашки/панелі нижче і проти
+          старої кнопки "До списку вправ" усередині ErrorReviewBlock,
+          теж у ЦІЙ-таки обгортці). PageHeader (спільний компонент,
+          page-header.tsx) тут більше НЕ використовується — пілюля+заголовок
+          тепер пряма частина ЦІЄЇ самої max-w-3xl-обгортки, що й
+          плашка/чипи/панель нижче, тож усі чотири мають РІВНО один лівий
+          край і одну ширину контейнера. */}
       <div className="mx-auto w-full max-w-3xl">
+        <Link
+          href="/cabinet/mistakes"
+          aria-label={t(lang, "cabinet.mistakes.scene.backToMistakes")}
+          className="mistakes-scene-back-pill"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          {t(lang, "cabinet.mistakes.scene.backToMistakes")}
+        </Link>
+        <div className="mt-3 mb-6">
+          <h1 className="cabinet-page-title">{scene.title}</h1>
+          {courseTitle && <p className="cabinet-page-subtitle">{courseTitle}</p>}
+        </div>
+
         {hasRemaining ? (
           <LangProvider lang={lang}>
             <ExerciseErrorBoundary>

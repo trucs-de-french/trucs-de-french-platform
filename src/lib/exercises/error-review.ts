@@ -572,3 +572,45 @@ export function buildErrorReviewEntry(params: {
     total: wrongItemIds.length,
   };
 }
+
+// "Робота над помилками", сцена-вигляд (/cabinet/mistakes/[sceneId],
+// error-review-block.tsx) — чіпи-перемикач вправ над плашкою. ПОРЯДОК
+// чипів (capturedOrder) — захоплюється викликачем ОДИН раз на монтуванні
+// (useState-ініціалізатор, той самий принцип, що snapshot у цьому ж
+// файлі для remainingItemIds) з ПЕРШОГО entries, що компонент отримав —
+// стабільний, не зсувається після router.refresh(), коли якась задача
+// зникає з liveEntries (повністю виправлена). СТАТУС кожного чипа —
+// завжди зі СВІЖИХ liveEntries (не з капчурнутого порядку): "виправлено"
+// рахується як "ця задача взагалі зникла з liveEntries" (score сягнув
+// 100%, loadSceneErrorReviewEntries вже не вважає її помилкою) ЧИ "лишилась,
+// але review.status уже 'done'" (усі колись неправильні елементи вже
+// правильні, хоч загальний score ще не 100% — напр. підказки зняли бали) —
+// обидва варіанти означають "у чипі нема більше що виправляти". activeTaskId
+// (відкрита зараз задача) МАЄ ПЕРШИЙ ПРІОРИТЕТ над "виправлено": студент,
+// який щойно сам виправив останній елемент відкритої задачі, має й далі
+// бачити цей чип як "поточний" (індиго), не як "виправлено" (приглушений,
+// недоступний) — доки сам не переключиться на інший чи не повернеться до
+// списку.
+export type MistakesChipStatus = "current" | "unfixed" | "fixed";
+
+export type MistakesChip = {
+  taskId: string;
+  // 1-based позиція в capturedOrder — підпис чипа (номер), НЕЗАЛЕЖНО від
+  // живого стану.
+  index: number;
+  status: MistakesChipStatus;
+};
+
+export function deriveMistakesChips(
+  capturedOrder: string[],
+  liveEntries: { taskId: string; status: ErrorReviewStatus }[],
+  activeTaskId: string | null
+): MistakesChip[] {
+  const liveByTaskId = new Map(liveEntries.map((e) => [e.taskId, e]));
+  return capturedOrder.map((taskId, i) => {
+    const live = liveByTaskId.get(taskId);
+    const isFixed = !live || live.status === "done";
+    const status: MistakesChipStatus = taskId === activeTaskId ? "current" : isFixed ? "fixed" : "unfixed";
+    return { taskId, index: i + 1, status };
+  });
+}

@@ -1,7 +1,13 @@
 // Немає тестового фреймворку в проєкті (package.json) — простий assert-
 // скрипт, той самий принцип, що format-reveal-answer.test.ts.
 // Запуск вручну: npx tsx src/lib/exercises/error-review.test.ts
-import { idsToClearAfterMistake, WHOLE_TASK_ITEM_ID, mistakeItemIds, buildErrorReviewEntry } from "./error-review";
+import {
+  idsToClearAfterMistake,
+  WHOLE_TASK_ITEM_ID,
+  mistakeItemIds,
+  buildErrorReviewEntry,
+  deriveMistakesChips,
+} from "./error-review";
 
 let failures = 0;
 function assert(condition: boolean, label: string) {
@@ -109,6 +115,38 @@ function assert(condition: boolean, label: string) {
   );
   assert(entry.remainingItemIds.length === 12, "14 wrong with 2 corrected leaves 12 remaining");
   assert(entry.status === "partial", "some corrected, some remaining -> status partial, not done");
+}
+
+// --- deriveMistakesChips (mistakes page scene-mode exercise switcher) -----
+
+{
+  // B повністю зникла з liveEntries (виправлена, score 100%) — "fixed",
+  // хоч capturedOrder і далі знає про неї (стабільний порядок/номер).
+  const out = deriveMistakesChips(
+    ["a", "b", "c"],
+    [
+      { taskId: "a", status: "partial" },
+      { taskId: "c", status: "done" },
+    ],
+    null
+  );
+  assert(out.length === 3, "chips keep the full captured order, even for a task missing from liveEntries");
+  assert(out[0].index === 1 && out[0].status === "unfixed", "a: present and not done -> unfixed, index 1");
+  assert(out[1].index === 2 && out[1].status === "fixed", "b: absent from liveEntries entirely -> fixed, index 2");
+  assert(out[2].index === 3 && out[2].status === "fixed", "c: present but status done -> fixed, index 3");
+}
+
+{
+  // activeTaskId має пріоритет над "fixed" — студент дивиться на задачу,
+  // яку щойно сам довиправив.
+  const out = deriveMistakesChips(["a", "b"], [{ taskId: "a", status: "done" }], "a");
+  assert(out[0].status === "current", "the active task shows as current even if its own status is already done");
+  assert(out[1].status === "fixed", "a non-active task absent from liveEntries is still fixed");
+}
+
+{
+  const out = deriveMistakesChips([], [], null);
+  assert(out.length === 0, "an empty captured order produces no chips, not a crash");
 }
 
 if (failures > 0) {
