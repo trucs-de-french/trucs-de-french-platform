@@ -571,6 +571,7 @@ export const en: Record<MessageKey, string> = {
   "cabinet.mistakes.scene.allExercises": "All exercises",
   "cabinet.mistakes.scene.remainingExercises": "{n} {word} left",
   "cabinet.mistakes.scene.exerciseChipLabel": "Exercise {n}: {name}",
+  "cabinet.mistakes.scene.exerciseChipsRowAria": "Exercise switcher",
   "cabinet.settings.subtitle": "Profile, language, theme and learning",
   "cabinet.theme.label": "Theme",
   "cabinet.theme.light": "Light",

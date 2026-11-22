@@ -577,6 +577,7 @@ export const uk = {
   "cabinet.mistakes.scene.allExercises": "Усі вправи",
   "cabinet.mistakes.scene.remainingExercises": "Залишилось {n} {word}",
   "cabinet.mistakes.scene.exerciseChipLabel": "Вправа {n}: {name}",
+  "cabinet.mistakes.scene.exerciseChipsRowAria": "Перемикач вправ",
   "cabinet.settings.subtitle": "Профіль, мова, тема та навчання",
   "cabinet.theme.label": "Тема",
   "cabinet.theme.light": "Світла",

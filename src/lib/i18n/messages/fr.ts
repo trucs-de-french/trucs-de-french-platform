@@ -573,6 +573,7 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.mistakes.scene.allExercises": "Tous les exercices",
   "cabinet.mistakes.scene.remainingExercises": "Il reste {n} {word}",
   "cabinet.mistakes.scene.exerciseChipLabel": "Exercice {n} : {name}",
+  "cabinet.mistakes.scene.exerciseChipsRowAria": "Sélecteur d'exercices",
   "cabinet.settings.subtitle": "Profil, langue, thème et apprentissage",
   "cabinet.theme.label": "Thème",
   "cabinet.theme.light": "Claire",

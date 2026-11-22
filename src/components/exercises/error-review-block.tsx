@@ -692,8 +692,15 @@ export function ErrorReviewBlock({
           : plural(lang, remainingCount, lang === "fr" ? { one: "exercice", other: "exercices" } : { one: "exercise", other: "exercises" });
       return (
         <>
+          <p className="mistakes-chip-remaining">
+            {t("cabinet.mistakes.scene.remainingExercises", { n: remainingCount, word: remainingWord })}
+          </p>
           <div className="mistakes-chip-row-wrap">
-            <div className="mistakes-chip-row">
+            <div
+              className="mistakes-chip-row"
+              tabIndex={0}
+              aria-label={t("cabinet.mistakes.scene.exerciseChipsRowAria")}
+            >
               <button type="button" onClick={handleBackToList} className="mistakes-chip mistakes-chip--all">
                 <List size={14} aria-hidden="true" />
                 {t("cabinet.mistakes.scene.allExercises")}
@@ -734,9 +741,6 @@ export function ErrorReviewBlock({
                 );
               })}
             </div>
-            <p className="mistakes-chip-remaining">
-              {t("cabinet.mistakes.scene.remainingExercises", { n: remainingCount, word: remainingWord })}
-            </p>
           </div>
           <GlassBlock>
             <div className={EXERCISE_STACK}>

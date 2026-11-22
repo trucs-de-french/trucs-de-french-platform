@@ -21786,16 +21786,15 @@ button.cabinet-nav-item {
 
 /* Чипи-перемикач вправ (openMode="scene", error-review-block.tsx) — над
    плашкою типу/панеллю, показується лише коли якась вправа відкрита.
-   Горизонтальний скрол на мобільному (overflow-x, прихований скролбар,
+   Горизонтальний скрол (overflow-x, ЗАВЖДИ видимий тонкий скролбар,
    scroll-snap) замість переносу рядків — довгий список вправ не ламає
-   високоту заголовка. */
+   високоту заголовка, а видима смужка (не прихована, на відміну від
+   попередньої версії) дає зрозумілий спосіб доскролити решту чипів на
+   десктопі (задача-виправлення: чипи за ~13-м обрізались без жодного
+   видимого способу доскролити мишею). margin-bottom (22px, +8px проти
+   попередніх 14px) — більший зазор до плашки типу нижче. */
 .mistakes-chip-row-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  margin-bottom: 14px;
+  margin-bottom: 22px;
 }
 .mistakes-chip-row {
   display: flex;
@@ -21804,14 +21803,43 @@ button.cabinet-nav-item {
   min-width: 0;
   max-width: 100%;
   overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  /* Запас під видиму смужку (6px) знизу, щоб вона не торкалась чипів
+     впритул. */
+  padding-bottom: 12px;
   scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a94a #eadfbd;
 }
 .mistakes-chip-row::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+  height: 6px;
+}
+.mistakes-chip-row::-webkit-scrollbar-track {
+  background: #eadfbd;
+  border-radius: 999px;
+}
+.mistakes-chip-row::-webkit-scrollbar-thumb {
+  background-color: #c9a94a;
+  border-radius: 999px;
+}
+.dark .mistakes-chip-row {
+  scrollbar-color: var(--gold-border-dark-45) var(--gold-border-dark-20);
+}
+.dark .mistakes-chip-row::-webkit-scrollbar-track {
+  background: var(--gold-border-dark-20);
+}
+.dark .mistakes-chip-row::-webkit-scrollbar-thumb {
+  background-color: var(--gold-border-dark-45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .mistakes-chip-row {
+    scrollbar-color: var(--gold-border-dark-45) var(--gold-border-dark-20);
+  }
+  :root:not(.light) .mistakes-chip-row::-webkit-scrollbar-track {
+    background: var(--gold-border-dark-20);
+  }
+  :root:not(.light) .mistakes-chip-row::-webkit-scrollbar-thumb {
+    background-color: var(--gold-border-dark-45);
+  }
 }
 .mistakes-chip {
   display: inline-flex;
@@ -21904,11 +21932,11 @@ button.cabinet-nav-item {
   }
 }
 .mistakes-chip-remaining {
-  font-family: var(--font-body);
-  font-size: 13px;
+  font-family: var(--font-content);
+  font-size: 14px;
+  text-align: right;
   color: var(--cabinet-muted);
-  margin: 0;
-  flex-shrink: 0;
+  margin: 0 0 8px;
 }
 
 .mistakes-scenes-grid {
