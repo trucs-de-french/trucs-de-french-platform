@@ -7,7 +7,7 @@ import { ImageLightbox } from "./image-lightbox";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
-import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
+import { slotClass } from "./tile-styles";
 import { useWordPoolCarousel, poolCarouselLabel, WordPoolCarouselTrack, WordPoolProgress } from "./word-pool-carousel";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -147,21 +147,44 @@ export function ImageMatchExercise({
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
-        {usedBankIndices.size < config.bank.length ? (
-          <div className={stickyPoolClass("image-match")} {...bankDropProps()}>
-            {config.bank.map((name, bi) => (
-              <button
-                key={bi}
-                type="button"
-                {...bankDragProps(bi)}
-                onClick={() => clickBank(bi)}
-                disabled={usedBankIndices.has(bi)}
-                aria-pressed={selected === bi}
-                className={`shrink-0 ${bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}`}
-              >
-                {name}
-              </button>
-            ))}
+        {/* Той самий .word-pool, що сценарна гілка нижче (мокап "варіант 1"/
+            "варіант 5" на мобільному) — практика раніше малювала свій
+            спрощений stickyPoolClass-трей без підпису/лічильника/каруселі/
+            грипа/підказки (задача "pool parity practice/scene"), тепер
+            лишилось рівно ОДНЕ місце розмітки пулу на весь компонент.
+            remaining/carousel/carouselLabel рахуються вище (до цієї гілки)
+            з того самого config.bank, що тут уже звужений сервером до
+            практики, тож лічильник показує саме стан практики. */}
+        {remaining > 0 ? (
+          <div className="word-pool" {...bankDropProps()}>
+            <div className="word-pool-label-row">
+              <span className="word-pool-label">{dragPoolLabel(lang)}</span>
+              <span className="word-pool-count" aria-label={carouselLabel ? poolRemainingLabel(lang, remaining) : undefined}>
+                {carouselLabel ?? poolRemainingLabel(lang, remaining)}
+              </span>
+            </div>
+            <WordPoolCarouselTrack trackRef={poolTrackRef} carousel={carousel}>
+              {config.bank.map((name, bi) =>
+                usedBankIndices.has(bi) ? null : (
+                  <button
+                    key={bi}
+                    type="button"
+                    {...bankDragProps(bi)}
+                    onClick={() => clickBank(bi)}
+                    aria-pressed={selected === bi}
+                    className={`word-pool-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
+                  >
+                    <ChipGripIcon />
+                    {name}
+                  </button>
+                )
+              )}
+            </WordPoolCarouselTrack>
+            <WordPoolProgress carousel={carousel} />
+            <p className="word-pool-hint" aria-hidden="false">
+              <span className="word-pool-hint-touch">{t("pool.dragHintImage")}</span>
+              <span className="word-pool-hint-mouse">{t("pool.dragHintImageMouse")}</span>
+            </p>
           </div>
         ) : (
           <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>

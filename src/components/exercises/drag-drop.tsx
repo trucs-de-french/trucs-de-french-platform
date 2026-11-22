@@ -5,7 +5,7 @@ import type { DragDropPublic, DragDropDetail, DragDropAnswer, GradeResult } from
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
-import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
+import { slotClass } from "./tile-styles";
 import { useWordPoolCarousel, poolCarouselLabel, WordPoolCarouselTrack, WordPoolProgress } from "./word-pool-carousel";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
@@ -240,21 +240,51 @@ export function DragDropExercise({
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
-        {usedBankIndices.size < config.bank.length ? (
-          <div className={stickyPoolClass("drag-drop")} {...bankDropProps()}>
-            {config.bank.map((word, bi) => (
-              <button
-                key={bi}
-                type="button"
-                {...bankDragProps(bi)}
-                onClick={() => clickBank(bi)}
-                disabled={usedBankIndices.has(bi)}
-                aria-pressed={selected === bi}
-                className={`shrink-0 ${bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}`}
-              >
-                {word}
-              </button>
-            ))}
+        {/* Той самий .word-pool, що сценарна гілка нижче — практика раніше
+            малювала свій спрощений stickyPoolClass-трей без підпису/
+            лічильника/каруселі/грипа/підказки (задача "pool parity
+            practice/scene"), тепер лишилось рівно ОДНЕ місце розмітки пулу
+            на весь компонент. remaining/intruderCount/carousel/carouselLabel
+            рахуються вище (до цієї гілки) з того самого config.bank/
+            config.sentences, уже звужених сервером до практики, тож
+            лічильники показують саме стан практики. */}
+        {remaining > 0 ? (
+          <div className="word-pool" {...bankDropProps()}>
+            <div className="word-pool-label-row">
+              <span className="word-pool-label">{dragPoolLabel(lang)}</span>
+              <span className="word-pool-count-group flex items-center gap-2">
+                <span className="word-pool-count" aria-label={carouselLabel ? poolRemainingLabel(lang, remaining) : undefined}>
+                  {carouselLabel ?? poolRemainingLabel(lang, remaining)}
+                </span>
+                {intruderCount > 0 && (
+                  <span className="word-pool-count word-pool-count--intruder">
+                    {dragDropIntruderLabel(lang, intruderCount)}
+                  </span>
+                )}
+              </span>
+            </div>
+            <WordPoolCarouselTrack trackRef={poolTrackRef} carousel={carousel}>
+              {config.bank.map((word, bi) =>
+                usedBankIndices.has(bi) ? null : (
+                  <button
+                    key={bi}
+                    type="button"
+                    {...bankDragProps(bi)}
+                    onClick={() => clickBank(bi)}
+                    aria-pressed={selected === bi}
+                    className={`word-pool-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
+                  >
+                    <ChipGripIcon />
+                    {word}
+                  </button>
+                )
+              )}
+            </WordPoolCarouselTrack>
+            <WordPoolProgress carousel={carousel} />
+            <p className="word-pool-hint" aria-hidden="false">
+              <span className="word-pool-hint-touch">{t("pool.dragHintGap")}</span>
+              <span className="word-pool-hint-mouse">{t("pool.dragHintGapMouse")}</span>
+            </p>
           </div>
         ) : (
           <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
