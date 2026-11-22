@@ -7,6 +7,7 @@ import {
   mistakeItemIds,
   buildErrorReviewEntry,
   deriveMistakesChips,
+  shouldRenderWrapperHeader,
 } from "./error-review";
 
 let failures = 0;
@@ -147,6 +148,49 @@ function assert(condition: boolean, label: string) {
 {
   const out = deriveMistakesChips([], [], null);
   assert(out.length === 0, "an empty captured order produces no chips, not a crash");
+}
+
+// --- shouldRenderWrapperHeader (ErrorReviewPractice — "duplicate
+// instruction header" bug: fill_blank/sort_columns/checkbox_grid/
+// chronological_order already draw TaskPanelHeader themselves in every
+// flow, the wrapper must never add a second one) ---------------------
+
+{
+  // "always": own header in both flows, every flow -> wrapper skips.
+  const alwaysOwnHeader = ["fill_blank", "sort_columns", "checkbox_grid", "chronological_order"];
+  for (const type of alwaysOwnHeader) {
+    assert(shouldRenderWrapperHeader(type, "flat") === false, `${type}: wrapper header is skipped in flat flow (own header always renders)`);
+    assert(shouldRenderWrapperHeader(type, "scene") === false, `${type}: wrapper header is skipped in scene flow (own header always renders)`);
+  }
+}
+
+{
+  // "sceneOnly": own header only when isPractice && isSceneMode -> wrapper
+  // renders in flat, skips in scene.
+  const sceneOnlyOwnHeader = ["letter_rearrangement", "letter_gaps", "matching", "table_fill"];
+  for (const type of sceneOnlyOwnHeader) {
+    assert(shouldRenderWrapperHeader(type, "flat") === true, `${type}: wrapper header renders in flat flow (no own header outside scene mode)`);
+    assert(shouldRenderWrapperHeader(type, "scene") === false, `${type}: wrapper header is skipped in scene flow (own header already there)`);
+  }
+}
+
+{
+  // the remaining 7 types never draw their own header in practice
+  // (isPractice early-return with no TaskPanelHeader at all) -> wrapper
+  // always renders, in both flows.
+  const neverOwnHeader = [
+    "multiple_choice",
+    "true_false",
+    "word_choice",
+    "listening",
+    "reorder",
+    "drag_drop",
+    "image_match",
+  ];
+  for (const type of neverOwnHeader) {
+    assert(shouldRenderWrapperHeader(type, "flat") === true, `${type}: wrapper header renders in flat flow`);
+    assert(shouldRenderWrapperHeader(type, "scene") === true, `${type}: wrapper header renders in scene flow`);
+  }
 }
 
 if (failures > 0) {

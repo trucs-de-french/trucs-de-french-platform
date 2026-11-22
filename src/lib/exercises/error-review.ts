@@ -614,3 +614,47 @@ export function deriveMistakesChips(
     return { taskId, index: i + 1, status };
   });
 }
+
+// Заголовок-інструкція практики ("Робота над помилками" — задача
+// "duplicate instruction header") — ErrorReviewPractice (error-review-
+// block.tsx) малює ОДИН спільний TaskPanelHeader для типів, чия ВЛАСНА
+// гілка isPractice сама жодного заголовка не рендерить, щоб не
+// дублювати. Три категорії за тим, що компонент типу насправді робить:
+//
+// - "always" — ОДИН return на весь компонент (TaskPanelHeader/.task-
+//   panel-header поза isPractice-умовою) — fill_blank/sort_columns/
+//   checkbox_grid/chronological_order. Власний заголовок завжди є,
+//   обгортка НЕ додає свій у жодному flow, інакше рядок інструкції
+//   показується двічі (саме цей баг — commit, що додав спільний
+//   TaskPanelHeader для "типів без заголовка", не врахував, що ці 4 типи
+//   вже мають його завжди, не лише поза практикою).
+// - "sceneOnly" — letter_rearrangement/letter_gaps/matching/table_fill:
+//   `if (isPractice && isSceneMode)` — власний заголовок лише коли
+//   практика отримала practice.scene (ErrorReviewOpenedTask,
+//   openMode="scene"), у flat-режимі (інлайн-картка на сторінці сцени,
+//   snapshotIds не передано) власного заголовка немає.
+// - решта 7 (multiple_choice/true_false/word_choice/listening/reorder/
+//   drag_drop/image_match) — `if (isPractice) return (...)` узагалі без
+//   TaskPanelHeader — власного заголовка в практиці немає НІКОЛИ,
+//   обгортка додає свій в обох flow (дефолт нижче, не в жодному Set).
+export type ErrorReviewPracticeFlow = "flat" | "scene";
+
+export const OWN_HEADER_ALWAYS_TASK_TYPES = new Set([
+  "fill_blank",
+  "sort_columns",
+  "checkbox_grid",
+  "chronological_order",
+]);
+
+export const OWN_HEADER_SCENE_ONLY_TASK_TYPES = new Set([
+  "letter_rearrangement",
+  "letter_gaps",
+  "matching",
+  "table_fill",
+]);
+
+export function shouldRenderWrapperHeader(taskType: string, flow: ErrorReviewPracticeFlow): boolean {
+  if (OWN_HEADER_ALWAYS_TASK_TYPES.has(taskType)) return false;
+  if (OWN_HEADER_SCENE_ONLY_TASK_TYPES.has(taskType)) return flow === "flat";
+  return true;
+}

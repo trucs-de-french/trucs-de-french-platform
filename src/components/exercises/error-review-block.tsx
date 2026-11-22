@@ -8,7 +8,7 @@ import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import { pluralizeExercisesNominative } from "@/lib/pluralize-exercises";
-import { isWholePracticeTaskType, deriveMistakesChips } from "@/lib/exercises/error-review";
+import { isWholePracticeTaskType, deriveMistakesChips, shouldRenderWrapperHeader } from "@/lib/exercises/error-review";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
 import { GlassBlock } from "@/components/glass-block";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -207,16 +207,18 @@ function ErrorReviewPractice({
     : undefined;
   // Рядок інструкції (FR-жирна/UK-сіра, слайш, роздільник — той самий
   // TaskPanelHeader, що сторінка сцени) — для типів, чия ВЛАСНА гілка тут
-  // (switch нижче) НЕ рендерить TaskPanelHeader сама: флет-режим
-  // (!isSceneBlockable — snapshotIds не передано, isSceneBlockable
-  // завжди false) для УСІХ 15 типів, і сцена-вигляд (openMode="scene")
-  // для 11 типів ПОЗА SCENE_BLOCKABLE_TASK_TYPES (вони й у сцена-вигляді
-  // й далі йдуть тим самим флет-шляхом усередині свого компонента —
-  // немає власної гілки isSceneMode). Для 4 SCENE_BLOCKABLE_TASK_TYPES у
-  // сцена-вигляді (isSceneBlockable===true) — НЕ рендериться тут: їхня
-  // власна гілка (letter-rearrangement.tsx/letter-gaps.tsx/matching.tsx/
-  // table-fill.tsx, isPractice && isSceneMode) уже сама малює
-  // TaskPanelHeader — дублювати означало б два заголовки поспіль.
+  // (switch нижче) НЕ рендерить TaskPanelHeader сама. ОКРЕМО від
+  // isSceneBlockable вище (та стабільне членство блоку/scene-пропс,
+  // лише для 4 chunk-based типів) — рішення "малювати ЧИ НІ" тепер іде
+  // через shouldRenderWrapperHeader (error-review.ts, задача "duplicate
+  // instruction header"): fill_blank/sort_columns/checkbox_grid/
+  // chronological_order малюють свій заголовок завжди (ОДИН return на
+  // весь компонент, TaskPanelHeader/.task-panel-header поза isPractice),
+  // тож обгортка НІКОЛИ не додає свій цим чотирьом, у жодному flow —
+  // раніше додавала, звідси й дубль рядка інструкції. Решта 4 (той самий
+  // SCENE_BLOCKABLE_TASK_TYPES-набір) — лише у flat, 7 інших — завжди.
+  const flow: "flat" | "scene" = snapshotIds ? "scene" : "flat";
+  const showWrapperHeader = shouldRenderWrapperHeader(entry.taskType, flow);
   const renderExercise = () => {
   switch (entry.taskType) {
     case "multiple_choice":
@@ -390,9 +392,9 @@ function ErrorReviewPractice({
   };
 
   const exerciseNode = renderExercise();
-  // 4 SCENE_BLOCKABLE_TASK_TYPES у сцена-вигляді вже малюють свій власний
-  // TaskPanelHeader (вище) — не додаємо другий.
-  if (isSceneBlockable) return exerciseNode;
+  // Власний заголовок типу вже є (shouldRenderWrapperHeader, вище) —
+  // не додаємо другий.
+  if (!showWrapperHeader) return exerciseNode;
 
   const instructionDefaults = DEFAULT_INSTRUCTIONS[entry.taskType];
   const configForHeader = entry.config as {
