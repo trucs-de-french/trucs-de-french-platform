@@ -742,14 +742,16 @@ export function ErrorReviewBlock({
               })}
             </div>
           </div>
-          <GlassBlock>
-            <div className={EXERCISE_STACK}>
-              <ErrorReviewOpenedTask
-                entry={openEntry}
-                snapshotIds={snapshot?.taskId === openEntry.taskId ? snapshot.ids : openEntry.remainingItemIds}
-              />
-            </div>
-          </GlassBlock>
+          <div className="mistakes-scene-panel-gap">
+            <GlassBlock>
+              <div className={EXERCISE_STACK}>
+                <ErrorReviewOpenedTask
+                  entry={openEntry}
+                  snapshotIds={snapshot?.taskId === openEntry.taskId ? snapshot.ids : openEntry.remainingItemIds}
+                />
+              </div>
+            </GlassBlock>
+          </div>
         </>
       );
     }
