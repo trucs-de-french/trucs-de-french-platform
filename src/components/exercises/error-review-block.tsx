@@ -12,6 +12,9 @@ import { isWholePracticeTaskType, deriveMistakesChips } from "@/lib/exercises/er
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
 import { GlassBlock } from "@/components/glass-block";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { TaskPanelHeader } from "./task-panel-header";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
+import type { TaskTypeKey } from "@/lib/exercises/default-task-labels";
 import { MultipleChoiceExercise } from "./multiple-choice";
 import { FillBlankExercise } from "./fill-blank";
 import { TrueFalseExercise } from "./true-false";
@@ -177,6 +180,7 @@ function ErrorReviewPractice({
   plaqueText?: string;
   snapshotIds?: string[];
 }) {
+  const { lang } = useT();
   if (!entry.config) return null;
   const isSceneBlockable = !!snapshotIds && SCENE_BLOCKABLE_TASK_TYPES.has(entry.taskType);
   const onlyItemIds = isSceneBlockable ? snapshotIds! : entry.remainingItemIds;
@@ -201,6 +205,19 @@ function ErrorReviewPractice({
             : snapshotIds!.filter((id) => !entry.remainingItemIds.includes(id)),
       }
     : undefined;
+  // Рядок інструкції (FR-жирна/UK-сіра, слайш, роздільник — той самий
+  // TaskPanelHeader, що сторінка сцени) — для типів, чия ВЛАСНА гілка тут
+  // (switch нижче) НЕ рендерить TaskPanelHeader сама: флет-режим
+  // (!isSceneBlockable — snapshotIds не передано, isSceneBlockable
+  // завжди false) для УСІХ 15 типів, і сцена-вигляд (openMode="scene")
+  // для 11 типів ПОЗА SCENE_BLOCKABLE_TASK_TYPES (вони й у сцена-вигляді
+  // й далі йдуть тим самим флет-шляхом усередині свого компонента —
+  // немає власної гілки isSceneMode). Для 4 SCENE_BLOCKABLE_TASK_TYPES у
+  // сцена-вигляді (isSceneBlockable===true) — НЕ рендериться тут: їхня
+  // власна гілка (letter-rearrangement.tsx/letter-gaps.tsx/matching.tsx/
+  // table-fill.tsx, isPractice && isSceneMode) уже сама малює
+  // TaskPanelHeader — дублювати означало б два заголовки поспіль.
+  const renderExercise = () => {
   switch (entry.taskType) {
     case "multiple_choice":
       return (
@@ -370,6 +387,32 @@ function ErrorReviewPractice({
     default:
       return null;
   }
+  };
+
+  const exerciseNode = renderExercise();
+  // 4 SCENE_BLOCKABLE_TASK_TYPES у сцена-вигляді вже малюють свій власний
+  // TaskPanelHeader (вище) — не додаємо другий.
+  if (isSceneBlockable) return exerciseNode;
+
+  const instructionDefaults = DEFAULT_INSTRUCTIONS[entry.taskType];
+  const configForHeader = entry.config as {
+    instructions?: string;
+    subInstructions?: string;
+    subInstructionsEn?: string;
+  };
+  return (
+    <>
+      <TaskPanelHeader
+        instructionText={configForHeader.instructions ?? instructionDefaults?.instruction}
+        subInstructionText={taskTranslationLine(
+          { uk: configForHeader.subInstructions, en: configForHeader.subInstructionsEn },
+          lang,
+          { uk: instructionDefaults?.subInstruction ?? "", en: DEFAULT_TRANSLATION_EN[entry.taskType as TaskTypeKey] }
+        )}
+      />
+      {exerciseNode}
+    </>
+  );
 }
 
 function ErrorReviewCard({
