@@ -30,20 +30,30 @@ export type MatchingPracticeProps = {
   onlyItemIds: string[];
   failedAttempts: Record<string, number>;
   // Сцена-вигляд (openMode="scene", мистейки-сторінка, крок 4) — лише
-  // error-review-block.tsx передає. На відміну від решти 3 chunk-based
-  // типів, membership блоку тут НЕ йде через onlyItemIds — config.left/
-  // right/pairs (scene-error-review.ts: wrongItemIds, НЕ remainingItemIds,
-  // sanitizeMatchingForPractice з perBlockShuffle=true) уже сам стабільний
-  // пул на ВСЮ історію завдання, і matching.tsx чанкує НАПРЯМУ з нього
-  // (інакше client-side фільтр за onlyItemIds розсинхронив би позиції
-  // config.left із позиціями, під які сервер УЖЕ розподілив per-block
-  // шафл config.right). onlyItemIds вище лишається лише для реакції на
-  // зміну набору (onlyItemIdsKey нижче) — плашка+заголовок+блоки заміняють
-  // плаский список пар. correctedItemIds — error-review-block.tsx рахує
-  // їх від УСЬОГО config.pairs (не від onlyItemIds), бо виправлена пара з
-  // МИНУЛОЇ сесії теж мусить лишитись "вирішеною", не зникнути — показується
-  // замість зникнення. Інлайн-картка сцени (error_correction, без цього
-  // поля) лишається пласким списком без плашки, НЕЗМІННО.
+  // error-review-block.tsx передає. Фікс "pre-corrected pairs напіввирішені"
+  // (owner report) — config.left/right/pairs тепер скоуплені сервером
+  // (scene-error-review.ts) на review.remainingItemIds (ЖИВИЙ, звужується
+  // після кожної перевірки), НЕ review.wrongItemIds (був раніше, ПОВНИЙ,
+  // ніколи не звужуваний): пари, виправлені ДО відкриття, взагалі не
+  // потрапляють у config узагалі. Стабільність блоків У ЦІЙ сесії (щойно
+  // виправлена пара не зникає з дошки одразу після router.refresh())
+  // забезпечує сам matching.tsx — frozenSceneConfig нижче заморожує
+  // ПЕРШИЙ отриманий config.left/right/pairs на монтуванні компонента
+  // (той самий принцип "знімок на момент відкриття", що snapshot у
+  // error-review-block.tsx для інших 3 типів, лише тут заморожується
+  // увесь зріз конфіга, не просто список id — right не прив'язаний до
+  // left публічно (секрет), клієнт не може сам дофільтрувати config.right
+  // за id-списком, лише заморозити те, що сервер уже прислав). onlyItemIds
+  // вище лишається лише для реакції на зміну набору (onlyItemIdsKey
+  // нижче) — плашка+заголовок+блоки заміняють плаский список пар.
+  // correctedItemIds — тепер завжди порожній для matching (config уже не
+  // містить виправлених пар узагалі, нічого седити як "вирішене"), рахунок
+  // лишається в error-review-block.tsx незмінним (безпечний no-op, не
+  // видалено звідти заради найменшої зміни). Інлайн-картка сцени
+  // (error_correction, без цього поля) лишається пласким списком без
+  // плашки, НЕЗМІННО — її власний config.left/right скоуплений на
+  // remainingItemIds теж, але БЕЗ заморожування (сторінка сцени, не
+  // торкається цього фіксу).
   scene?: { correctedItemIds: string[] };
 };
 
@@ -103,19 +113,51 @@ export function MatchingExercise({
   // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
   // вище: завжди один "блок" (config тут уже звужений сервером до пар
   // review.remainingItemIds, page.tsx: sanitizeMatchingForPractice), без
-  // BlockNavigation. idByLeft/leftById — локальна адресація між left-
-  // текстом (яким керують клік-хендлери) і pair.id (яким адресуються
-  // practice/check, practice/reveal і failedAttempts/revealed).
+  // BlockNavigation.
   const isPractice = !!practice;
-  const idByLeft = useMemo(() => new Map(config.pairs.map((p) => [p.left, p.id])), [config.pairs]);
-  const leftById = useMemo(() => new Map(config.pairs.map((p) => [p.id, p.left])), [config.pairs]);
+  const isSceneMode = !!practice?.scene;
+  // Фікс "pre-corrected pairs напіввирішені" (owner report, сцена-вигляд) —
+  // заморожений на монтуванні зріз config.left/right/pairs, а не живий
+  // config: scene-error-review.ts тепер масштабує matching-конфіг під
+  // review.remainingItemIds (ЖИВИЙ, звужується після кожної перевірки в
+  // цій сесії), а не під ПОВНИЙ, ніколи не звужуваний wrongItemIds
+  // (MatchingPracticeProps вище). Заморожуючи тут (а не лишаючи сервер на
+  // ПОВНОМУ пулі, як раніше) отримуємо ОБИДВА: пари, виправлені ДО
+  // відкриття, взагалі не потрапляють у заморожений зріз (бо їх уже нема
+  // в ПЕРШОМУ, живому remainingItemIds, з якого сервер будує конфіг саме
+  // на монтуванні компонента); пари, виправлені ПІД ЧАС цієї сесії,
+  // лишаються в замороженому зрізі (і далі показуються "вирішеними" —
+  // practiceResultByLeft/practicePairs нижче, незалежні від конфіга) —
+  // заморожений зріз просто не оновлюється пізнішими router.refresh() (та
+  // сама ідея, що snapshot у error-review-block.tsx для інших 3 типів,
+  // лише тут заморожується увесь зріз конфіга, не просто список id).
+  // Реopen (закрити й знову відкрити цю саму задачу) ремонтує компонент
+  // (expandedTaskId-перехід в ErrorReviewBlock) — заморозка береться
+  // наново, свіжа. Флет-режим (isSceneMode===false) — null, завжди
+  // читає живий config напряму, той самий принцип, що раніше.
+  const [frozenSceneConfig] = useState<{ left: string[]; right: string[]; pairs: MatchingPublic["pairs"] } | null>(
+    () => (isSceneMode ? { left: config.left, right: config.right, pairs: config.pairs } : null)
+  );
+  // idByLeft/leftById — локальна адресація між left-текстом (яким керують
+  // клік-хендлери) і pair.id (яким адресуються practice/check,
+  // practice/reveal і failedAttempts/revealed). Сцена-вигляд читає із
+  // замороженого зрізу вище (не живого config.pairs), інакше ці мапи
+  // звужувались би слідом за живим config на кожному router.refresh(), і
+  // activeItemIds (нижче, submitPractice) загубив би id щойно виправленої
+  // в ЦІЙ сесії пари, щойно вона випала б із НОВОГО (живого) config.pairs.
+  const effectivePairs = frozenSceneConfig?.pairs ?? config.pairs;
+  const idByLeft = useMemo(() => new Map(effectivePairs.map((p) => [p.left, p.id])), [effectivePairs]);
+  const leftById = useMemo(() => new Map(effectivePairs.map((p) => [p.id, p.left])), [effectivePairs]);
   const [practicePairs, setPracticePairs] = useState<Record<string, string>>({});
   const [selectedLeftPractice, setSelectedLeftPractice] = useState<string | null>(null);
   // Сцена-вигляд (крок 4) — попередньо "вирішені" ліві елементи
   // (виправлені ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds
   // — pair.id, мапуються на left-текст через leftById вище) засіюються як
   // correct:true одразу при монтуванні — та сама зелена підсвітка на
-  // MatchingBoard, що й щойно перевірена пара.
+  // MatchingBoard, що й щойно перевірена пара. Для matching тепер завжди
+  // порожній набір (config уже не містить виправлених ДО відкриття пар
+  // узагалі, error-review-block.tsx — нічого седити), лишено як
+  // безпечний no-op, не найменша зміна.
   const [practiceResultByLeft, setPracticeResultByLeft] = useState<Record<string, boolean>>(() => {
     const seed: Record<string, boolean> = {};
     for (const id of practice?.scene?.correctedItemIds ?? []) {
@@ -137,13 +179,12 @@ export function MatchingExercise({
 
   // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE/2 пар, той самий
   // chunk(), що звичайна вправа (leftBlocks/rightBlocks вище), лише тут —
-  // на config.left/config.right (уже звужено сервером до pairIds=знімок,
-  // scene-error-review.ts). blockCount<=1 — БЕЗ вкладок/футера нижче (той
-  // самий built-in захист, що BlockTabs/BlockNavigation уже мають),
-  // плашка+заголовок лишаються завжди.
-  const isSceneMode = !!practice?.scene;
-  const practiceLeftBlocks = isSceneMode ? chunk(config.left, EXERCISE_BLOCK_SIZE / 2) : [];
-  const practiceRightBlocks = isSceneMode ? chunk(config.right, EXERCISE_BLOCK_SIZE / 2) : [];
+  // на замороженому зрізі (frozenSceneConfig вище), не на живому config.
+  // blockCount<=1 — БЕЗ вкладок/футера нижче (той самий built-in захист,
+  // що BlockTabs/BlockNavigation уже мають), плашка+заголовок лишаються
+  // завжди.
+  const practiceLeftBlocks = frozenSceneConfig ? chunk(frozenSceneConfig.left, EXERCISE_BLOCK_SIZE / 2) : [];
+  const practiceRightBlocks = frozenSceneConfig ? chunk(frozenSceneConfig.right, EXERCISE_BLOCK_SIZE / 2) : [];
   const practiceBlockCount = practiceLeftBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
   const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);
@@ -518,8 +559,8 @@ export function MatchingExercise({
   }
 
   if (isPractice && isSceneMode) {
-    const activeLeft = practiceUseBlocks ? (practiceLeftBlocks[practiceActiveBlock] ?? []) : config.left;
-    const activeRight = practiceUseBlocks ? (practiceRightBlocks[practiceActiveBlock] ?? []) : config.right;
+    const activeLeft = practiceUseBlocks ? (practiceLeftBlocks[practiceActiveBlock] ?? []) : frozenSceneConfig!.left;
+    const activeRight = practiceUseBlocks ? (practiceRightBlocks[practiceActiveBlock] ?? []) : frozenSceneConfig!.right;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
     const activeItemIds = activeLeft.map((left) => idByLeft.get(left)).filter((id): id is string => !!id);
     // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,

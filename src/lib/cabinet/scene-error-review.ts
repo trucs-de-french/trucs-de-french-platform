@@ -183,19 +183,29 @@ export async function loadSceneErrorReviewEntries(
           review.mode === "items"
             ? taskType === "matching"
               ? // "Робота над помилками", сцена-вигляд (крок 4, мистейки-
-                // сторінка) — wrongItemIds (ПОВНИЙ, стабільний набір пар, що
-                // колись були помилкою), не remainingItemIds (живий,
-                // звужується щоразу, коли студент виправляє пару): інакше
-                // вже виправлена пара зникала б із config.left/right/pairs
-                // після router.refresh(), і блок, у якому вона сиділа, не
-                // міг би й далі показати її як "вирішену" (ErrorReviewBlock,
-                // openMode="scene" — знімок remainingItemIds-НА-МОМЕНТ-
-                // ВІДКРИТТЯ визначає МЕЖІ блоків, а не те, які пари взагалі
-                // присутні в config). perBlockShuffle=true — right
-                // перемішується в межах кожного блоку (sanitize.ts), щоб
-                // matching.tsx міг позиційно нарізати config.right тим самим
-                // chunk(), що config.left.
-                sanitizeMatchingForPractice(config as unknown as MatchingConfig, review.wrongItemIds, true)
+                // сторінка) — фікс "pre-corrected pairs напіввирішені"
+                // (owner report: "un formulaire"/"couramment" зеленим зліва,
+                // звичайною карткою справа, без лінії): review.remainingItemIds
+                // (ЖИВИЙ, звужується щоразу, коли студент виправляє пару),
+                // НЕ review.wrongItemIds (ПОВНИЙ, ніколи не звужуваний набір
+                // пар, що колись були помилкою, commit 17b7ac9) — пари,
+                // виправлені ДО відкриття цієї задачі, тепер взагалі не
+                // потрапляють у config.left/right/pairs (а не лише в один
+                // стовпець, напіввирішено). Стабільність блоків У ЦІЙ сесії
+                // (щойно виправлена пара НЕ має зникнути з дошки одразу
+                // після router.refresh()) тепер забезпечує matching.tsx
+                // (frozenSceneConfig — заморожує ПЕРШИЙ отриманий config на
+                // монтуванні компонента, а не сервер через стабільний
+                // пул) — той самий принцип "знімок на момент відкриття", що
+                // snapshot у error-review-block.tsx для інших 3 типів, лише
+                // тут заморожується увесь зріз конфіга (left/right/pairs),
+                // бо right-варіанти не прив'язані до left публічно (секрет)
+                // — клієнт не може сам дофільтрувати config.right за
+                // id-списком. perBlockShuffle=true — right перемішується в
+                // межах кожного блоку (sanitize.ts), щоб matching.tsx міг
+                // позиційно нарізати config.right тим самим chunk(), що
+                // config.left.
+                sanitizeMatchingForPractice(config as unknown as MatchingConfig, review.remainingItemIds, true)
               : taskType === "drag_drop"
                 ? sanitizeDragDropForPractice(config as unknown as DragDropConfig, review.remainingItemIds)
                 : taskType === "image_match"

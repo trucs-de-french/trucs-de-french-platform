@@ -1,7 +1,7 @@
 // Немає тестового фреймворку в проєкті (package.json) — простий assert-
 // скрипт, той самий принцип, що format-reveal-answer.test.ts.
 // Запуск вручну: npx tsx src/lib/exercises/error-review.test.ts
-import { idsToClearAfterMistake, WHOLE_TASK_ITEM_ID, mistakeItemIds } from "./error-review";
+import { idsToClearAfterMistake, WHOLE_TASK_ITEM_ID, mistakeItemIds, buildErrorReviewEntry } from "./error-review";
 
 let failures = 0;
 function assert(condition: boolean, label: string) {
@@ -81,6 +81,34 @@ function assert(condition: boolean, label: string) {
     [...fromClear].sort().join(",") === [...fromMistakeItemIds].sort().join(","),
     "idsToClearAfterMistake for items-mode uses the exact same ids as mistakeItemIds/aggregateWrongItems"
   );
+}
+
+// --- buildErrorReviewEntry.remainingItemIds (scene-error-review.ts matching
+// fix, owner report "un formulaire"/"couramment" напіввирішені): the matching
+// config scoped to remainingItemIds must be "frozen snapshot of wrong pairs
+// at open time MINUS already corrected ones" — this is exactly wrongItemIds
+// minus correctedItemIds, which buildErrorReviewEntry already computes as
+// remainingItemIds. 14 wrong pairs, 2 already corrected -> 12 remaining. ----
+
+{
+  const pairIds = Array.from({ length: 14 }, (_, i) => `pair-${i}`);
+  const detail = { pairPoints: pairIds.map((id) => ({ id, isCorrect: false })) };
+  const correctedItemIds = ["pair-0", "pair-1"];
+  const entry = buildErrorReviewEntry({
+    taskId: "t1",
+    taskType: "matching",
+    mistakeRows: [{ createdAt: "2026-01-01T00:00:00Z", detail }],
+    correctedItemIds,
+    failedAttempts: {},
+  });
+  assert(entry.wrongItemIds.length === 14, "all 14 pairs are wrong (none correct in the mistake row)");
+  assert(
+    [...entry.remainingItemIds].sort().join(",") ===
+      pairIds.filter((id) => !correctedItemIds.includes(id)).sort().join(","),
+    "remainingItemIds is exactly wrongItemIds minus correctedItemIds: 14 wrong minus 2 corrected leaves the other 12"
+  );
+  assert(entry.remainingItemIds.length === 12, "14 wrong with 2 corrected leaves 12 remaining");
+  assert(entry.status === "partial", "some corrected, some remaining -> status partial, not done");
 }
 
 if (failures > 0) {

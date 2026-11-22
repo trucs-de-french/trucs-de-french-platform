@@ -53,6 +53,22 @@ function sizes(blocks: unknown[][]): number[] {
   assert(JSON.stringify(sizes(blocks)) === JSON.stringify([5, 5, 2]), "matching flat groups: 12 pairs chunk into 5,5,2");
 }
 
+// Сцена-вигляд, фікс "pre-corrected pairs напіввирішені" — 14 wrong pairs
+// minus 2 already-corrected leaves 11 remaining (buildErrorReviewEntry.
+// remainingItemIds, see error-review.test.ts for the 12-remaining case).
+// chunk() is a PLAIN sequential slice, no "merge the small trailing block
+// into the previous one" rule anywhere in this file (only splitEvenly()
+// below balances block sizes, and that's for the CARD_BLOCK_MAX=5 card
+// types, not matching) — so 11 pairs give 5,5,1, not 5,6.
+{
+  const pairs = Array.from({ length: 11 }, (_, i) => `pair-${i}`);
+  const blocks = chunk(pairs, EXERCISE_BLOCK_SIZE / 2);
+  assert(
+    JSON.stringify(sizes(blocks)) === JSON.stringify([5, 5, 1]),
+    "matching: 14 wrong minus 2 corrected -> 11 remaining pairs chunk into 5,5,1 (chunk() has no merge rule; see test file comment)"
+  );
+}
+
 {
   const pairs = Array.from({ length: 5 }, (_, i) => `pair-${i}`);
   const blocks = chunk(pairs, EXERCISE_BLOCK_SIZE / 2);
