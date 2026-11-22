@@ -58,6 +58,7 @@ import { VideoFrame } from "@/components/video-frame";
 import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player";
 import { ScriptSection } from "./script-section";
 import { DictHint } from "./dict-hint";
+import { ScrollTopOnReload } from "./scroll-top-on-reload";
 import { VocabSection } from "./vocab-section";
 import { SavedWordsProvider } from "@/components/dictionary/saved-words-provider";
 import { listSavedWordsForSource } from "@/lib/cabinet/saved-words.server";
@@ -1019,6 +1020,7 @@ export default async function ScenePage({
     <div className="student-bg-wrapper" data-scene-bg={bgMode ?? undefined}>
       <SceneBackground desktopUrl={bgDesktopUrl} mobileUrl={bgMobileUrl} fillColor={bgFillColor} />
       <main className="student-bg-content mx-auto w-full max-w-3xl p-6">
+        <ScrollTopOnReload />
         <Link href={`/courses/${productId}`} className="student-on-bg text-sm underline">
           {t(lang, "scene.backToCourse")}
         </Link>
