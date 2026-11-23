@@ -29,7 +29,7 @@ import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
 import { estimateLetterGapsCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
-import { layoutFlatPracticeItems } from "@/lib/exercises/flat-practice-layout";
+import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
 import { buildGapRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
@@ -502,6 +502,15 @@ export function LetterGapsExercise({
       // картки, під полями. undefined (флет-практика/реальна вправа) —
       // нічого не рендериться.
       practiceFooter?: ReactNode;
+      // Задача "card pairing in the 2-column grid" — ЛИШЕ практика
+      // (pairPracticeItems, flat-practice-layout.ts), сцена-вигляд блоків:
+      // непарна картка без пари в своєму рядку сітки рендериться на всю
+      // ширину (md:col-span-2) замість half-width. Флет-режим застосовує
+      // той самий спан на СВОЄМУ зовнішньому wrapper-div (renderPracticeItem
+      // нижче), не тут — там grid-дитина не цей card, а той wrapper.
+      // undefined/false для реальної вправи — вона й далі ніколи не займає
+      // повний рядок.
+      fullWidth?: boolean;
     }
   ) {
     const word = config.words[wi];
@@ -528,9 +537,11 @@ export function LetterGapsExercise({
     // НИЖЧЕ заголовка, лампочка туди не сягає, резерв там не потрібен.
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
     return (
-      // Картка НІКОЛИ не займає повний рядок (жодного col-span) — завжди
+      // Картка НІКОЛИ не займає повний рядок у РЕАЛЬНІЙ вправі — завжди
       // half-width у 2-колонковому режимі, full-width в 1-колонковому.
-      <div key={wi} className={`relative ${WORD_CARD}`}>
+      // opts.fullWidth (лише сцена-вигляд практики, pairPracticeItems) —
+      // єдиний виняток: непарна картка без пари в рядку сітки.
+      <div key={wi} className={`relative ${WORD_CARD}${opts.fullWidth ? " md:col-span-2" : ""}`}>
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -694,22 +705,24 @@ export function LetterGapsExercise({
 
   // Одна картка практики + рядок статусу під нею — спільне для плаского
   // режиму (інлайн-картка сцени: крок 5 — 2-колонкова сітка з
-  // layoutFlatPracticeItems, flatGapOrder) і сцена-вигляду блоків (крок 4:
+  // pairPracticeItems, flatGapOrder) і сцена-вигляду блоків (крок 4:
   // gapOrderFor активного блоку, нижче). hideReveal — лише
   // сцена-вигляд (крок 3b): інлайн-кнопка "Показати відповідь"+розкритий
   // текст замінюються на спільну панель "Правильні відповіді" під блоком
   // (showToggle-картка TaskResult, той самий компонент, що звичайна
   // вправа), щоб не дублювати відповідь у двох місцях; лічильник спроб
   // лишається — у звичайної вправи нема свого еквівалента цього рядка.
+  // Задача "card pairing in the 2-column grid" — layout тепер завжди
+  // приходить від pairPracticeItems (flat-practice-layout.ts), в ОБОХ
+  // режимах (сцена-вигляд блоків і флет): displayNumber — наскрізна
+  // нумерація в новому парному порядку (1..N у межах активного блоку/
+  // флет-списку); full — картка без пари в цьому рядку, на всю ширину
+  // замість half-width.
   function renderPracticeItem(
     wi: number,
-    pos: number,
+    layout: { displayNumber: number; full: boolean },
     gapOrder: GapKey[],
-    hideReveal = false,
-    // Крок 5 (флет-режим, "довгі слова в кінці списку") — displayNumber з
-    // layoutFlatPracticeItems замінює pos+1; undefined для сцена-вигляду
-    // (hideReveal=true), там нумерація лишається позиційною.
-    flatLayout?: { displayNumber: number }
+    hideReveal = false
   ) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
@@ -741,8 +754,9 @@ export function LetterGapsExercise({
         locked: false,
         gapOrder,
         hintDisabled: true,
-        cardNumber: pos + 1,
+        cardNumber: layout.displayNumber,
         practiceFooter: footer,
+        fullWidth: layout.full,
       });
     }
 
@@ -783,13 +797,17 @@ export function LetterGapsExercise({
       </p>
     ) : undefined;
     return (
-      <div key={wi} className="flex flex-col gap-1.5">
+      // md:col-span-2 на цьому wrapper-div, не на самому renderWordCard —
+      // тут grid-дитина сітки САМЕ цей div (картка+статус-рядок разом), не
+      // внутрішня картка (на відміну від hideReveal-гілки вище, де
+      // renderWordCard — сам grid-дитина).
+      <div key={wi} className={`flex flex-col gap-1.5${layout.full ? " md:col-span-2" : ""}`}>
         {renderWordCard(wi, {
           detail: undefined,
           locked: false,
           gapOrder,
           hintDisabled: true,
-          cardNumber: flatLayout ? flatLayout.displayNumber : pos + 1,
+          cardNumber: layout.displayNumber,
           practiceFooter: footer,
         })}
         {isCorrect === true && (
@@ -802,7 +820,16 @@ export function LetterGapsExercise({
   if (isPractice && isSceneMode) {
     const activeIndices = practiceUseBlocks ? (practiceBlocks[practiceActiveBlock] ?? []) : practiceWordIndices;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
-    const activeGapOrder = gapOrderFor(activeIndices);
+    // Задача "card pairing in the 2-column grid" — той самий pairPracticeItems,
+    // що флет-режим нижче, рахований на активний блок; activeGapOrder далі
+    // будується з ЦЬОГО відображуваного порядку (не сирого activeIndices),
+    // інакше Tab/Enter-навігація між пропусками стрибала б за позиційним
+    // порядком, не за тим, що студент бачить на екрані (той самий принцип,
+    // що flatGapOrder нижче вже застосовує).
+    const pairedActiveIndices = pairPracticeItems(
+      activeIndices.map((wi) => ({ id: wi, length: config.words[wi].chars.length }))
+    );
+    const activeGapOrder = gapOrderFor(pairedActiveIndices.map((item) => item.id));
     // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
     // нижче) — disabled лише поки запит у польоті (activeBlockPending
     // там), БЕЗ вимоги "усі слова заповнені": заповненість лише показує
@@ -892,14 +919,14 @@ export function LetterGapsExercise({
             checkButton={sceneCheckButtonEl}
           >
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, activeGapOrder, true))}
+              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, activeGapOrder, true))}
             </div>
             {answersPanel}
           </BlockNavigation>
         ) : (
           <>
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, activeGapOrder, true))}
+              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, activeGapOrder, true))}
             </div>
             {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
@@ -925,18 +952,16 @@ export function LetterGapsExercise({
     // Крок 5 — флет-режим (інлайн-картка сцени, error-review-block.tsx
     // БЕЗ openMode): довгий список однорядкових full-width карток
     // замінюється на 2-колонкову сітку (та сама TWO_COLUMN_GRID_CLASS, що
-    // сцена-вигляд блоків), з довгими словами в кінці списку — БЕЗ
-    // col-span, довге слово просто переносить свої одиниці на другий
-    // рядок усередині своєї звичайної половинної картки (той самий
-    // принцип, що сцена-вигляд блоків), тож непарна кількість коротких
-    // одразу продовжується першим довгим у тому самому рядку сітки, без
-    // порожньої клітинки. layoutFlatPracticeItems (flat-practice-layout.ts).
-    // length — word.chars.length (ВСІ символи слова, включно з видимими
-    // літерами, не лише приховані gaps — саме так ТЗ описує "довжину
-    // слова" тут, бо й видимі літери, й gaps однаково займають місце в
-    // рядку картки). wi (id) лишається джерелом для submitPractice/
-    // перевірки нижче.
-    const flatPracticeLayout = layoutFlatPracticeItems(
+    // сцена-вигляд блоків). Задача "card pairing in the 2-column grid" —
+    // pairPracticeItems (flat-practice-layout.ts) тепер явно парує короткі
+    // з короткими/довгі з довгими рядками (замість старого "короткі-
+    // спочатку/довгі-в-кінці ОДНИМ списком", що лишало непарну коротку в
+    // одному рядку з ПЕРШИМ довгим, навіть коли різниця висот карток
+    // велика — баг зі скріншота задачі). length — word.chars.length (ВСІ
+    // символи слова, включно з видимими літерами, не лише приховані gaps —
+    // саме так ТЗ описує "довжину слова" тут). wi (id) лишається джерелом
+    // для submitPractice/перевірки нижче.
+    const flatPracticeLayout = pairPracticeItems(
       practiceWordIndices.map((wi) => ({ id: wi, length: config.words[wi].chars.length }))
     );
     // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,
@@ -949,9 +974,7 @@ export function LetterGapsExercise({
     return (
       <div className={EXERCISE_STACK}>
         <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-          {flatPracticeLayout.map((item) =>
-            renderPracticeItem(item.id, item.displayNumber - 1, flatGapOrder, false, item)
-          )}
+          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item, flatGapOrder, false))}
         </div>
 
         {diacritics.rect && diacritics.activeKey && (
@@ -970,7 +993,13 @@ export function LetterGapsExercise({
           <button
             type="button"
             onClick={() => submitPractice(practiceWordIndices)}
-            disabled={practiceCheck.pending || !practiceWordIndices.every(isWordFilled)}
+            // Задача "check button pale/disabled" — та сама умова, що вже
+            // виправлена для sceneCheckButtonEl (вище): disabled лише поки
+            // запит у польоті, БЕЗ вимоги "усі слова заповнені". Незаповнені
+            // слова лишаються "ще неправильними" (gradeLetterGaps трактує
+            // порожній answers[wi] як неправильну відповідь, не крашиться) —
+            // той самий принцип, що вже підтверджений сцена-виглядом.
+            disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? t("button.checking") : t("button.check")}

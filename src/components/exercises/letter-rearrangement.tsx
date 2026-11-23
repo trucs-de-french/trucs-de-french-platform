@@ -33,7 +33,7 @@ import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { estimateLetterRearrangementCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
 import { buildRevealedWordDetail, type RevealedWordDetail } from "@/lib/exercises/format-reveal-answer";
-import { layoutFlatPracticeItems } from "@/lib/exercises/flat-practice-layout";
+import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -418,6 +418,12 @@ export function LetterRearrangementExercise({
       // картки. undefined (флет-практика/реальна вправа) — нічого не
       // рендериться.
       practiceFooter?: ReactNode;
+      // Задача "card pairing in the 2-column grid" — ЛИШЕ практика
+      // (pairPracticeItems, flat-practice-layout.ts): непарна картка без
+      // пари в своєму рядку сітки рендериться на всю ширину (md:col-span-2)
+      // замість half-width. undefined/false для реальної вправи — вона й
+      // далі ніколи не займає повний рядок (та сама поведінка, що завжди).
+      fullWidth?: boolean;
     }
   ) {
     const word = config.words[wi];
@@ -441,9 +447,11 @@ export function LetterRearrangementExercise({
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
 
     return (
-      // Картка НІКОЛИ не займає повний рядок — завжди half-width у
-      // 2-колонковому режимі, full-width в 1-колонковому.
-      <div key={wi} className={`relative ${WORD_CARD}`}>
+      // Картка НІКОЛИ не займає повний рядок у РЕАЛЬНІЙ вправі — завжди
+      // half-width у 2-колонковому режимі, full-width в 1-колонковому.
+      // opts.fullWidth (лише практика, pairPracticeItems) — єдиний виняток:
+      // непарна картка без пари в рядку сітки.
+      <div key={wi} className={`relative ${WORD_CARD}${opts.fullWidth ? " md:col-span-2" : ""}`}>
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -561,14 +569,13 @@ export function LetterRearrangementExercise({
   // відмінність між режимами лишається лише в нумерації картки
   // (flatLayout, "довгі слова в кінці списку", крок 5 флет-режиму, не
   // стосується футера/розкриття).
-  function renderPracticeItem(
-    wi: number,
-    pos: number,
-    // Крок 5 (флет-режим, "довгі слова в кінці списку") — displayNumber з
-    // layoutFlatPracticeItems замінює pos+1; undefined для sceneStyle (там
-    // нумерація лишається позиційною, не перепорядкованою).
-    flatLayout?: { displayNumber: number }
-  ) {
+  // Задача "card pairing in the 2-column grid" — layout тепер завжди
+  // приходить від pairPracticeItems (flat-practice-layout.ts), в ОБОХ
+  // режимах (sceneStyle і флет): displayNumber — наскрізна нумерація в
+  // новому парному порядку; full — картка без пари в цьому рядку (непарний
+  // короткий/довгий залишок), рендериться на весь рядок сітки
+  // (md:col-span-2, renderWordCard нижче) замість half-width.
+  function renderPracticeItem(wi: number, layout: { displayNumber: number; full: boolean }) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
@@ -608,15 +615,24 @@ export function LetterRearrangementExercise({
       detail: undefined,
       locked: false,
       hintDisabled: true,
-      cardNumber: flatLayout ? flatLayout.displayNumber : pos + 1,
+      cardNumber: layout.displayNumber,
       revealedWordDetail,
       practiceFooter: footer,
+      fullWidth: layout.full,
     });
   }
 
   if (isPractice && isSceneMode) {
     const activeIndices = practiceUseBlocks ? (practiceBlocks[practiceActiveBlock] ?? []) : practiceWordIndices;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
+    // Задача "card pairing in the 2-column grid" — той самий pairPracticeItems,
+    // що флет-режим нижче (short-first/long-last + явне парування рядками),
+    // рахований ОКРЕМО на кожен активний блок (активний блок — те саме
+    // activeIndices, що й check/submitPractice нижче, порядок рендеру тут
+    // ніяк не чіпає payload перевірки — wi (id) лишається джерелом істини).
+    const pairedActiveIndices = pairPracticeItems(
+      activeIndices.map((wi) => ({ id: wi, length: config.words[wi].shuffledLetters.length }))
+    );
     const sceneCheckButtonEl = (
       <button
         type="button"
@@ -661,13 +677,13 @@ export function LetterRearrangementExercise({
             checkButton={sceneCheckButtonEl}
           >
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
+              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item))}
             </div>
           </BlockNavigation>
         ) : (
           <>
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
+              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item))}
             </div>
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
@@ -681,16 +697,15 @@ export function LetterRearrangementExercise({
     // Крок 5 — флет-режим (інлайн-картка сцени, error-review-block.tsx
     // БЕЗ openMode): довгий список однорядкових full-width карток
     // замінюється на 2-колонкову сітку (та сама TWO_COLUMN_GRID_CLASS, що
-    // сцена-вигляд блоків), з довгими словами в кінці списку — БЕЗ
-    // col-span, довге слово просто переносить плитки на другий рядок
-    // усередині своєї звичайної половинної картки (той самий принцип, що
-    // сцена-вигляд блоків), тож непарна кількість коротких одразу
-    // продовжується першим довгим у тому самому рядку сітки, без порожньої
-    // клітинки. layoutFlatPracticeItems (flat-practice-layout.ts) рахує
-    // короткі-спочатку/довгі-в-кінці порядок і наскрізну нумерацію;
-    // wi (id) лишається джерелом для submitPractice/перевірки нижче,
-    // лише порядок рендеру й видимі номери міняються.
-    const flatPracticeLayout = layoutFlatPracticeItems(
+    // сцена-вигляд блоків). Задача "card pairing in the 2-column grid" —
+    // pairPracticeItems (flat-practice-layout.ts) тепер явно парує короткі
+    // з короткими/довгі з довгими рядками, замість старого "короткі-
+    // спочатку/довгі-в-кінці ОДНИМ списком" (що саме й лишало непарну
+    // коротку в одному рядку з ПЕРШИМ довгим, навіть коли різниця висот
+    // карток велика — баг зі скріншота задачі); wi (id) лишається джерелом
+    // для submitPractice/перевірки нижче, лише порядок рендеру й видимі
+    // номери міняються.
+    const flatPracticeLayout = pairPracticeItems(
       practiceWordIndices.map((wi) => ({ id: wi, length: config.words[wi].shuffledLetters.length }))
     );
     return (
@@ -712,7 +727,7 @@ export function LetterRearrangementExercise({
           {t("letterrearr.swapHintDesktop")}
         </p>
         <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item.displayNumber - 1, item))}
+          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item))}
         </div>
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}

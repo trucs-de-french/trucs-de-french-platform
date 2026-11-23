@@ -53,21 +53,74 @@ export const FLAT_PRACTICE_LONG_WORD_THRESHOLD = Math.max(
 );
 
 export type FlatPracticeItemInput<Id> = { id: Id; length: number };
-export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number };
+export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number; full: boolean };
 
-// Слово "довге" (не влазить в один рядок половини картки на десктопі) —
-// length (кількість плиток letter_rearrangement / кількість символів
-// chars.length letter_gaps, включно з видимими літерами) понад порогове
-// значення вище. Короткі — спочатку, у вихідному порядку; довгі — в кінці,
-// теж у вихідному порядку (Array.prototype.filter гарантовано стабільний,
-// жодного явного сортування не потрібно), в ОДНІЙ і тій самій сітці —
-// жодного col-span: непарна кількість коротких одразу продовжується
-// першим довгим в тому самому рядку, без порожньої клітинки. Номери карток
-// (displayNumber) рахуються заново в цьому відображуваному порядку,
-// 1-based — id (використовується для перевірки/збереження/API) лишається
-// незмінним.
-export function layoutFlatPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatPracticeLayoutItem<Id>[] {
-  const isLong = (item: FlatPracticeItemInput<Id>) => item.length > FLAT_PRACTICE_LONG_WORD_THRESHOLD;
-  const ordered = [...items.filter((item) => !isLong(item)), ...items.filter(isLong)];
-  return ordered.map((item, i) => ({ id: item.id, displayNumber: i + 1 }));
+// Скільки рядків плиток/клітинок потребує слово такої довжини (1 — "коротке",
+// 2+ — "довге") — той самий поріг, що вище, лише як кількість рядків, не
+// бінарний прапорець, бо задача "card pairing" розрізняє не просто
+// коротке/довге, а РІЗНИЦЮ в рядках між непарним коротким і першим довгим
+// (парується лише коли довге має РІВНО на 1 рядок більше, тобто 2 рядки —
+// 3+ рядків різниця вже занадто велика, картки в парі виглядали б так само
+// нерівномірно, як сама задача описує).
+function lineCountFor(length: number): number {
+  return Math.max(1, Math.ceil(length / FLAT_PRACTICE_LONG_WORD_THRESHOLD));
+}
+
+// Задача "card pairing in the 2-column grid" — раніше (layoutFlatPracticeItems,
+// видалено) короткі й довгі просто йшли одним списком (короткі-спочатку,
+// довгі-в-кінці) БЕЗ жодної пари/рядка-спану, тож непарна кількість
+// коротких просто "перетікала" в один рядок сітки з ПЕРШИМ довгим —
+// рівно той самий баг, що скріншот задачі показує (нерівні висоти рядка,
+// великий порожній простір під короткою карткою, яку grid розтягнув до
+// висоти довгого сусіда). Тепер — явне парування РЯДКАМИ:
+// 1. короткі з короткими (у вихідному порядку кожної групи, стабільно);
+// 2. довгі з довгими;
+// 3. непарна коротка в кінці групи коротких ПАРУЄТЬСЯ з першим довгим
+//    ЛИШЕ якщо різниця рядків <= 1 (1 рядок проти 2) — інакше йде сама,
+//    на весь рядок (full:true), а довгі парується між собою як завжди;
+// 4. непарна довга в кінці групи довгих — сама, на весь рядок.
+// displayNumber — наскрізна нумерація В ЦЬОМУУ новому порядку рядків,
+// 1-based; id (перевірка/збереження/API) лишається незмінним — порядок
+// рендеру й видимі номери міняються, нічого більше.
+export function pairPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatPracticeLayoutItem<Id>[] {
+  type Item = FlatPracticeItemInput<Id>;
+  const shorts: Item[] = [];
+  const longs: Item[] = [];
+  for (const item of items) {
+    (lineCountFor(item.length) === 1 ? shorts : longs).push(item);
+  }
+
+  const rows: { items: Item[]; full: boolean }[] = [];
+
+  for (let i = 0; i + 1 < shorts.length; i += 2) {
+    rows.push({ items: [shorts[i], shorts[i + 1]], full: false });
+  }
+
+  let remainingLongs = longs;
+  if (shorts.length % 2 === 1) {
+    const oddShort = shorts[shorts.length - 1];
+    const firstLong = remainingLongs[0];
+    if (firstLong && lineCountFor(firstLong.length) - 1 <= 1) {
+      rows.push({ items: [oddShort, firstLong], full: false });
+      remainingLongs = remainingLongs.slice(1);
+    } else {
+      rows.push({ items: [oddShort], full: true });
+    }
+  }
+
+  for (let i = 0; i + 1 < remainingLongs.length; i += 2) {
+    rows.push({ items: [remainingLongs[i], remainingLongs[i + 1]], full: false });
+  }
+  if (remainingLongs.length % 2 === 1) {
+    rows.push({ items: [remainingLongs[remainingLongs.length - 1]], full: true });
+  }
+
+  const ordered: FlatPracticeLayoutItem<Id>[] = [];
+  let n = 1;
+  for (const row of rows) {
+    for (const item of row.items) {
+      ordered.push({ id: item.id, displayNumber: n++, full: row.full });
+    }
+  }
+  return ordered;
 }
