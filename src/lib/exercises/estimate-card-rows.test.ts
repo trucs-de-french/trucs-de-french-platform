@@ -2,15 +2,22 @@
 // скрипт, той самий принцип, що flat-practice-layout.test.ts.
 // Запуск вручну: npx tsx src/lib/exercises/estimate-card-rows.test.ts
 //
-// Задача "orphan card" — перевіряє САМУ оцінку (letterGapsIsOrphan/
-// letterRearrangementIsOrphan) на реальних даних слова/плиток, а не лише
-// чисту логіку парування (та тестується окремо, flat-practice-layout.test.ts,
-// де orphan/lines задаються напряму без проксі через ці естіматори).
+// Задача "unified card layout rule for letter practice" — перевіряє
+// РЕАЛЬНІ числові приклади класифікації (letterGapsCardClass/
+// letterRearrangementCardClass) на даних слова/плиток, а не лише чисту
+// логіку парування (та тестується окремо, flat-practice-layout.test.ts,
+// де cardClass задається напряму, без проксі через ці естіматори).
+//
+// Калібрувальні приклади зі скріншотів ("часто"/"якийсь" 10 тайлів,
+// "взуття" 9 тайлів) і явні порогові приклади задачі (9/10/11/12 тайлів,
+// фраза з двох слів ~20 тайлів на двох рядках, слово, що й на full-width
+// потребує 2+ рядки) — усі перевірені нижче.
 import {
+  classifyPracticeCard,
   estimateLetterGapsCardRows,
   estimateLetterRearrangementCardRows,
-  letterGapsIsOrphan,
-  letterRearrangementIsOrphan,
+  letterGapsCardClass,
+  letterRearrangementCardClass,
 } from "./estimate-card-rows";
 
 let failures = 0;
@@ -21,12 +28,62 @@ function assert(condition: boolean, label: string) {
   }
 }
 
-// --- letter_gaps: будуємо фразу з N видимих "одиниць переносу" (слів) ------
-// ширини 11*11=121px кожна (GIVEN_LETTER_WIDTH_PX=11px, 11 видимих літер,
-// жодної прихованої — hiddenLetters: [], прогалин/null немає взагалі) —
-// дозволяє рахувати пакування вручну (просте додавання, без розбиття на
-// силабічні фрагменти, той самий шлях, що звичайний "кілька одиниць на
-// рядок" гілка estimateLetterGapsCardRows/letterGapsIsOrphan).
+// --- classifyPracticeCard: the pure threshold function itself --------------
+// Порогові числа буквально з задачі: overflow<=0 -> short; 1 чи 2 І
+// влазить на full -> wideSingleLine; інакше (>=3, АБО не влазить на full)
+// -> long.
+
+{
+  assert(classifyPracticeCard(0, true) === "short", "overflow 0 is always short");
+  assert(classifyPracticeCard(-5, true) === "short", "negative overflow (content well under half-width) is short");
+  assert(classifyPracticeCard(1, true) === "wideSingleLine", "overflow 1, fits one line at full -> wideSingleLine");
+  assert(classifyPracticeCard(2, true) === "wideSingleLine", "overflow 2, fits one line at full -> wideSingleLine");
+  assert(classifyPracticeCard(3, true) === "long", "overflow 3 is long even when it would fit one line at full");
+  assert(classifyPracticeCard(8, true) === "long", "large overflow (8) is long regardless of fitting one line at full");
+  assert(classifyPracticeCard(1, false) === "long", "overflow 1 but NOT fitting one line at full is long, never standalone");
+  assert(classifyPracticeCard(2, false) === "long", "overflow 2 but NOT fitting one line at full is long, never standalone");
+}
+
+// --- letter_rearrangement: real tile-count examples from the task ----------
+// REFERENCE_ROW_WIDTH_PX=330, FIXED_CELL_PX=32, FIXED_CELL_GAP_PX=3.4 ->
+// half-width tile capacity floor((330+3.4)/35.4)=9, full-width capacity
+// floor((672+3.4)/35.4)=19 (estimate-card-rows.ts).
+
+// 9 tiles ("взуття", screenshot) -> fits one half-width line already -> short.
+{
+  assert(estimateLetterRearrangementCardRows(9) === 1, "letter_rearrangement: 9 tiles fit one half-width line");
+  assert(letterRearrangementCardClass(9) === "short", "letter_rearrangement: 9 tiles ('взуття') -> short");
+}
+
+// 10 tiles ("часто"/"якийсь", screenshot) -> overflow 1, fits one line at
+// full -> wideSingleLine.
+{
+  assert(letterRearrangementCardClass(10) === "wideSingleLine", "letter_rearrangement: 10 tiles ('часто'/'якийсь') -> wideSingleLine");
+}
+
+// 11 tiles -> overflow 2, fits one line at full -> wideSingleLine.
+{
+  assert(letterRearrangementCardClass(11) === "wideSingleLine", "letter_rearrangement: 11 tiles -> wideSingleLine (overflow 2)");
+}
+
+// 12 tiles -> overflow 3 -> long, wraps to 2 lines inside a half-width card.
+{
+  assert(estimateLetterRearrangementCardRows(12) === 2, "letter_rearrangement: 12 tiles wrap to 2 lines inside a half-width card");
+  assert(letterRearrangementCardClass(12) === "long", "letter_rearrangement: 12 tiles -> long (overflow 3)");
+}
+
+// 20 tiles -> needs 2+ lines even at full row width -> long, never standalone.
+{
+  assert(estimateLetterRearrangementCardRows(20, 672) === 2, "letter_rearrangement: 20 tiles still need 2 lines even at full row width");
+  assert(letterRearrangementCardClass(20) === "long", "letter_rearrangement: 20 tiles -> long, never standalone, even though it needs 2 lines everywhere");
+}
+
+// 1 tile -> trivially short.
+{
+  assert(letterRearrangementCardClass(1) === "short", "letter_rearrangement: a single tile is short");
+}
+
+// --- letter_gaps: phrase examples (multi-word, real estimator) -------------
 
 function visibleUnit(n: number): string[] {
   return Array.from({ length: n }, () => "a");
@@ -40,104 +97,62 @@ function phraseOfUnits(unitLengths: number[]): string[] {
   return chars;
 }
 
-// 3 одиниці по 121px: half-width (330px, перекалібровано — див.
-// estimate-card-rows.ts) пакує по 2 на рядок (2*121+8=250<=330), третя НЕ
-// влазить (3*121+16=379>330) -> рядки [2,1], останній рядок РІВНО 1
-// одиниця (сирітка-кандидат); full-width (672px) — усі 3 влазять в один
-// рядок (379<=672) -> orphan.
-{
-  const chars = phraseOfUnits([11, 11, 11]);
-  assert(estimateLetterGapsCardRows(chars, []) === 2, "letter_gaps: 3 units of 121px need 2 half-width lines");
-  assert(letterGapsIsOrphan(chars, []), "letter_gaps: last half-width line holds exactly 1 unit, fits one full-width line -> orphan");
-}
-
-// 4 одиниці по 121px: half-width пакує рівно по 2 на рядок ([2,2]) -> останній
-// рядок тримає 2 одиниці, НЕ 1 -> не сирітка, незалежно від rows>=2.
-{
-  const chars = phraseOfUnits([11, 11, 11, 11]);
-  assert(estimateLetterGapsCardRows(chars, []) === 2, "letter_gaps: 4 units of 121px need 2 half-width lines");
-  assert(!letterGapsIsOrphan(chars, []), "letter_gaps: last half-width line holds 2 units, not 1 -> not orphan, even with 2 lines");
-}
-
-// 7 одиниць по 121px: half-width пакує по 2 на рядок -> [2,2,2,1] (останній
-// рядок 1 одиниця, кандидат); full-width (672px) влазить РІВНО 5 одиниць
-// на рядок (129*5-8=637<=672, 129*6-8=766>672) -> [5,2] -> rows=2 на full
-// width -> НЕ сирітка (слово потребує 2+ рядки навіть при full-width,
-// задача явно вимагає цього винятку).
-{
-  const chars = phraseOfUnits([11, 11, 11, 11, 11, 11, 11]);
-  assert(
-    !letterGapsIsOrphan(chars, []),
-    "letter_gaps: a word needing 2+ lines even at full width is a normal long card, not an orphan"
-  );
-}
-
-// Коротка картка (1 одиниця, 1 рядок на half-width вже) — rows<2, ніколи
-// не сирітка (немає зайвого рядка, щоб "осиротіти").
+// A single short unit (11 visible letters, 121px) -> fits one half-width
+// line -> short.
 {
   const chars = phraseOfUnits([11]);
-  assert(estimateLetterGapsCardRows(chars, []) === 1, "letter_gaps: a single short unit is 1 line");
-  assert(!letterGapsIsOrphan(chars, []), "letter_gaps: a card that already fits one half-width line is never an orphan");
+  assert(estimateLetterGapsCardRows(chars, []) === 1, "letter_gaps: a single 121px unit fits one half-width line");
+  assert(letterGapsCardClass(chars, []) === "short", "letter_gaps: a single short unit -> short");
 }
 
-// --- letter_rearrangement: кількість однакових плиток-літер ----------------
-// Задача "orphan detection did not fire" — калібрувальні числа ПРЯМО зі
-// скріншота: 9 плиток влазять в один half-width рядок (card 5), 10 плиток
-// переносять РІВНО 1 плитку на другий рядок (card 3/4, "часто"/"якийсь"),
-// 10 плиток влазять в один рядок на full-width. REFERENCE_ROW_WIDTH_PX=330
-// (estimate-card-rows.ts), FIXED_CELL_PX=32, FIXED_CELL_GAP_PX=3.4 -> 9
-// плиток на half-width рядок (floor((330+3.4)/35.4)=9), 19 на full-width
-// рядок (FULL_ROW_WIDTH_PX=672, floor((672+3.4)/35.4)=19) — обчислено з
-// тих самих констант, що й сам estimateLetterRearrangementCardRows/
-// letterRearrangementIsOrphan, а не довільно підібрані тестом.
-
-// 9 плиток: half -> ceil(9/9)=1 рядок (уже влазить, НЕ потребує переносу)
-// -> rows<2, ніколи сирітка — "нормальна" картка (чи то коротка, чи то
-// звичайний непарний залишок, залежно від сусідів), саме той випадок, що
-// скріншот показує для card 5 (НЕ orphan, НЕ full-width).
+// Two-word phrase (~20 "tiles" worth of width: two 198px units, 18 visible
+// letters each) rendered on two lines at half-width (198+8+198=404 >330) ->
+// overflow = ceil((404-330)/35.4) = 3 -> long, pairs with another long card
+// (matches "опустошити тарілку, з'їсти все" / "сиротинець" / "поцілувати":
+// a multi-unit phrase that needs 2 real lines at half-width is long, even
+// though the SAME content would fit one line at full width: 404<=672 ->
+// the magnitude threshold (overflow>=3) wins over the full-width fit, per
+// the task's rule 3).
 {
-  assert(estimateLetterRearrangementCardRows(9) === 1, "letter_rearrangement: 9 tiles fit one half-width line (card 5 on the screenshot)");
-  assert(!letterRearrangementIsOrphan(9), "letter_rearrangement: 9 tiles already fit one half-width line -> normal, never orphan");
-}
-
-// 10 плиток: half -> ceil(10/9)=2 рядки, останній = 10-9=1 плитка (РІВНО
-// 1 — точно "card 3"/"card 4" зі скріншота, що раніше лишались парними з
-// сиротою-плиткою на другому рядку); full -> ceil(10/19)=1 рядок -> усе
-// слово влазить в один рядок, якщо дати йому обидві колонки -> orphan.
-{
-  assert(estimateLetterRearrangementCardRows(10) === 2, "letter_rearrangement: 10 tiles need 2 half-width lines, last holds exactly 1 tile");
-  assert(letterRearrangementIsOrphan(10), "letter_rearrangement: 10 tiles -> orphan (this was the missed detection from the screenshot)");
-}
-
-// 11+ плиток, що все одно потребують 2+ рядки НАВІТЬ на full-width (НЕ
-// сирітка, попри кандидатську умову на half-width) — найменше таке число
-// при k_half=9/k_full=19: 28 плиток (9*3+1=28, half last=1 candidate;
-// ceil(28/19)=2, full НЕ влазить в один рядок) — "11+" з умови задачі —
-// звичайна довга картка, парується як завжди, НЕ стає окремим full-width
-// рядком лише тому, що на half-width виглядала кандидатом.
-{
-  assert(estimateLetterRearrangementCardRows(28) === 4, "letter_rearrangement: 28 tiles need 4 half-width lines, last holding exactly 1 tile");
+  const chars = phraseOfUnits([18, 18]);
+  assert(estimateLetterGapsCardRows(chars, []) === 2, "letter_gaps: a two-unit ~404px phrase needs 2 lines at half-width");
   assert(
-    !letterRearrangementIsOrphan(28),
-    "letter_rearrangement: a word needing 2+ lines even at full width (28 tiles) is a normal long card, not an orphan"
+    letterGapsCardClass(chars, []) === "long",
+    "letter_gaps: a two-word phrase needing 2 lines at half-width -> long (overflow 3), even though it would fit one line at full width"
   );
 }
 
-// 11 плиток: half -> ceil(11/9)=2, останній = 11-9=2 (НЕ 1) -> не навіть
-// кандидат — підтверджує, що правило спрацьовує лише для СПРАВЖНЬОЇ
-// "сирітки" (рівно 1 на останньому рядку), не для будь-якого непарного
-// залишку.
+// A word/phrase that needs 2+ lines even at FULL row width (two 352px
+// units, 32 visible letters each: 352+8+352=712 > 672) -> long, never
+// standalone (matches "невдячність"/long words where even full-width
+// doesn't help).
 {
-  assert(!letterRearrangementIsOrphan(11), "letter_rearrangement: last half-width line holds 2 tiles, not 1 -> not orphan");
+  const chars = phraseOfUnits([32, 32]);
+  assert(
+    letterGapsCardClass(chars, []) === "long",
+    "letter_gaps: content needing 2+ lines even at full row width -> long, never standalone"
+  );
 }
 
-// 1 плитка — вже short/fit-in-one-line (rows<2) -> ніколи сирітка.
+// A single long unit (~594px, 54 visible letters, like "невдячність" ~600px
+// of tiles) that WOULD fit one line at full width (594<=672) but has large
+// overflow (>=3) at half-width -> still long, not promoted to
+// wideSingleLine just because it happens to fit one line at full.
 {
-  assert(!letterRearrangementIsOrphan(1), "letter_rearrangement: a single tile is never an orphan");
+  const chars = phraseOfUnits([54]);
+  assert(
+    letterGapsCardClass(chars, []) === "long",
+    "letter_gaps: large overflow (~8 tiles) stays long even though the content fits one line at full width (~600px <= 672px)"
+  );
 }
+
+// Odd/mix/empty/single-card pairing scenarios (short/long/wideSingleLine
+// buckets, widest-to-narrowest ordering, stability) are covered on the
+// pure pairPracticeItems logic in flat-practice-layout.test.ts - this file
+// only verifies the numeric classification feeding that logic.
 
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed.`);
   process.exit(1);
 }
-console.log("All estimate-card-rows (orphan detection) tests passed.");
+console.log("All estimate-card-rows (unified card layout rule) tests passed.");

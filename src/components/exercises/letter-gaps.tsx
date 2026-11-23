@@ -28,12 +28,7 @@ import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
-import {
-  estimateLetterGapsCardRows,
-  letterGapsIsOrphan,
-  letterGapsOverflowsColumn,
-  orderByEstimatedRows,
-} from "@/lib/exercises/estimate-card-rows";
+import { estimateLetterGapsCardRows, letterGapsCardClass, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
 import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
 import { letterGapsWideCardWidthPx, WIDE_CARD_WIDTH_CLASS, wideCardWidthStyle } from "@/lib/exercises/wide-card-width";
 import { buildGapRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
@@ -855,23 +850,15 @@ export function LetterGapsExercise({
     // довжина в символах не пропорційна реальній кількості рядків картки,
     // задача "pairing still mispairs cards 5/6, 7/8").
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi) => {
-        const overflowsColumn = letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters);
-        const orphan = letterGapsIsOrphan(config.words[wi].chars, config.words[wi].hiddenLetters);
-        return {
-          id: wi,
-          lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
-          overflowsColumn,
-          orphan,
-          // Задача "width-by-content rule must ALSO apply to a lone
-          // card" — рахується ЗАВЖДИ (не лише для orphan/overflow): цей
-          // helper не знає наперед, чи саме цей елемент лишиться
-          // одинокою карткою (pairPracticeItems вирішує це сам, крок
-          // 3/4 непарного залишку) — pairPracticeItems застосує
-          // wideWidthPx лише там, де рядок дійсно вийшов одиноким.
-          wideWidthPx: letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText),
-        };
-      })
+      activeIndices.map((wi) => ({
+        id: wi,
+        cardClass: letterGapsCardClass(config.words[wi].chars, config.words[wi].hiddenLetters),
+        // wideWidthPx потрібен лише для cardClass:"wideSingleLine", але
+        // рахується для КОЖНОГО елемента — pairPracticeItems сам визначає,
+        // хто саме "wideSingleLine" (helper не знає наперед), і бере це
+        // значення лише звідти, де воно справді потрібне.
+        wideWidthPx: letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText),
+      }))
     );
     const activeGapOrder = gapOrderFor(pairedActiveIndices.map((item) => item.id));
     // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
@@ -1018,23 +1005,11 @@ export function LetterGapsExercise({
     // одиницями переносу чи видимими літерами). wi (id) лишається
     // джерелом для submitPractice/перевірки нижче.
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi) => {
-        const overflowsColumn = letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters);
-        const orphan = letterGapsIsOrphan(config.words[wi].chars, config.words[wi].hiddenLetters);
-        return {
-          id: wi,
-          lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
-          overflowsColumn,
-          orphan,
-          // Задача "width-by-content rule must ALSO apply to a lone
-          // card" — рахується ЗАВЖДИ (не лише для orphan/overflow): цей
-          // helper не знає наперед, чи саме цей елемент лишиться
-          // одинокою карткою (pairPracticeItems вирішує це сам, крок
-          // 3/4 непарного залишку) — pairPracticeItems застосує
-          // wideWidthPx лише там, де рядок дійсно вийшов одиноким.
-          wideWidthPx: letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText),
-        };
-      })
+      practiceWordIndices.map((wi) => ({
+        id: wi,
+        cardClass: letterGapsCardClass(config.words[wi].chars, config.words[wi].hiddenLetters),
+        wideWidthPx: letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText),
+      }))
     );
     // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,
     // вище): перераховується на ВІДОБРАЖУВАНИЙ порядок слів (flatPracticeLayout

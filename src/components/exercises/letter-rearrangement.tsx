@@ -33,7 +33,7 @@ import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import {
   estimateLetterRearrangementCardRows,
-  letterRearrangementIsOrphan,
+  letterRearrangementCardClass,
   orderByEstimatedRows,
 } from "@/lib/exercises/estimate-card-rows";
 import { buildRevealedWordDetail, type RevealedWordDetail } from "@/lib/exercises/format-reveal-answer";
@@ -655,18 +655,11 @@ export function LetterRearrangementExercise({
     // lines — estimateLetterRearrangementCardRows, той самий точний
     // естіматор, що blockDisplayOrder реальної вправи.
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi) => {
-        const orphan = letterRearrangementIsOrphan(config.words[wi].shuffledLetters.length);
-        return {
-          id: wi,
-          lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
-          orphan,
-          // Задача "width-by-content rule must ALSO apply to a lone
-          // card" — рахується ЗАВЖДИ (не лише для orphan): pairPracticeItems
-          // сам вирішує, хто лишиться одинокою карткою.
-          wideWidthPx: letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText),
-        };
-      })
+      activeIndices.map((wi) => ({
+        id: wi,
+        cardClass: letterRearrangementCardClass(config.words[wi].shuffledLetters.length),
+        wideWidthPx: letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText),
+      }))
     );
     const sceneCheckButtonEl = (
       <button
@@ -742,18 +735,11 @@ export function LetterRearrangementExercise({
     // номери міняються. lines — estimateLetterRearrangementCardRows, той
     // самий точний естіматор, що blockDisplayOrder реальної вправи.
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi) => {
-        const orphan = letterRearrangementIsOrphan(config.words[wi].shuffledLetters.length);
-        return {
-          id: wi,
-          lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
-          orphan,
-          // Задача "width-by-content rule must ALSO apply to a lone
-          // card" — рахується ЗАВЖДИ (не лише для orphan): pairPracticeItems
-          // сам вирішує, хто лишиться одинокою карткою.
-          wideWidthPx: letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText),
-        };
-      })
+      practiceWordIndices.map((wi) => ({
+        id: wi,
+        cardClass: letterRearrangementCardClass(config.words[wi].shuffledLetters.length),
+        wideWidthPx: letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText),
+      }))
     );
     return (
       <div className={EXERCISE_STACK}>

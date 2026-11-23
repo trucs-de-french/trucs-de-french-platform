@@ -94,8 +94,6 @@ function packIntoRowsCounts(itemWidths: number[], rowWidth: number, gapPx: numbe
   return counts;
 }
 
-type GapsCardLayout = { rows: number; lastLineCount: number };
-
 // letter_gaps: одиниці переносу (артикль/"se"/слово) — атомарні, пакуються
 // зліва праворуч у звичайному текстовому потоці (packIntoRowsCounts,
 // WORD_GAP_PX між одиницями). Одиниця, що сама ширша за рядок, НЕ ділить
@@ -105,27 +103,17 @@ type GapsCardLayout = { rows: number; lastLineCount: number };
 // packIntoRowsCounts(фрагменти, rowWidth, 0) власних рядків (фрагменти того
 // самого слова — без проміжку між собою, splitIntoSyllableChunks вище,
 // .syllable-chunk у globals.css), наступна одиниця починає новий рядок.
-// rowWidthPx — задача "orphan card": той самий підрахунок на ДОВІЛЬНІЙ
-// ширині рядка (REFERENCE_ROW_WIDTH_PX для half-width, FULL_ROW_WIDTH_PX
-// для full-width) — викликачі нижче (estimateLetterGapsCardRows,
-// letterGapsIsOrphan, letterGapsOverflowsColumn) підставляють потрібну.
-// lastLineCount — скільки "тайлів" (одиниць переносу, що пакуються разом
-// на рядку, АБО силабічних фрагментів одного завеликого слова) лишилось на
-// ОСТАННЬОМУ рядку картки — саме це визначає "сирітку" (lastLineCount===1
-// при rows>=2).
-function estimateLetterGapsCardLayout(
-  chars: (string | null)[],
-  hiddenLetters: string[],
-  rowWidthPx: number
-): GapsCardLayout {
+// rowWidthPx — той самий підрахунок на ДОВІЛЬНІЙ ширині рядка
+// (REFERENCE_ROW_WIDTH_PX для half-width, FULL_ROW_WIDTH_PX для
+// full-width) — викликачі нижче (estimateLetterGapsCardRows,
+// letterGapsCardClass) підставляють потрібну.
+function estimateLetterGapsCardLayoutRows(chars: (string | null)[], hiddenLetters: string[], rowWidthPx: number): number {
   const units = splitPhraseUnits(chars);
   // rowUsedWidth === 0 означає "рядок ще не відкрито" — наступна звичайна
   // одиниця відкриває його (rows++); інакше вона або ділить поточний рядок
   // (влазить разом із WORD_GAP_PX), або закриває його й відкриває новий.
   let rows = 0;
   let rowUsedWidth = 0;
-  let rowUnitCount = 0;
-  let lastLineCount = 0;
   let gapOffset = 0;
   for (const unit of units) {
     const unitWidth = cellsWidth(unit);
@@ -133,16 +121,12 @@ function estimateLetterGapsCardLayout(
       if (rowUsedWidth === 0) {
         rows++;
         rowUsedWidth = unitWidth;
-        rowUnitCount = 1;
       } else if (rowUsedWidth + WORD_GAP_PX + unitWidth <= rowWidthPx) {
         rowUsedWidth += WORD_GAP_PX + unitWidth;
-        rowUnitCount += 1;
       } else {
         rows++;
         rowUsedWidth = unitWidth;
-        rowUnitCount = 1;
       }
-      lastLineCount = rowUnitCount;
     } else {
       // Завелика одиниця ніколи не ділить рядок із сусідами (ні з
       // попередньою, ні з наступною) — закриває поточний рядок (якщо був)
@@ -150,75 +134,71 @@ function estimateLetterGapsCardLayout(
       // відкриває новий рядок (rowUsedWidth = 0 нижче).
       const word = reconstructUnitWord(unit, hiddenLetters, gapOffset);
       const chunkWidths = sliceUnitByChunks(unit, splitIntoSyllableChunks(word)).map(cellsWidth);
-      const chunkCounts = packIntoRowsCounts(chunkWidths, rowWidthPx, 0);
-      rows += chunkCounts.length;
-      lastLineCount = chunkCounts[chunkCounts.length - 1] ?? 1;
+      rows += packIntoRowsCounts(chunkWidths, rowWidthPx, 0).length;
       rowUsedWidth = 0;
-      rowUnitCount = 0;
     }
     gapOffset += unit.filter((c) => c === null).length;
   }
-  return { rows: Math.max(1, rows), lastLineCount: rows === 0 ? 1 : lastLineCount };
+  return Math.max(1, rows);
 }
 
 export function estimateLetterGapsCardRows(chars: (string | null)[], hiddenLetters: string[]): number {
-  return estimateLetterGapsCardLayout(chars, hiddenLetters, REFERENCE_ROW_WIDTH_PX).rows;
+  return estimateLetterGapsCardLayoutRows(chars, hiddenLetters, REFERENCE_ROW_WIDTH_PX);
 }
 
-// Задача "a lone card in the last row must stay half-width" — чи є в слові
-// одиниця, що НАВІТЬ після розбиття на силабічні фрагменти лишає бодай один
-// фрагмент ШИРШИМ за FULL_ROW_WIDTH_PX (задача "orphan card": тепер
-// найширше доступне місце — full-width картка, не half-width, бо
-// "сирітки"/orphan-картки вже й так отримують full-width нижче — цей
-// виняток лишається лише для СПРАВДІ нерозривного слова, що не влазить НАВІТЬ
-// туди) — це і є "контент, що насправді не влазить у жодну колонку" (дуже
-// довге, нерозривне слово), на відміну від звичайного "картка потребує
-// кілька рядків" (просто переносить слова/фрагменти рядками, завжди влазить,
-// full-width НЕ потрібен з цієї причини). pairPracticeItems
-// (flat-practice-layout.ts) використовує це поруч з orphan, щоб вирішити,
-// чи картка лишається full-width.
-export function letterGapsOverflowsColumn(chars: (string | null)[], hiddenLetters: string[]): boolean {
-  const units = splitPhraseUnits(chars);
-  let gapOffset = 0;
-  for (const unit of units) {
-    const unitWidth = cellsWidth(unit);
-    if (unitWidth > FULL_ROW_WIDTH_PX) {
-      const word = reconstructUnitWord(unit, hiddenLetters, gapOffset);
-      const chunkWidths = sliceUnitByChunks(unit, splitIntoSyllableChunks(word)).map(cellsWidth);
-      if (chunkWidths.some((w) => w > FULL_ROW_WIDTH_PX)) return true;
-    }
-    gapOffset += unit.filter((c) => c === null).length;
-  }
-  return false;
+// Задача "unified card layout rule for letter practice" — ОДНА класифікація
+// картки практики за "overflow" (скільки тайлів/плиток НЕ влазить на
+// перший рядок half-width картки, якби все слово/фразу покласти в ОДИН
+// уявний рядок) і за тим, чи слово дійсно влазить в ОДИН рядок при
+// full-width (реальний пошаговий естіматор — той самий, що впорядковує
+// РЕАЛЬНУ вправу — а не наївне порівняння сум ширин, бо один-єдиний
+// завеликий фрагмент слова МІГ БИ розбитись на кілька своїх рядків навіть
+// коли сума виглядає "влазить"):
+//   overflow <= 0            -> "short" (уже влазить в один рядок half-width)
+//   overflow в {1, 2} І влазить в один рядок на full-width -> "wideSingleLine"
+//   інакше (overflow >= 3, АБО не влазить в один рядок навіть на full-width)
+//                             -> "long"
+// Порогові числа (1, 2, 3) — буквально з задачі ("слову не вистачає 1 чи 2
+// літер" -> wideSingleLine; "3 чи більше" -> long), не довільний вибір.
+export type PracticeCardClass = "short" | "long" | "wideSingleLine";
+
+export function classifyPracticeCard(overflowTiles: number, fitsOneLineAtFull: boolean): PracticeCardClass {
+  if (overflowTiles <= 0) return "short";
+  if (overflowTiles <= 2 && fitsOneLineAtFull) return "wideSingleLine";
+  return "long";
 }
 
-// Задача "orphan card" — "сирітка": при half-width картка потребує 2+
-// рядки (rows>=2), і ОСТАННІЙ рядок тримає РІВНО 1 "тайл" (слово-одиницю
-// чи силабічний фрагмент, lastLineCount===1), АЛЕ при full-width (обидві
-// колонки) ВСЕ слово влазить в ОДИН рядок (rows===1 на FULL_ROW_WIDTH_PX) —
-// саме цей і тільки цей випадок: "той самий текст, що виглядає, як помилка
-// розмітки, half-width, насправді прекрасно влазить в один рядок, якщо
-// дати йому обидві колонки". Якщо слово потребує 2+ рядки НАВІТЬ при
-// full-width — це звичайна довга картка (НЕ сирітка, пара-з-парою, задача
-// явно вимагає цього винятку).
-export function letterGapsIsOrphan(chars: (string | null)[], hiddenLetters: string[]): boolean {
-  const half = estimateLetterGapsCardLayout(chars, hiddenLetters, REFERENCE_ROW_WIDTH_PX);
-  if (half.rows < 2 || half.lastLineCount !== 1) return false;
-  const full = estimateLetterGapsCardLayout(chars, hiddenLetters, FULL_ROW_WIDTH_PX);
-  return full.rows === 1;
+// Скільки "тайлів" (клітинок FIXED_CELL_PX+FIXED_CELL_GAP_PX завширшки)
+// перевищує contentWidthPx понад REFERENCE_ROW_WIDTH_PX (half-width
+// картка) — ціле число, округлене ВГОРУ (навіть 0.1 тайла зайвого —
+// це вже "не влазить", частковий тайл не можна відобразити). <=0 -> 0.
+function overflowTilesFor(contentWidthPx: number): number {
+  const overflowPx = contentWidthPx - REFERENCE_ROW_WIDTH_PX;
+  if (overflowPx <= 0) return 0;
+  return Math.ceil(overflowPx / (FIXED_CELL_PX + FIXED_CELL_GAP_PX));
 }
 
-// Задача "wide standalone card should be content-width, not full row
-// width" — скільки МІСЦЯ займе слово, якщо покласти ВСІ його одиниці
-// переносу в ОДИН рядок (WORD_GAP_PX між ними, як і в звичайному
-// пакуванні вище) — БЕЗ урахування будь-якої ширини рядка-обмеження. Для
-// orphan-картки (letterGapsIsOrphan: full.rows===1 на FULL_ROW_WIDTH_PX)
-// це ТОЧНЕ значення фактичної потрібної ширини (за визначенням, усе влазить
-// в один рядок на full-width); для overflowsColumn-картки це ПЕРЕОЦІНКА
-// (слово насправді потребує кількох рядків навіть на full-width), але
-// wide-card-width.ts однаково обрізає результат до FULL_ROW_WIDTH_PX —
-// переоцінка нічого не псує, картка просто лишається full-width, як і
-// раніше.
+// letter_gaps: overflow — з letterGapsSingleLineContentWidth (уявний один
+// рядок, сума всіх одиниць переносу + проміжки, БЕЗ обмеження ширини
+// рядка); "влазить в один рядок на full-width" — РЕАЛЬНИЙ пошаговий
+// естіматор (estimateLetterGapsCardLayout) на FULL_ROW_WIDTH_PX, рядків
+// рівно 1 — не те саме порівняння сум, бо один завеликий фрагмент слова
+// (сам ширший за рядок) розбивається на СВОЇ рядки незалежно від суми.
+export function letterGapsCardClass(chars: (string | null)[], hiddenLetters: string[]): PracticeCardClass {
+  const overflowTiles = overflowTilesFor(letterGapsSingleLineContentWidth(chars));
+  const fitsOneLineAtFull = estimateLetterGapsCardLayoutRows(chars, hiddenLetters, FULL_ROW_WIDTH_PX) === 1;
+  return classifyPracticeCard(overflowTiles, fitsOneLineAtFull);
+}
+
+// Скільки МІСЦЯ займе слово/фраза, якщо покласти ВСІ її одиниці переносу в
+// ОДИН уявний рядок (WORD_GAP_PX між ними, як і в звичайному пакуванні
+// вище) — БЕЗ урахування будь-якої ширини рядка-обмеження. Використовується
+// ДВІЧІ: (1) overflowTilesFor вище — наскільки це перевищує
+// REFERENCE_ROW_WIDTH_PX, у "тайлах"; (2) wide-card-width.ts —
+// letterGapsWideCardWidthPx, фактична ширина "wideSingleLine"-картки (за
+// визначенням класу — слово й так влазить у РІВНО один рядок на
+// full-width, тож ця сума ТОЧНО дорівнює ширині того єдиного рядка, не
+// переоцінка).
 export function letterGapsSingleLineContentWidth(chars: (string | null)[]): number {
   const units = splitPhraseUnits(chars);
   return units.reduce((sum, unit, i) => sum + (i > 0 ? WORD_GAP_PX : 0) + cellsWidth(unit), 0);
@@ -243,19 +223,14 @@ export function estimateLetterRearrangementCardRows(letterCount: number, rowWidt
   return Math.max(1, Math.ceil(letterCount / k));
 }
 
-// Задача "orphan card" — той самий принцип, що letterGapsIsOrphan: при
-// half-width слово потребує 2+ рядки, і ОСТАННІЙ тримає РІВНО 1 плитку
-// (greedy-поділ однакових плиток: lastLineCount = letterCount - k*(rows-1)),
-// АЛЕ при full-width усе слово влазить в ОДИН рядок.
-export function letterRearrangementIsOrphan(letterCount: number): boolean {
-  const kHalf = rearrangementTilesPerLine(REFERENCE_ROW_WIDTH_PX);
-  const halfRows = Math.max(1, Math.ceil(letterCount / kHalf));
-  if (halfRows < 2) return false;
-  const lastLineCount = letterCount - kHalf * (halfRows - 1);
-  if (lastLineCount !== 1) return false;
-  const kFull = rearrangementTilesPerLine(FULL_ROW_WIDTH_PX);
-  const fullRows = Math.max(1, Math.ceil(letterCount / kFull));
-  return fullRows === 1;
+// letter_rearrangement: той самий принцип, що letterGapsCardClass —
+// overflow з letterRearrangementSingleLineContentWidth (однакові плитки,
+// один уявний рядок), "влазить в один рядок на full-width" — РЕАЛЬНИЙ
+// estimateLetterRearrangementCardRows на FULL_ROW_WIDTH_PX, рядків рівно 1.
+export function letterRearrangementCardClass(letterCount: number): PracticeCardClass {
+  const overflowTiles = overflowTilesFor(letterRearrangementSingleLineContentWidth(letterCount));
+  const fitsOneLineAtFull = estimateLetterRearrangementCardRows(letterCount, FULL_ROW_WIDTH_PX) === 1;
+  return classifyPracticeCard(overflowTiles, fitsOneLineAtFull);
 }
 
 // Задача "wide standalone card should be content-width, not full row
