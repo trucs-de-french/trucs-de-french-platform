@@ -8804,6 +8804,19 @@ button.scene-bar:active .scene-bar-toggle {
   white-space: nowrap;
   cursor: pointer;
   transition: border-color 150ms, background-color 150ms, transform 80ms;
+  /* Задача "reveal pill sits too high next to the blank input" —
+     fill-blank.tsx рендерить цю кнопку ІНЛАЙН, прямо в тексті речення,
+     поряд зі .fill-blank-field-wrap (той самий inline-контекст, align-
+     middle на обгортці інпута) — без власного vertical-align кнопка
+     лишалась на дефолтному baseline, вище за центр інпута. Інші 14 місць
+     (.reveal-answer-pill у status-рядку під слотом/реченням,
+     letter_gaps/table_fill/matching/drag_drop/true_false/
+     multiple_choice/word_choice/listening/reorder/chronological_order/
+     sort_columns/checkbox_grid) — завжди всередині flex-рядка з
+     items-center, де vertical-align дитини не впливає на крос-вісь
+     взагалі, тож це правило там без жодного ефекту (перевірено для всіх
+     15 викликів класу). */
+  vertical-align: middle;
 }
 .reveal-answer-pill svg {
   flex-shrink: 0;
