@@ -8386,6 +8386,32 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 13px;
   font-weight: 800;
 }
+/* practice-standalone-card (letter-gaps.tsx/letter-rearrangement.tsx
+   practice 2-column grids, wide-card-width.ts) - a card alone in its grid
+   row (orphan/overflow or a plain unpaired leftover) sized to its own
+   content width instead of stretching to the full row. grid-column: 1/-1
+   reserves the card the full row's track budget (span both columns) -
+   without it the card could never exceed one column's width even with an
+   explicit width set below; justify-self: start stops the grid's default
+   stretch from filling that whole reserved budget, so the card sits at
+   its own width, left-aligned; width reads --wide-card-w (inline style,
+   wideCardWidthStyle in wide-card-width.ts) with a 100% fallback (if no
+   width was computed, the card still renders full-width, same as before
+   this rule existed); max-width: 100% is a safety net in case the pure
+   width estimate (REFERENCE_ROW_WIDTH_PX/FULL_ROW_WIDTH_PX, an
+   approximation, not a real screen measurement) overshoots the real grid
+   row. Scoped to the same two-column breakpoint as the grid itself
+   (TWO_COLUMN_BREAKPOINT_PX, use-working-tile-layout.ts) - below it
+   (single-column/mobile) this rule does nothing, so the card stays full
+   width exactly as it always has there, with no separate code path. */
+@media (min-width: 768px) {
+  .practice-standalone-card {
+    grid-column: 1 / -1;
+    justify-self: start;
+    width: var(--wide-card-w, 100%);
+    max-width: 100%;
+  }
+}
 /* vocab_quiz: після перевірки гурток літери навмисно повторює колір
    картки-відповіді (зелена/червона) — той самий суцільний bg-green-600/
    bg-red-600, що картка мала й раніше, в обох темах однаково (колір уже

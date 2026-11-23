@@ -52,12 +52,20 @@ export function estimateTranslationLineWidthPx(hintText: string): number {
 // підкріплене буквальним CSS max-width:100% на викликачі, бо
 // FULL_ROW_WIDTH_PX сам лише наближення реального екрана), вужча НІКОЛИ не
 // менша за звичайну half-колонкову картку (узгодженість вигляду сітки).
+// Експортовані (не лише внутрішні) — тести (wide-card-width.test.ts)
+// рахують очікувані значення ЦИМИ константами, а не повторюють формулу з
+// власними захардкодженими числами: перекалібрування REFERENCE_ROW_WIDTH_PX/
+// FULL_ROW_WIDTH_PX (estimate-card-rows.ts) автоматично узгоджує й тести,
+// без ризику розійтись знову (та сама причина, що спричинила задачу
+// "orphan detection did not fire" — захардкоджені числа десь поза єдиним
+// джерелом правди).
+export const MIN_WIDE_CARD_OUTER_WIDTH_PX = REFERENCE_ROW_WIDTH_PX + CARD_PADDING_PX;
+export const MAX_WIDE_CARD_OUTER_WIDTH_PX = FULL_ROW_WIDTH_PX + CARD_PADDING_PX;
+
 export function computeWideCardOuterWidthPx(contentWidthPx: number, translationWidthPx: number): number {
   const innerWidth = Math.max(contentWidthPx, translationWidthPx);
   const outerWidth = innerWidth + CARD_PADDING_PX;
-  const minOuterWidth = REFERENCE_ROW_WIDTH_PX + CARD_PADDING_PX;
-  const maxOuterWidth = FULL_ROW_WIDTH_PX + CARD_PADDING_PX;
-  return Math.min(maxOuterWidth, Math.max(minOuterWidth, outerWidth));
+  return Math.min(MAX_WIDE_CARD_OUTER_WIDTH_PX, Math.max(MIN_WIDE_CARD_OUTER_WIDTH_PX, outerWidth));
 }
 
 // Зручні обгортки для викликачів (letter-gaps.tsx/letter-rearrangement.tsx) —
@@ -79,21 +87,28 @@ export function letterRearrangementWideCardWidthPx(letterCount: number, hintText
 // standalone cards on desktop; below the single-column breakpoint cards
 // stay full width as today" — ОДНЕ спільне CSS-рішення для обох вправ
 // (letter-gaps.tsx/letter-rearrangement.tsx), щоб не дублювати логіку в
-// кожному з 3 місць рендеру (2 у letter-gaps.tsx, 1 у
-// letter-rearrangement.tsx): md:col-span-2 резервує картці ПОВНУ ширину
-// рядка-сітки (2 колонки) — без цього картка не могла б перевищити ширину
-// ОДНІЄЇ колонки, навіть з явним width; md:justify-self-start — картка НЕ
+// кожному з 4 місць рендеру. Звичайний Tailwind arbitrary-value клас
+// (md:w-[var(--wide-card-w,100%)]) був замінений на звичайний СТАТИЧНИЙ
+// клас у globals.css (.practice-standalone-card) — задача "card 5 still
+// renders at full row width despite the width computation": кома всередині
+// Tailwind arbitrary-значення (var(--x,fallback)) — нестандартний,
+// ненадійний патерн (немає прецеденту в проєкті, jit-парсер Tailwind явно
+// не документує підтримку коми там), тож перейшли на звичайне,
+// гарантовано коректне CSS-правило: grid-column:1/-1 резервує картці ПОВНУ
+// ширину рядка-сітки — без цього картка не могла б перевищити ширину
+// ОДНІЄЇ колонки, навіть з явним width; justify-self:start — картка НЕ
 // розтягується (стандартний stretch) на всю зарезервовану ширину, а йде
-// зліва, шириною зі свого власного `width`; md:w-[var(--wide-card-w,100%)] —
+// зліва, шириною зі свого власного width; width:var(--wide-card-w,100%) —
 // сам width, через CSS-змінну (вузько заданий ЛИШЕ на цьому елементі,
-// style нижче) з фолбеком 100% (якщо з якоїсь причини ширину не
-// підрахували — той самий вигляд, що й раніше, full-width, ніколи не
-// "зникла" картка); md:max-w-full — підстраховка, якщо REFERENCE_ROW_WIDTH_PX/
+// style, wideCardWidthStyle нижче) з фолбеком 100% (якщо з якоїсь причини
+// ширину не підрахували — full-width, той самий вигляд, що раніше);
+// max-width:100% — підстраховка, якщо REFERENCE_ROW_WIDTH_PX/
 // FULL_ROW_WIDTH_PX (наближення, не реальні піксели екрана) дають трохи
-// забагато — картка ніколи не вилазить за межі свого грід-рядка. Ніяких
-// класів НИЖЧЕ md: (мобільний, 1-колонковий режим) — там картка й так на
-// всю ширину єдиної колонки, без додаткової логіки.
-export const WIDE_CARD_WIDTH_CLASS = "md:col-span-2 md:justify-self-start md:w-[var(--wide-card-w,100%)] md:max-w-full";
+// забагато. Правило обгорнуте в @media (min-width:768px) у globals.css
+// (той самий TWO_COLUMN_BREAKPOINT_PX) — на мобільному (1-колонковий
+// режим) клас нічого не робить, картка й так на всю ширину єдиної
+// колонки.
+export const WIDE_CARD_WIDTH_CLASS = "practice-standalone-card";
 
 export function wideCardWidthStyle(wideWidthPx: number | undefined): CSSProperties | undefined {
   return wideWidthPx !== undefined ? ({ "--wide-card-w": `${wideWidthPx}px` } as CSSProperties) : undefined;

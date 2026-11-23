@@ -40,13 +40,16 @@
 // half-width, просто вища за сусідню.
 //
 // wideWidthPx (задача "wide standalone card should be content-width, not
-// full row width") — опційна готова ЗОВНІШНЯ ширина (px) full-width
-// картки, рахована викликачем (letterGapsWideCardWidthPx/
-// letterRearrangementWideCardWidthPx, wide-card-width.ts) ЛИШЕ для
-// orphan/overflowsColumn елементів — використовується тут ТІЛЬКИ для
-// сортування "найширша спочатку" (крок 5 нижче), і передається НАСКРІЗНО
-// в FlatPracticeLayoutItem без зміни, щоб викликач застосував те саме
-// значення як CSS-ширину картки (jsx) без повторного рахування.
+// full row width"; задача "width-by-content rule must ALSO apply to a
+// lone card" — поширено на БУДЬ-ЯКУ одиноку картку) — готова ЗОВНІШНЯ
+// ширина (px) картки, рахована викликачем (letterGapsWideCardWidthPx/
+// letterRearrangementWideCardWidthPx, wide-card-width.ts) ДЛЯ КОЖНОГО
+// елемента (не лише orphan/overflowsColumn — ЦЕЙ файл сам вирішує, хто
+// саме лишиться одинокою карткою, викликач не може знати це наперед) —
+// використовується тут для сортування "найширша спочатку" (крок 5 нижче)
+// і передається НАСКРІЗНО в FlatPracticeLayoutItem без зміни, щоб
+// викликач застосував те саме значення як CSS-ширину картки (jsx) без
+// повторного рахування.
 export type FlatPracticeItemInput<Id> = {
   id: Id;
   lines: number;
@@ -65,41 +68,46 @@ export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number; full: 
 // висоти довгого сусіда). Тепер — явне парування РЯДКАМИ:
 // 0. (задача "orphan card") картки orphan:true чи overflowsColumn:true
 //    ВИЙМАЮТЬСЯ з пулу парування ПЕРШИМИ, ще до класифікації
-//    короткі/довгі — вони НІКОЛИ не паруються з сусідом, кожна рендериться
-//    ОКРЕМИМ full-width рядком, у ВИХІДНОМУ порядку, У КІНЦІ списку (після
-//    усіх звичайних коротких/довгих пар);
+//    короткі/довгі — вони НІКОЛИ не паруються з сусідом;
 // 1. з решти — короткі з короткими (у вихідному порядку кожної групи,
 //    стабільно);
 // 2. довгі з довгими;
 // 3. непарна коротка в кінці групи коротких ПАРУЄТЬСЯ з першим довгим
-//    ЛИШЕ якщо різниця рядків <= 1 (1 рядок проти 2) — інакше йде сама,
-//    half-width (full:false — full:true більше НЕ можливий тут, бо
-//    orphan/overflow картки вже вийняті на кроці 0), а довгі парується
-//    між собою як завжди;
-// 4. непарна довга в кінці групи довгих — сама, half-width (той самий
-//    принцип).
-// 5. (задача "order wide cards widest-to-narrowest") full-width рядки
-//    (крок 0) сортуються за wideWidthPx ЗА ЗМЕНШЕННЯМ (найширша перша),
-//    стабільно для рівних значень (тай-брейк за вихідним індексом, не
-//    лише надія на стабільність Array.sort) — акуратний "сходовий" вигляд
-//    зліва (картки left-aligned, вужчі внизу).
+//    ЛИШЕ якщо різниця рядків <= 1 (1 рядок проти 2) — інакше йде в той
+//    самий "одинокий" пул, що картки з кроку 0 (задача "width-by-content
+//    rule must ALSO apply to a lone card" — звичайний непарний залишок
+//    більше НЕ отримує окремого "half-width за замовчуванням" шляху,
+//    він ОДНАКОВО одинока картка, що й orphan/overflow, лише з content-
+//    шириною, яка (за визначенням — інакше він БУВ БИ orphan/overflow)
+//    і так НЕ перевищує half-колонку, тож візуально нічого не змінюється
+//    для цього випадку, крім того, що тепер він ТАКОЖ бере участь у
+//    сортуванні "найширша перша" разом з усіма іншими одинокими);
+// 4. непарна довга в кінці групи довгих — у той самий одинокий пул.
+// 5. (задача "order wide cards widest-to-narrowest") УСІ одинокі картки
+//    (крок 0 + непарні залишки 3/4) сортуються РАЗОМ за wideWidthPx ЗА
+//    ЗМЕНШЕННЯМ (найширша перша), стабільно для рівних значень (тай-брейк
+//    за позицією ПОПАДАННЯ в одинокий пул — orphan/overflow спочатку (у
+//    вихідному порядку), потім непарний короткий, потім непарний довгий —
+//    не лише надія на стабільність Array.sort) — акуратний "сходовий"
+//    вигляд зліва (картки left-aligned, вужчі внизу), кожна рендериться
+//    ОКРЕМИМ рядком У КІНЦІ списку (після усіх звичайних парних рядків).
 // displayNumber — наскрізна нумерація В ЦЬОМУ новому порядку рядків,
 // 1-based; id (перевірка/збереження/API) лишається незмінним — порядок
 // рендеру й видимі номери міняються, нічого більше. Мобільний (1-колонковий)
 // вигляд не парує картки взагалі (CSS-брейкпоінт, не цей файл) — та сама
-// послідовність рядків (короткі → довгі → orphan/full-width) просто стає
+// послідовність рядків (короткі → довгі → одинокі) просто стає
 // вертикальним списком, без додаткової логіки.
 export function pairPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatPracticeLayoutItem<Id>[] {
   type Item = FlatPracticeItemInput<Id>;
-  const isMustBeFull = (item: Item) => item.orphan === true || item.overflowsColumn === true;
+  const isMustBeStandalone = (item: Item) => item.orphan === true || item.overflowsColumn === true;
   const isShort = (item: Item) => item.lines <= 1;
 
-  const fullWidthItems: Item[] = [];
+  const standaloneItems: Item[] = [];
   const shorts: Item[] = [];
   const longs: Item[] = [];
   for (const item of items) {
-    if (isMustBeFull(item)) {
-      fullWidthItems.push(item);
+    if (isMustBeStandalone(item)) {
+      standaloneItems.push(item);
     } else {
       (isShort(item) ? shorts : longs).push(item);
     }
@@ -119,7 +127,7 @@ export function pairPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatP
       rows.push({ items: [oddShort, firstLong], full: false });
       remainingLongs = remainingLongs.slice(1);
     } else {
-      rows.push({ items: [oddShort], full: false });
+      standaloneItems.push(oddShort);
     }
   }
 
@@ -127,15 +135,15 @@ export function pairPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatP
     rows.push({ items: [remainingLongs[i], remainingLongs[i + 1]], full: false });
   }
   if (remainingLongs.length % 2 === 1) {
-    rows.push({ items: [remainingLongs[remainingLongs.length - 1]], full: false });
+    standaloneItems.push(remainingLongs[remainingLongs.length - 1]);
   }
 
-  const sortedFullWidthItems = fullWidthItems
+  const sortedStandaloneItems = standaloneItems
     .map((item, i) => ({ item, i }))
     .sort((a, b) => (b.item.wideWidthPx ?? 0) - (a.item.wideWidthPx ?? 0) || a.i - b.i)
     .map(({ item }) => item);
-  for (const fw of sortedFullWidthItems) {
-    rows.push({ items: [fw], full: true });
+  for (const sw of sortedStandaloneItems) {
+    rows.push({ items: [sw], full: true });
   }
 
   const ordered: FlatPracticeLayoutItem<Id>[] = [];

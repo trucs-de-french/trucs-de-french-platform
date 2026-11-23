@@ -13,6 +13,8 @@ import {
   letterGapsWideCardWidthPx,
   letterRearrangementWideCardWidthPx,
   wideCardWidthStyle,
+  MIN_WIDE_CARD_OUTER_WIDTH_PX,
+  MAX_WIDE_CARD_OUTER_WIDTH_PX,
 } from "./wide-card-width";
 
 let failures = 0;
@@ -23,12 +25,13 @@ function assert(condition: boolean, label: string) {
   }
 }
 
-// CARD_PADDING_PX=28 (use-working-tile-layout.ts), REFERENCE_ROW_WIDTH_PX=
-// 300, FULL_ROW_WIDTH_PX=612 (estimate-card-rows.ts) -> minOuterWidth=328,
-// maxOuterWidth=640 (обчислено вручну, ті самі константи, що helper сам
-// використовує).
-const MIN_OUTER_WIDTH_PX = 328;
-const MAX_OUTER_WIDTH_PX = 640;
+// Задача "orphan detection did not fire" перекалібрувала
+// REFERENCE_ROW_WIDTH_PX/FULL_ROW_WIDTH_PX (estimate-card-rows.ts) — цей
+// файл читає MIN/MAX_WIDE_CARD_OUTER_WIDTH_PX напряму з wide-card-width.ts
+// (не повторює формулу власними захардкодженими числами), тож подальші
+// перекалібрування НЕ вимагають правити ці тести знову.
+const MIN_OUTER_WIDTH_PX = MIN_WIDE_CARD_OUTER_WIDTH_PX;
+const MAX_OUTER_WIDTH_PX = MAX_WIDE_CARD_OUTER_WIDTH_PX;
 
 // --- narrow content gets the half-column minimum ----------------------------
 
@@ -76,10 +79,20 @@ const MAX_OUTER_WIDTH_PX = 640;
 }
 
 // --- exact boundary values pass through unclamped ---------------------------
+// -28 = CARD_PADDING_PX (use-working-tile-layout.ts, unrelated to the
+// REFERENCE_ROW_WIDTH_PX/FULL_ROW_WIDTH_PX recalibration) — the helper adds
+// it to get from content width to outer card width, so content exactly at
+// MIN_OUTER_WIDTH_PX-28 / MAX_OUTER_WIDTH_PX-28 lands exactly on the bound.
 
 {
-  assert(computeWideCardOuterWidthPx(300, 0) === MIN_OUTER_WIDTH_PX, "content landing exactly on the minimum stays at the minimum");
-  assert(computeWideCardOuterWidthPx(612, 0) === MAX_OUTER_WIDTH_PX, "content landing exactly on the maximum stays at the maximum");
+  assert(
+    computeWideCardOuterWidthPx(MIN_OUTER_WIDTH_PX - 28, 0) === MIN_OUTER_WIDTH_PX,
+    "content landing exactly on the minimum stays at the minimum"
+  );
+  assert(
+    computeWideCardOuterWidthPx(MAX_OUTER_WIDTH_PX - 28, 0) === MAX_OUTER_WIDTH_PX,
+    "content landing exactly on the maximum stays at the maximum"
+  );
 }
 
 // --- estimateTranslationLineWidthPx: badge-only for empty translations -----
@@ -116,13 +129,13 @@ function visibleUnit(n: number): string[] {
 
 {
   // 9 tiles -> content width = 9*32 + 8*3.4 = 288+27.2 = 315.2px; outer =
-  // 315.2+28 = 343.2px, ALREADY above the half-column minimum (328) -> its
-  // own width, not clamped (a 9-tile orphan card is comfortably wider than
-  // a bare half-column card, so it keeps its exact content width).
+  // 315.2+28 = 343.2px, BELOW the (recalibrated) half-column minimum
+  // (MIN_OUTER_WIDTH_PX=358) -> clamped up to it, matching the screenshot's
+  // card 5 (9 tiles) rendering at the normal half-column width, not wider.
   const width = letterRearrangementWideCardWidthPx(9, "");
   assert(
-    Math.abs(width - 343.2) < 0.01,
-    "letterRearrangementWideCardWidthPx: a 9-tile word's content width is used as-is, above the half-column minimum"
+    width === MIN_OUTER_WIDTH_PX,
+    "letterRearrangementWideCardWidthPx: a 9-tile word's content is clamped to the half-column minimum"
   );
 
   // A single tile (1) -> content width = 32px, outer = 60px, far under the
@@ -132,6 +145,20 @@ function visibleUnit(n: number): string[] {
     narrowWidth === MIN_OUTER_WIDTH_PX,
     "letterRearrangementWideCardWidthPx: a single-tile word's content is clamped to the half-column minimum"
   );
+}
+
+{
+  // 10 tiles (an orphan, screenshot's card 3/4) -> content width = 10*32 +
+  // 9*3.4 = 320+30.6 = 350.6px; outer = 350.6+28 = 378.6px — comfortably
+  // between the half-column minimum (358) and the full row maximum (700)
+  // -> its OWN content width, not stretched to the full row.
+  const width = letterRearrangementWideCardWidthPx(10, "");
+  assert(
+    Math.abs(width - 378.6) < 0.01,
+    "letterRearrangementWideCardWidthPx: a 10-tile orphan card gets its own content width, between the half-column minimum and the full row"
+  );
+  assert(width > MIN_OUTER_WIDTH_PX, "a 10-tile orphan card is wider than the bare half-column minimum");
+  assert(width < MAX_OUTER_WIDTH_PX, "a 10-tile orphan card is narrower than the full row maximum");
 }
 
 // --- wideCardWidthStyle: undefined width -> no style object ----------------

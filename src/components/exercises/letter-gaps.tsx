@@ -520,9 +520,10 @@ export function LetterGapsExercise({
       // Задача "wide standalone card should be content-width, not full
       // row width" — готова ЗОВНІШНЯ ширина (px, letterGapsWideCardWidthPx)
       // для fullWidth-картки: застосовується ЛИШЕ коли fullWidth truthy,
-      // через --wide-card-w (style) + md:w-[var(--wide-card-w)] (клас
-      // нижче) — на мобільному (без md:) НЕ застосовується, картка й так
-      // на всю ширину єдиної колонки.
+      // через --wide-card-w (style, wideCardWidthStyle) + статичний клас
+      // .practice-standalone-card (globals.css, WIDE_CARD_WIDTH_CLASS) —
+      // клас сам обгорнутий @media (min-width:768px), тож на мобільному
+      // НЕ застосовується, картка й так на всю ширину єдиної колонки.
       wideWidthPx?: number;
     }
   ) {
@@ -862,10 +863,13 @@ export function LetterGapsExercise({
           lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
           overflowsColumn,
           orphan,
-          wideWidthPx:
-            overflowsColumn || orphan
-              ? letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText)
-              : undefined,
+          // Задача "width-by-content rule must ALSO apply to a lone
+          // card" — рахується ЗАВЖДИ (не лише для orphan/overflow): цей
+          // helper не знає наперед, чи саме цей елемент лишиться
+          // одинокою карткою (pairPracticeItems вирішує це сам, крок
+          // 3/4 непарного залишку) — pairPracticeItems застосує
+          // wideWidthPx лише там, де рядок дійсно вийшов одиноким.
+          wideWidthPx: letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText),
         };
       })
     );
@@ -1022,10 +1026,13 @@ export function LetterGapsExercise({
           lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
           overflowsColumn,
           orphan,
-          wideWidthPx:
-            overflowsColumn || orphan
-              ? letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText)
-              : undefined,
+          // Задача "width-by-content rule must ALSO apply to a lone
+          // card" — рахується ЗАВЖДИ (не лише для orphan/overflow): цей
+          // helper не знає наперед, чи саме цей елемент лишиться
+          // одинокою карткою (pairPracticeItems вирішує це сам, крок
+          // 3/4 непарного залишку) — pairPracticeItems застосує
+          // wideWidthPx лише там, де рядок дійсно вийшов одиноким.
+          wideWidthPx: letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText),
         };
       })
     );

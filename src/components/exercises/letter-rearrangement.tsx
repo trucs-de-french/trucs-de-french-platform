@@ -661,9 +661,10 @@ export function LetterRearrangementExercise({
           id: wi,
           lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
           orphan,
-          wideWidthPx: orphan
-            ? letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText)
-            : undefined,
+          // Задача "width-by-content rule must ALSO apply to a lone
+          // card" — рахується ЗАВЖДИ (не лише для orphan): pairPracticeItems
+          // сам вирішує, хто лишиться одинокою карткою.
+          wideWidthPx: letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText),
         };
       })
     );
@@ -747,9 +748,10 @@ export function LetterRearrangementExercise({
           id: wi,
           lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
           orphan,
-          wideWidthPx: orphan
-            ? letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText)
-            : undefined,
+          // Задача "width-by-content rule must ALSO apply to a lone
+          // card" — рахується ЗАВЖДИ (не лише для orphan): pairPracticeItems
+          // сам вирішує, хто лишиться одинокою карткою.
+          wideWidthPx: letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText),
         };
       })
     );

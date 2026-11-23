@@ -16,15 +16,20 @@ function assert(condition: boolean, label: string) {
 // estimateLetterRearrangementCardRows (estimate-card-rows.ts) — ЦЕЙ файл
 // лише перевіряє чисту логіку парування/сортування за вже готовим
 // числом рядків, не саму оцінку (та має власні тести, estimate-card-
-// rows.test.ts, якщо існує — тут lines задаються напряму, без проксі
-// через довжину символів, задача "pairing still mispairs cards 5/6, 7/8":
-// довжина символів НЕ пропорційна реальній кількості рядків для
-// letter_gaps, звідси й перехід на lines замість length).
+// rows.test.ts — там lines задаються напряму, без проксі через довжину
+// символів).
+//
+// Задача "width-by-content rule must ALSO apply to a lone card" — `full`
+// тепер означає ОДНЕ: "ця картка одинока у своєму рядку сітки" (orphan,
+// overflowsColumn, АБО звичайний непарний залишок пари, що не знайшов
+// партнера) — УСІ вони однаково стають окремим рядком у КІНЦІ списку,
+// сортованим за wideWidthPx (найширший спочатку). full:false лишається
+// лише для СПРАВЖНІХ пар (2 картки в одному рядку).
 const SHORT = 1;
 const LINES_2 = 2;
 const LINES_3 = 3;
 
-// --- all-short: усі парами, жодного full-рядка -----------------------------
+// --- all-short: усі парами, жодного одинокого рядка ------------------------
 
 {
   const out = pairPracticeItems([
@@ -34,11 +39,11 @@ const LINES_3 = 3;
     { id: "d", lines: SHORT },
   ]);
   assert(out.map((i) => i.id).join(",") === "a,b,c,d", "all-short (even count) keeps original order");
-  assert(out.every((i) => !i.full), "all-short even count has no full-width row");
+  assert(out.every((i) => !i.full), "all-short even count has no standalone row");
   assert(out.map((i) => i.displayNumber).join(",") === "1,2,3,4", "sequential numbering");
 }
 
-// --- all-long: усі парами, жодного full-рядка -------------------------------
+// --- all-long: усі парами, жодного одинокого рядка --------------------------
 
 {
   const out = pairPracticeItems([
@@ -48,12 +53,17 @@ const LINES_3 = 3;
     { id: "s", lines: LINES_3 },
   ]);
   assert(out.map((i) => i.id).join(",") === "p,q,r,s", "all-long (even count) keeps original order");
-  assert(out.every((i) => !i.full), "all-long even count has no full-width row");
+  assert(out.every((i) => !i.full), "all-long even count has no standalone row");
 }
 
-// --- odd shorts, no longs at all: the lone short stands alone, HALF-width --
-// Задача "a lone card in the last row must stay half-width" — full:true
-// тепер ТІЛЬКИ коли overflowsColumn:true (тут не передано -> false).
+// --- odd shorts, no longs at all: the lone short becomes a standalone row --
+// Задача "width-by-content rule must ALSO apply to a lone card" — a plain
+// unpaired leftover is NOW also `full:true` (content-width, not simply
+// "half-width by default") — the exact outer width it renders at is
+// decided by the CSS clamp (wide-card-width.ts/computeWideCardOuterWidthPx,
+// tested separately), which for content that already fits one column
+// naturally resolves to the half-column minimum, so nothing changes
+// visually for this case — only the `full` flag/row grouping changes.
 
 {
   const out = pairPracticeItems([
@@ -63,8 +73,8 @@ const LINES_3 = 3;
   ]);
   assert(out.map((i) => i.id).join(",") === "a,b,c", "odd shorts with no longs keep original order");
   assert(
-    out[0]!.full === false && out[1]!.full === false && out[2]!.full === false,
-    "the first pair stays paired, the odd third short stands alone but stays half-width (no overflow)"
+    out[0]!.full === false && out[1]!.full === false && out[2]!.full === true,
+    "the first pair stays paired; the odd third short becomes its own standalone row"
   );
 }
 
@@ -76,10 +86,7 @@ const LINES_3 = 3;
     { id: "b", lines: SHORT },
     { id: "c", lines: SHORT, overflowsColumn: true },
   ]);
-  assert(
-    out[2]!.full === true,
-    "an odd lone card that genuinely cannot fit one column (overflowsColumn:true) still spans full-width"
-  );
+  assert(out[2]!.full === true, "an odd lone card that genuinely cannot fit one column (overflowsColumn:true) is a standalone row");
 }
 
 // --- odd shorts, first long differs by exactly 1 line: they pair up --------
@@ -97,11 +104,11 @@ const LINES_3 = 3;
   );
   assert(
     out[2]!.full === false && out[3]!.full === false,
-    "the odd short and the first long form a paired (non-full) row together"
+    "the odd short and the first long form a paired (non-standalone) row together"
   );
 }
 
-// --- odd shorts, first long differs by 2+ lines: no pairing, both stand alone, HALF-width --
+// --- odd shorts, first long differs by 2+ lines: no pairing, both become standalone rows --
 
 {
   const out = pairPracticeItems([
@@ -110,18 +117,12 @@ const LINES_3 = 3;
     { id: "c", lines: SHORT },
     { id: "long3", lines: LINES_3 },
   ]);
-  assert(
-    out.map((i) => i.id).join(",") === "a,b,c,long3",
-    "order is still short-group-first, long-group-last"
-  );
-  assert(
-    out[2]!.full === false,
-    "the odd short does not pair with a long that differs by 2+ lines — it stands alone, but stays half-width (no overflow)"
-  );
-  assert(out[3]!.full === false, "the single remaining long (now unpaired) also stands alone, half-width");
+  assert(out.map((i) => i.id).join(",") === "a,b,c,long3", "order is still short-group-first, long-group-last");
+  assert(out[2]!.full === true, "the odd short does not pair with a long that differs by 2+ lines — it becomes a standalone row");
+  assert(out[3]!.full === true, "the single remaining long (now unpaired) also becomes a standalone row");
 }
 
-// --- odd longs: the lone long stands alone, HALF-width, at the end ---------
+// --- odd longs: the lone long becomes a standalone row, at the end ---------
 
 {
   const out = pairPracticeItems([
@@ -134,10 +135,10 @@ const LINES_3 = 3;
   assert(out.map((i) => i.id).join(",") === "a,b,p,q,r", "shorts first (paired), then longs (paired + odd one last)");
   assert(out[0]!.full === false && out[1]!.full === false, "the two shorts pair up");
   assert(out[2]!.full === false && out[3]!.full === false, "the first two longs pair up");
-  assert(out[4]!.full === false, "the odd third long stands alone, half-width (no overflow), at the end");
+  assert(out[4]!.full === true, "the odd third long becomes a standalone row, at the end");
 }
 
-// --- odd long leftover that genuinely overflows the column keeps full-width --
+// --- odd long leftover that genuinely overflows the column -----------------
 
 {
   const out = pairPracticeItems([
@@ -145,13 +146,10 @@ const LINES_3 = 3;
     { id: "q", lines: LINES_2 },
     { id: "r", lines: LINES_2, overflowsColumn: true },
   ]);
-  assert(
-    out[2]!.full === true,
-    "an odd long leftover with overflowsColumn:true still spans full-width, as today"
-  );
+  assert(out[2]!.full === true, "an odd long leftover with overflowsColumn:true is a standalone row, as before");
 }
 
-// --- mix: even shorts and even longs — no full rows at all ------------------
+// --- mix: even shorts and even longs — no standalone rows at all -----------
 
 {
   const out = pairPracticeItems([
@@ -161,7 +159,7 @@ const LINES_3 = 3;
     { id: "q", lines: LINES_3 },
   ]);
   assert(out.map((i) => i.id).join(",") === "a,b,p,q", "even shorts then even longs, both groups stay in order");
-  assert(out.every((i) => !i.full), "no full-width row needed when both groups are even");
+  assert(out.every((i) => !i.full), "no standalone row needed when both groups are even");
 }
 
 // --- empty list --------------------------------------------------------------
@@ -171,17 +169,17 @@ const LINES_3 = 3;
   assert(out.length === 0, "an empty list produces an empty list, not a crash");
 }
 
-// --- single card: stands alone, HALF-width unless it overflows the column --
+// --- single card: always becomes a standalone row ---------------------------
 
 {
   const outShort = pairPracticeItems([{ id: "only", lines: SHORT }]);
-  assert(outShort.length === 1 && outShort[0]!.full === false, "a single short card stands alone, half-width (no overflow)");
+  assert(outShort.length === 1 && outShort[0]!.full === true, "a single short card is a standalone row");
 
   const outLong = pairPracticeItems([{ id: "only", lines: LINES_2 }]);
-  assert(outLong.length === 1 && outLong[0]!.full === false, "a single long card stands alone, half-width (no overflow)");
+  assert(outLong.length === 1 && outLong[0]!.full === true, "a single long card is a standalone row");
 
   const outOverflow = pairPracticeItems([{ id: "only", lines: LINES_2, overflowsColumn: true }]);
-  assert(outOverflow.length === 1 && outOverflow[0]!.full === true, "a single card that genuinely overflows the column still spans full-width");
+  assert(outOverflow.length === 1 && outOverflow[0]!.full === true, "a single card that genuinely overflows the column is a standalone row");
 }
 
 // --- 3+ lines never pairs with anything shorter than itself-1 --------------
@@ -197,16 +195,13 @@ const LINES_3 = 3;
   assert(out.every((i) => !i.full), "two long items always pair with each other regardless of their own line gap");
 }
 
-// --- orphan card: never paired, always full-width, moved to the end --------
+// --- orphan card: never paired, becomes a standalone row, moved to the end --
 // Задача "orphan card in the last tile line" — orphan:true картки виймаються
 // з пулу парування ПЕРШИМИ (ще до short/long-класифікації), ніколи не
-// паруються з сусідом, і йдуть ОКРЕМИМИ full-width рядками У КІНЦІ, у
-// вихідному порядку.
+// паруються з сусідом, і йдуть ОКРЕМИМИ рядками У КІНЦІ, разом з усіма
+// іншими одинокими картками.
 
 {
-  // 4 звичайні короткі (паруються як завжди) + 1 orphan (довга картка з
-  // позначкою orphan) — orphan НЕ бере участі в парі з жодною короткою чи
-  // довгою, виходить окремим full-width рядком останнім.
   const out = pairPracticeItems([
     { id: "a", lines: SHORT },
     { id: "b", lines: SHORT },
@@ -222,43 +217,23 @@ const LINES_3 = 3;
     out[0]!.full === false && out[1]!.full === false && out[2]!.full === false && out[3]!.full === false,
     "the four shorts pair up normally, unaffected by the orphan"
   );
-  assert(out[4]!.full === true, "the orphan card renders full-width");
-  assert(out.map((i) => i.displayNumber).join(",") === "1,2,3,4,5", "numbering stays sequential across the orphan row");
+  assert(out[4]!.full === true, "the orphan card is a standalone row");
+  assert(out.map((i) => i.displayNumber).join(",") === "1,2,3,4,5", "numbering stays sequential across the standalone row");
 }
 
-// --- orphan is detected independently of being the odd leftover ------------
-
-{
-  // Odd short count (3) WITHOUT any orphan: the third short is simply a
-  // normal half-width lone leftover (not full) — orphan:true is a SEPARATE
-  // signal, never implied just by being unpaired.
-  const out = pairPracticeItems([
-    { id: "a", lines: SHORT },
-    { id: "b", lines: SHORT },
-    { id: "c", lines: SHORT },
-  ]);
-  assert(out[2]!.full === false, "an odd leftover short with no orphan flag stays half-width, not full");
-}
-
-// --- orphan NOT detected: estimate-card-rows only sets orphan:true when ---
-// --- the half-width last line holds exactly 1 tile — callers passing ------
-// --- orphan:false (2+ tiles on the last half-width line) must pair normally
+// --- orphan:false long cards pair normally ----------------------------------
 
 {
   const out = pairPracticeItems([
     { id: "p", lines: LINES_2, orphan: false },
     { id: "q", lines: LINES_2, orphan: false },
   ]);
-  assert(out.every((i) => !i.full), "orphan:false long cards pair normally, like before this task");
+  assert(out.every((i) => !i.full), "orphan:false long cards pair normally");
 }
 
 // --- odd counts WITH an orphan present: the orphan still never pairs -------
 
 {
-  // 3 longs, the last one flagged orphan: the first two longs pair up as
-  // usual; the orphan is pulled OUT before the "odd longs" leftover logic
-  // ever runs, so it never ends up accidentally paired or treated as the
-  // ordinary half-width leftover.
   const out = pairPracticeItems([
     { id: "p", lines: LINES_2 },
     { id: "q", lines: LINES_2 },
@@ -266,17 +241,14 @@ const LINES_3 = 3;
   ]);
   assert(out.map((i) => i.id).join(",") === "p,q,r", "the two normal longs pair, the orphan stands alone at the end");
   assert(out[0]!.full === false && out[1]!.full === false, "the two non-orphan longs pair up");
-  assert(out[2]!.full === true, "the orphan long renders full-width, not as a half-width leftover");
+  assert(out[2]!.full === true, "the orphan long is a standalone row");
 }
 
 // --- orphan that still would not fit even at full width (overflowsColumn) --
-// --- behaves the same as a plain overflow (both pulled out, both full) ----
 
 {
-  const out = pairPracticeItems([
-    { id: "only", lines: LINES_3, orphan: true, overflowsColumn: true },
-  ]);
-  assert(out.length === 1 && out[0]!.full === true, "a card flagged both orphan and overflowsColumn is still full-width (no double-counting bug)");
+  const out = pairPracticeItems([{ id: "only", lines: LINES_3, orphan: true, overflowsColumn: true }]);
+  assert(out.length === 1 && out[0]!.full === true, "a card flagged both orphan and overflowsColumn is still a standalone row");
 }
 
 // --- all orphans, no wideWidthPx given (tie): keeps original order ---------
@@ -288,10 +260,10 @@ const LINES_3 = 3;
     { id: "z", lines: LINES_2, orphan: true },
   ]);
   assert(out.map((i) => i.id).join(",") === "x,y,z", "all-orphan input with no wideWidthPx (all tie at 0) keeps original order");
-  assert(out.every((i) => i.full), "every orphan card renders full-width, none paired");
+  assert(out.every((i) => i.full), "every orphan card is a standalone row, none paired");
 }
 
-// --- orphan cards are ordered widest-to-narrowest (task "staircase") ------
+// --- standalone rows are ordered widest-to-narrowest (task "staircase") ----
 
 {
   const out = pairPracticeItems([
@@ -301,7 +273,7 @@ const LINES_3 = 3;
   ]);
   assert(
     out.map((i) => i.id).join(",") === "wide,medium,narrow",
-    "orphan/full-width rows are reordered widest-to-narrowest by wideWidthPx, regardless of input order"
+    "standalone rows are reordered widest-to-narrowest by wideWidthPx, regardless of input order"
   );
   assert(
     out.map((i) => i.displayNumber).join(",") === "1,2,3",
@@ -323,23 +295,24 @@ const LINES_3 = 3;
   );
 }
 
-// --- widest-to-narrowest ordering only applies within the full-width bucket,
-// --- it never reorders relative to paired short/long rows -----------------
+// --- a plain unpaired leftover joins the SAME sorted standalone bucket -----
+// --- as orphan/overflow cards, ordered together by wideWidthPx -------------
 
 {
   const out = pairPracticeItems([
     { id: "s1", lines: SHORT },
     { id: "s2", lines: SHORT },
-    { id: "narrowOrphan", lines: LINES_2, orphan: true, wideWidthPx: 200 },
+    { id: "s3", lines: SHORT, wideWidthPx: 250 }, // plain odd leftover, narrow
     { id: "wideOrphan", lines: LINES_2, orphan: true, wideWidthPx: 500 },
   ]);
   assert(
-    out.map((i) => i.id).join(",") === "s1,s2,wideOrphan,narrowOrphan",
-    "paired shorts still come first; only the orphan bucket itself is sorted widest-first"
+    out.map((i) => i.id).join(",") === "s1,s2,wideOrphan,s3",
+    "paired shorts come first; the plain leftover (s3) and the orphan are sorted TOGETHER, widest first"
   );
+  assert(out[2]!.full === true && out[3]!.full === true, "both the orphan and the plain leftover are standalone rows");
 }
 
-// --- mix: shorts + longs + orphans, each bucket ordered independently -----
+// --- mix: shorts + longs + standalone rows, each paired bucket ordered independently -----
 
 {
   const out = pairPracticeItems([
@@ -352,25 +325,25 @@ const LINES_3 = 3;
   ]);
   assert(
     out.map((i) => i.id).join(",") === "s1,s2,l1,l2,orphanA,orphanB",
-    "shorts pair first, then longs pair, then orphans stand alone at the end in their original relative order"
+    "shorts pair first, then longs pair, then standalone rows at the end in their original relative order (tie, no wideWidthPx)"
   );
   assert(out[0]!.full === false && out[1]!.full === false, "the two shorts pair");
   assert(out[2]!.full === false && out[3]!.full === false, "the two longs pair");
-  assert(out[4]!.full === true && out[5]!.full === true, "both orphans render full-width, at the end");
+  assert(out[4]!.full === true && out[5]!.full === true, "both orphans are standalone rows, at the end");
 }
 
-// --- orphan: empty list still produces an empty list, not a crash ---------
+// --- wideWidthPx is carried through to the output unchanged ----------------
 
 {
-  const out = pairPracticeItems([] as { id: string; lines: number; orphan?: boolean }[]);
-  assert(out.length === 0, "an empty list with the orphan field still produces an empty list");
+  const out = pairPracticeItems([{ id: "only", lines: LINES_2, orphan: true, wideWidthPx: 412 }]);
+  assert(out[0]!.wideWidthPx === 412, "wideWidthPx passes through from input to output unchanged, for the caller's CSS");
 }
 
-// --- orphan: a single orphan card stands alone, full-width -----------------
+// --- empty list (orphan/wideWidthPx fields present but unused) -------------
 
 {
-  const out = pairPracticeItems([{ id: "only", lines: LINES_2, orphan: true }]);
-  assert(out.length === 1 && out[0]!.full === true, "a single orphan card still renders full-width");
+  const out = pairPracticeItems([] as { id: string; lines: number; orphan?: boolean; wideWidthPx?: number }[]);
+  assert(out.length === 0, "an empty list still produces an empty list, not a crash");
 }
 
 // --- ids are passed through untouched, only order/numbering/full change ---
