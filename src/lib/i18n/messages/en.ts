@@ -254,7 +254,7 @@ export const en: Record<MessageKey, string> = {
   "hintExplanation.crossword": "the next letter of the word is revealed",
   "hintExplanation.letter_gaps": "the next letter is revealed",
   "hintExplanation.letter_rearrangement": "a letter moves into its place",
-  "hintExplanation.fill_blank": "the first letter of the field is revealed",
+  "hintExplanation.fill_blank": "the word in Ukrainian",
   "hintExplanation.table_fill": "the first letter of the field is revealed",
   "hintExplanation.word_choice": "the answer in Ukrainian",
   "hintExplanation.chronological_order": "help for the whole exercise",

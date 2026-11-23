@@ -256,7 +256,7 @@ export const fr: Record<MessageKey, string> = {
   "hintExplanation.crossword": "la lettre suivante du mot s'affiche",
   "hintExplanation.letter_gaps": "la lettre suivante s'affiche",
   "hintExplanation.letter_rearrangement": "une lettre se met à sa place",
-  "hintExplanation.fill_blank": "la première lettre du champ s'affiche",
+  "hintExplanation.fill_blank": "le mot en ukrainien",
   "hintExplanation.table_fill": "la première lettre du champ s'affiche",
   "hintExplanation.word_choice": "la réponse en ukrainien",
   "hintExplanation.chronological_order": "une aide pour tout l'exercice",

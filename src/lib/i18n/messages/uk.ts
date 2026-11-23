@@ -257,7 +257,7 @@ export const uk = {
   "hintExplanation.crossword": "відкриється наступна літера слова",
   "hintExplanation.letter_gaps": "відкриється наступна літера",
   "hintExplanation.letter_rearrangement": "літера стане на своє місце",
-  "hintExplanation.fill_blank": "відкриється перша літера поля",
+  "hintExplanation.fill_blank": "слово українською",
   "hintExplanation.table_fill": "відкриється перша літера поля",
   "hintExplanation.word_choice": "відповідь українською",
   "hintExplanation.chronological_order": "підказка до всього завдання",
