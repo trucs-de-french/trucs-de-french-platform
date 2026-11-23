@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, List } from "lucide-react";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
@@ -402,8 +402,17 @@ function ErrorReviewPractice({
     subInstructions?: string;
     subInstructionsEn?: string;
   };
+  // Обгортка EXERCISE_STACK (не голий Fragment) — задача "matching board
+  // touches the header": TaskPanelHeader's margin-bottom:-8px (globals.css)
+  // лише ГАСИТЬ частину gap БАТЬКІВСЬКОГО flex-контейнера (24px десктоп/
+  // 16px мобільний), щоб лишити рівно ~16px — без спільного flex-батька з
+  // exerciseNode (голий Fragment раніше) тут НІЯКОГО gap не було взагалі,
+  // і -8px просто тягнув вправу ВГОРУ, під роздільник. exerciseNode і
+  // далі має власний внутрішній EXERCISE_STACK (вкладений flex-контейнер,
+  // не той самий) — цей зовнішній рівень зачіпає лише відстань заголовок↔
+  // exerciseNode, внутрішня розкладка самої вправи незмінна.
   return (
-    <>
+    <div className={EXERCISE_STACK}>
       <TaskPanelHeader
         instructionText={configForHeader.instructions ?? instructionDefaults?.instruction}
         subInstructionText={taskTranslationLine(
@@ -413,7 +422,7 @@ function ErrorReviewPractice({
         )}
       />
       {exerciseNode}
-    </>
+    </div>
   );
 }
 
@@ -435,9 +444,45 @@ function ErrorReviewCard({
 }) {
   const { t, lang } = useT();
   const { isItems, isWhole, isInteractive, isDone, remaining } = errorReviewFlags(entry);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Задача "matching card opens below the fold" — інлайн-розгортання
+  // картки (флет-шлях, openMode не задано) не мало жодного явного скролу:
+  // сторінка все одно "їхала" вниз (ймовірно фокус на кнопці "Виправити"
+  // у поєднанні з browser scroll anchoring на щойно змонтований великий
+  // блок вправи — div вище з overflow-anchor:none гасить саме цей шлях),
+  // і студент бачив середину/кінець вправи замість її верху. Тут —
+  // детермінований скрол: коли картка розгортається, після того як
+  // щойно змонтований вміст реально розкладеться (два requestAnimationFrame
+  // — перший чекає layout-коміт React, другий чекає сам кадр малювання),
+  // верх картки (scroll-mt-4 нижче, той самий відступ-конвенція, що
+  // scene page's <li id="task-...">) ставимо під верх в'юпорта.
+  // settleTimer — один додатковий прохід трохи пізніше: картинки
+  // (image_match) чи шрифти можуть ще змінити висоту ПІСЛЯ першого
+  // кадру; не нескінченне спостереження, лише один запасний виклик.
+  useLayoutEffect(() => {
+    if (!expanded) return;
+    let cancelled = false;
+    function scrollCardIntoView() {
+      if (cancelled) return;
+      cardRef.current?.scrollIntoView({ block: "start", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    }
+    const raf1 = requestAnimationFrame(() => {
+      requestAnimationFrame(scrollCardIntoView);
+    });
+    const settleTimer = setTimeout(scrollCardIntoView, 350);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      clearTimeout(settleTimer);
+    };
+  }, [expanded]);
 
   return (
-    <div className="rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]">
+    <div
+      ref={cardRef}
+      className="scroll-mt-4 rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]"
+    >
       <div className={`error-review-row flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
         <span className="item-number-badge" aria-hidden>
           {index + 1}
@@ -620,7 +665,14 @@ export function ErrorReviewBlock({
           {frenchNbsp(EMPTY_STATE_TEXT[emptyState])}
         </p>
       ) : (
-        <div className="flex flex-col gap-2">
+        // overflow-anchor:none — задача "matching card opens below the
+        // fold": вимикає стандартне браузерне scroll anchoring саме на
+        // цьому списку карток, щоб воно не "компенсувало" скрол, поки
+        // картка розгортається/згортається (щойно змонтований великий
+        // блок вправи) і НЕ заважало детермінованому скролу нижче
+        // (ErrorReviewCard, useLayoutEffect) — той сам вирішує, куди
+        // скролити, без втручання браузерної евристики.
+        <div className="flex flex-col gap-2" style={{ overflowAnchor: "none" }}>
           {(() => {
             // Кілька карток з ОДНАКОВОЮ фінальною назвою (entry.displayTitle —
             // та сама назва, що на плашці типу над вправою) у блоці —
