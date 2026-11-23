@@ -33,16 +33,12 @@ import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import {
   estimateLetterRearrangementCardRows,
-  letterRearrangementCardClass,
+  letterRearrangementPracticeLayout,
   orderByEstimatedRows,
+  REFERENCE_ROW_WIDTH_PX,
 } from "@/lib/exercises/estimate-card-rows";
 import { buildRevealedWordDetail, type RevealedWordDetail } from "@/lib/exercises/format-reveal-answer";
 import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
-import {
-  letterRearrangementWideCardWidthPx,
-  WIDE_CARD_WIDTH_CLASS,
-  wideCardWidthStyle,
-} from "@/lib/exercises/wide-card-width";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -195,7 +191,15 @@ export function LetterRearrangementExercise({
   // sortable-tile-row.tsx). Без резерву лампочки: плитки йдуть НИЖЧЕ
   // заголовка картки, лампочка (верхній правий кут) туди не сягає — резерв
   // лишається лише на самому заголовку (pr-[52px] нижче).
-  const { gridRef } = useWorkingTileLayout();
+  // Задача "simplification of the card layout for letter practice" (п.5) —
+  // ready/twoColumn/halfCardInnerPx потрібні ЛИШЕ для практики (нижче,
+  // practiceRowWidthPx): РЕАЛЬНА виміряна half-колонкова ширина замінює
+  // фіксовану оцінку (REFERENCE_ROW_WIDTH_PX), коли вона вже готова.
+  // displayOrder/renderBlock() (реальна вправа) і далі НЕЗМІННО
+  // використовують estimateLetterRearrangementCardRows БЕЗ другого
+  // аргументу (дефолт REFERENCE_ROW_WIDTH_PX) — ця задача їх не чіпає.
+  const { gridRef, ready, twoColumn, halfCardInnerPx } = useWorkingTileLayout();
+  const practiceRowWidthPx = ready && twoColumn ? halfCardInnerPx : REFERENCE_ROW_WIDTH_PX;
 
   // Показовий порядок карток — за ОЦІНЕНОЮ кількістю рядків плиток
   // (estimateLetterRearrangementCardRows), той самий принцип, що
@@ -427,18 +431,13 @@ export function LetterRearrangementExercise({
       // картки. undefined (флет-практика/реальна вправа) — нічого не
       // рендериться.
       practiceFooter?: ReactNode;
-      // Задача "card pairing in the 2-column grid" — ЛИШЕ практика
-      // (pairPracticeItems, flat-practice-layout.ts): непарна картка без
-      // пари в своєму рядку сітки рендериться на всю ширину (md:col-span-2)
-      // замість half-width. undefined/false для реальної вправи — вона й
-      // далі ніколи не займає повний рядок (та сама поведінка, що завжди).
-      fullWidth?: boolean;
-      // Задача "wide standalone card should be content-width, not full
-      // row width" — готова ЗОВНІШНЯ ширина (px, letterRearrangementWideCardWidthPx)
-      // для fullWidth-картки: застосовується ЛИШЕ коли fullWidth truthy,
-      // через --wide-card-w (style) + md:w-[var(--wide-card-w)] (клас
-      // нижче) — на мобільному (без md:) НЕ застосовується.
-      wideWidthPx?: number;
+      // Задача "simplification of the card layout for letter practice" —
+      // ЛИШЕ практика (letterRearrangementPracticeLayout): 0-based індекс
+      // плитки, ПІСЛЯ якої SortableTileRow вставляє форсований розрив
+      // рядка (.practice-forced-line-break, globals.css). null/undefined
+      // (реальна вправа, чи практика без потреби в розриві) — жодного
+      // розриву, природний flex-wrap лишається НЕЗМІННИМ.
+      forcedBreakAfterIndex?: number | null;
     }
   ) {
     const word = config.words[wi];
@@ -462,17 +461,12 @@ export function LetterRearrangementExercise({
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
 
     return (
-      // Картка НІКОЛИ не займає повний рядок у РЕАЛЬНІЙ вправі — завжди
-      // half-width у 2-колонковому режимі, full-width в 1-колонковому.
-      // opts.fullWidth (лише практика, pairPracticeItems) — єдиний виняток:
-      // непарна/orphan картка без пари в рядку сітки, тепер content-width
-      // (WIDE_CARD_WIDTH_CLASS/wideCardWidthStyle, wide-card-width.ts), не
-      // буквально на всю ширину.
-      <div
-        key={wi}
-        style={opts.fullWidth ? wideCardWidthStyle(opts.wideWidthPx) : undefined}
-        className={`relative ${WORD_CARD}${opts.fullWidth ? ` ${WIDE_CARD_WIDTH_CLASS}` : ""}`}
-      >
+      // Задача "simplification of the card layout for letter practice" —
+      // КОЖНА картка (реальна вправа Й практика) завжди half-width у
+      // 2-колонковому режимі, full-width в 1-колонковому — без жодного
+      // винятку (попередні full-width/content-width класи практики
+      // прибрані цілком).
+      <div key={wi} className={`relative ${WORD_CARD}`}>
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -516,6 +510,7 @@ export function LetterRearrangementExercise({
               letterTile
               gapClassName="letter-tile-row-gap"
               lockedCount={opts.locked ? 0 : lockedCounts[wi]}
+              forcedBreakAfterIndex={opts.forcedBreakAfterIndex}
             />
           </div>
         </div>
@@ -590,13 +585,20 @@ export function LetterRearrangementExercise({
   // відмінність між режимами лишається лише в нумерації картки
   // (flatLayout, "довгі слова в кінці списку", крок 5 флет-режиму, не
   // стосується футера/розкриття).
-  // Задача "card pairing in the 2-column grid" — layout тепер завжди
-  // приходить від pairPracticeItems (flat-practice-layout.ts), в ОБОХ
-  // режимах (sceneStyle і флет): displayNumber — наскрізна нумерація в
-  // новому парному порядку; full — картка без пари в цьому рядку (непарний
-  // короткий/довгий залишок), рендериться на весь рядок сітки
-  // (md:col-span-2, renderWordCard нижче) замість half-width.
-  function renderPracticeItem(wi: number, layout: { displayNumber: number; full: boolean; wideWidthPx?: number }) {
+  // Задача "simplification of the card layout for letter practice" —
+  // layout тепер завжди приходить від pairPracticeItems
+  // (flat-practice-layout.ts), в ОБОХ режимах (sceneStyle і флет):
+  // displayNumber — наскрізна нумерація в новому парному порядку;
+  // fillerAfter — лише для непарного КОРОТКОГО залишку перед групою
+  // довгих (renderMaybeFiller нижче вставляє невидиму "filler"-клітинку
+  // сітки). forcedBreakAfterIndex — куди вставити форсований розрив
+  // усередині SortableTileRow, рахується ОКРЕМО (letterRearrangementPracticeLayout
+  // виклик, що дав cardClass для пари, лише інше поле результату).
+  function renderPracticeItem(
+    wi: number,
+    layout: { displayNumber: number; fillerAfter?: boolean },
+    forcedBreakAfterIndex: number | null
+  ) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
@@ -639,27 +641,36 @@ export function LetterRearrangementExercise({
       cardNumber: layout.displayNumber,
       revealedWordDetail,
       practiceFooter: footer,
-      fullWidth: layout.full,
-      wideWidthPx: layout.wideWidthPx,
+      forcedBreakAfterIndex,
     });
+  }
+
+  // Задача "an odd last card sits alone in a half-width column" —
+  // невидима "filler"-клітинка сітки (.practice-grid-filler, globals.css:
+  // display:none нижче md, щоб мобільний одноколонковий список лишався
+  // БЕЗ жодного зайвого елемента в потоці), що займає ДРУГУ клітинку рядка
+  // непарної короткої картки, коли за нею йдуть довгі (layout.fillerAfter,
+  // pairPracticeItems).
+  function renderMaybeFiller(layout: { fillerAfter?: boolean }, key: string) {
+    return layout.fillerAfter ? <div key={key} aria-hidden="true" className="practice-grid-filler" /> : null;
   }
 
   if (isPractice && isSceneMode) {
     const activeIndices = practiceUseBlocks ? (practiceBlocks[practiceActiveBlock] ?? []) : practiceWordIndices;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
-    // Задача "card pairing in the 2-column grid" — той самий pairPracticeItems,
-    // що флет-режим нижче (short-first/long-last + явне парування рядками),
-    // рахований ОКРЕМО на кожен активний блок (активний блок — те саме
-    // activeIndices, що й check/submitPractice нижче, порядок рендеру тут
-    // ніяк не чіпає payload перевірки — wi (id) лишається джерелом істини).
-    // lines — estimateLetterRearrangementCardRows, той самий точний
-    // естіматор, що blockDisplayOrder реальної вправи.
+    // Задача "simplification of the card layout for letter practice" —
+    // той самий pairPracticeItems, що флет-режим нижче (короткі з
+    // короткими, довгі з довгими), рахований ОКРЕМО на кожен активний
+    // блок (активний блок — те саме activeIndices, що й check/
+    // submitPractice нижче, порядок рендеру тут ніяк не чіпає payload
+    // перевірки — wi (id) лишається джерелом істини). practiceRowWidthPx —
+    // РЕАЛЬНА виміряна half-колонкова ширина (чи фолбек, доки не готова).
+    const activeLayouts = activeIndices.map((wi) =>
+      letterRearrangementPracticeLayout(config.words[wi].shuffledLetters.length, practiceRowWidthPx)
+    );
+    const forcedBreakByWi = new Map(activeIndices.map((wi, i) => [wi, activeLayouts[i].forcedBreakAfterIndex]));
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi) => ({
-        id: wi,
-        cardClass: letterRearrangementCardClass(config.words[wi].shuffledLetters.length),
-        wideWidthPx: letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText),
-      }))
+      activeIndices.map((wi, i) => ({ id: wi, cardClass: activeLayouts[i].cardClass }))
     );
     const sceneCheckButtonEl = (
       <button
@@ -705,13 +716,19 @@ export function LetterRearrangementExercise({
             checkButton={sceneCheckButtonEl}
           >
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item))}
+              {pairedActiveIndices.flatMap((item) => [
+                renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null),
+                renderMaybeFiller(item, `filler-${item.id}`),
+              ])}
             </div>
           </BlockNavigation>
         ) : (
           <>
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item))}
+              {pairedActiveIndices.flatMap((item) => [
+                renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null),
+                renderMaybeFiller(item, `filler-${item.id}`),
+              ])}
             </div>
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
@@ -734,12 +751,12 @@ export function LetterRearrangementExercise({
     // для submitPractice/перевірки нижче, лише порядок рендеру й видимі
     // номери міняються. lines — estimateLetterRearrangementCardRows, той
     // самий точний естіматор, що blockDisplayOrder реальної вправи.
+    const flatLayouts = practiceWordIndices.map((wi) =>
+      letterRearrangementPracticeLayout(config.words[wi].shuffledLetters.length, practiceRowWidthPx)
+    );
+    const flatForcedBreakByWi = new Map(practiceWordIndices.map((wi, i) => [wi, flatLayouts[i].forcedBreakAfterIndex]));
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi) => ({
-        id: wi,
-        cardClass: letterRearrangementCardClass(config.words[wi].shuffledLetters.length),
-        wideWidthPx: letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText),
-      }))
+      practiceWordIndices.map((wi, i) => ({ id: wi, cardClass: flatLayouts[i].cardClass }))
     );
     return (
       <div className={EXERCISE_STACK}>
@@ -760,7 +777,10 @@ export function LetterRearrangementExercise({
           {t("letterrearr.swapHintDesktop")}
         </p>
         <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item))}
+          {flatPracticeLayout.flatMap((item) => [
+            renderPracticeItem(item.id, item, flatForcedBreakByWi.get(item.id) ?? null),
+            renderMaybeFiller(item, `filler-${item.id}`),
+          ])}
         </div>
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}

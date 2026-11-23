@@ -37,6 +37,7 @@ export function SortableTileRow({
   extraContainerClassName = "",
   extraTileClassName = "",
   touchDrag = false,
+  forcedBreakAfterIndex = null,
 }: {
   items: string[];
   onChange: (next: string[]) => void;
@@ -77,6 +78,15 @@ export function SortableTileRow({
   // Пальцем-перетягування (нижче) — лише коли true; миша/перо завжди
   // йдуть нативним draggable-шляхом вище, без змін.
   touchDrag?: boolean;
+  // Задача "simplification of the card layout for letter practice" —
+  // ЛИШЕ letter_rearrangement практика (letterRearrangementPracticeLayout,
+  // estimate-card-rows.ts) передає: 0-based індекс плитки, ПІСЛЯ якої
+  // вставити форсований розрив рядка (.practice-forced-line-break,
+  // globals.css — display:none нижче md, щоб мобільний природний перенос
+  // лишався незмінним). null (дефолт, reorder.tsx і РЕАЛЬНА вправа
+  // letter_rearrangement — цей проп не передають) — жодного розриву,
+  // поведінка НЕЗМІННА.
+  forcedBreakAfterIndex?: number | null;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -224,7 +234,8 @@ export function SortableTileRow({
 
   return (
     <div className={`relative flex flex-wrap items-stretch ${gapClassName} ${extraContainerClassName}`}>
-      {items.map((text, i) => (
+      {items.flatMap((text, i) => {
+        const tile = (
         <div key={i} className="relative flex items-stretch">
           {/* Індикатор вставки — тонка вертикальна лінія кольору brand між
               плитками, ліворуч чи праворуч від наведеної, замість
@@ -304,7 +315,12 @@ export function SortableTileRow({
             <span className="absolute -right-[5px] top-0 bottom-0 w-0.5 rounded-full bg-brand" aria-hidden />
           )}
         </div>
-      ))}
+        );
+        if (forcedBreakAfterIndex === i) {
+          return [tile, <span key={`break-${i}`} aria-hidden="true" className="practice-forced-line-break" />];
+        }
+        return [tile];
+      })}
       {/* Ghost-клон, що слідує за пальцем — лише під час активного тач-
           перетягування (touchDragState.dragging по суті, виставляється
           лише ПІСЛЯ порогу в handleTouchPointerMove); position:fixed не

@@ -98,5 +98,14 @@ export function useWorkingTileLayout() {
   // там), інакше full (1-колонковий режим — кожна картка full-width).
   const perLineFor = useCallback((): number => (twoColumn ? perLineHalf : perLineFull), [twoColumn, perLineHalf, perLineFull]);
 
-  return { gridRef, twoColumn, perLineFor, ready: gridWidth > 0 };
+  // Задача "simplification of the card layout for letter practice" (п.5) —
+  // РЕАЛЬНА (виміряна ResizeObserver, не захардкоджена REFERENCE_ROW_WIDTH_PX)
+  // half-колонкова внутрішня ширина картки — практика "Робота над
+  // помилками" (letter-gaps.tsx/letter-rearrangement.tsx) підставляє це
+  // значення в letterGapsPracticeLayout/letterRearrangementPracticeLayout
+  // (estimate-card-rows.ts) замість фіксованої оцінки, коли воно вже
+  // готове (ready && twoColumn — поза 2-колонковим режимом ця величина не
+  // має сенсу, half ширини НЕ-двоколонкового контейнера ніяк не
+  // відповідає реальній картці, яка там full-width).
+  return { gridRef, twoColumn, perLineFor, halfCardInnerPx: halfCardInner, ready: gridWidth > 0 };
 }

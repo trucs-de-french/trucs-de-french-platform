@@ -28,9 +28,14 @@ import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
-import { estimateLetterGapsCardRows, letterGapsCardClass, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
+import {
+  estimateLetterGapsCardRows,
+  letterGapsPracticeLayout,
+  orderByEstimatedRows,
+  REFERENCE_ROW_WIDTH_PX,
+  type LetterGapsForcedBreak,
+} from "@/lib/exercises/estimate-card-rows";
 import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
-import { letterGapsWideCardWidthPx, WIDE_CARD_WIDTH_CLASS, wideCardWidthStyle } from "@/lib/exercises/wide-card-width";
 import { buildGapRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
@@ -171,7 +176,17 @@ export function LetterGapsExercise({
   // винятків. Без резерву лампочки: рядки клітинок ідуть НИЖЧЕ заголовка
   // картки, де лампочка (абсолютна, верхній правий кут) уже не заважає —
   // резерв лишається лише на самому заголовку (pr-[52px] нижче).
-  const { gridRef } = useWorkingTileLayout();
+  //
+  // Задача "simplification of the card layout for letter practice" (п.5) —
+  // ready/twoColumn/halfCardInnerPx потрібні ЛИШЕ для практики (нижче,
+  // practiceRowWidthPx): РЕАЛЬНА виміряна half-колонкова ширина замінює
+  // фіксовану оцінку (REFERENCE_ROW_WIDTH_PX), коли вона вже готова
+  // (ready && twoColumn — поза 2-колонковим режимом ця величина не має
+  // сенсу). displayOrder/renderBlock() (реальна вправа) і далі
+  // НЕЗМІННО використовують estimateLetterGapsCardRows БЕЗ третього
+  // аргументу (дефолт REFERENCE_ROW_WIDTH_PX) — ця задача їх не чіпає.
+  const { gridRef, ready, twoColumn, halfCardInnerPx } = useWorkingTileLayout();
+  const practiceRowWidthPx = ready && twoColumn ? halfCardInnerPx : REFERENCE_ROW_WIDTH_PX;
 
   // Показовий порядок карток — за ОЦІНЕНОЮ кількістю рядків клітинок
   // (estimateLetterGapsCardRows, ЧИСТА функція від даних слова, без
@@ -503,23 +518,13 @@ export function LetterGapsExercise({
       // картки, під полями. undefined (флет-практика/реальна вправа) —
       // нічого не рендериться.
       practiceFooter?: ReactNode;
-      // Задача "card pairing in the 2-column grid" — ЛИШЕ практика
-      // (pairPracticeItems, flat-practice-layout.ts), сцена-вигляд блоків:
-      // непарна картка без пари в своєму рядку сітки рендериться на всю
-      // ширину (md:col-span-2) замість half-width. Флет-режим застосовує
-      // той самий спан на СВОЄМУ зовнішньому wrapper-div (renderPracticeItem
-      // нижче), не тут — там grid-дитина не цей card, а той wrapper.
-      // undefined/false для реальної вправи — вона й далі ніколи не займає
-      // повний рядок.
-      fullWidth?: boolean;
-      // Задача "wide standalone card should be content-width, not full
-      // row width" — готова ЗОВНІШНЯ ширина (px, letterGapsWideCardWidthPx)
-      // для fullWidth-картки: застосовується ЛИШЕ коли fullWidth truthy,
-      // через --wide-card-w (style, wideCardWidthStyle) + статичний клас
-      // .practice-standalone-card (globals.css, WIDE_CARD_WIDTH_CLASS) —
-      // клас сам обгорнутий @media (min-width:768px), тож на мобільному
-      // НЕ застосовується, картка й так на всю ширину єдиної колонки.
-      wideWidthPx?: number;
+      // Задача "simplification of the card layout for letter practice" —
+      // ЛИШЕ практика (pairPracticeItems/letterGapsPracticeLayout):
+      // куди саме (після якої одиниці/фрагмента) вставити форсований
+      // розрив рядка всередині .word-units-row нижче — null/undefined
+      // (реальна вправа, чи практика без потреби в розриві) — нічого не
+      // вставляється, природний CSS-перенос лишається НЕЗМІННИМ.
+      forcedBreak?: LetterGapsForcedBreak | null;
     }
   ) {
     const word = config.words[wi];
@@ -546,17 +551,12 @@ export function LetterGapsExercise({
     // НИЖЧЕ заголовка, лампочка туди не сягає, резерв там не потрібен.
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
     return (
-      // Картка НІКОЛИ не займає повний рядок у РЕАЛЬНІЙ вправі — завжди
-      // half-width у 2-колонковому режимі, full-width в 1-колонковому.
-      // opts.fullWidth (лише сцена-вигляд практики, pairPracticeItems) —
-      // єдиний виняток: непарна/orphan/overflow картка без пари в рядку
-      // сітки, тепер content-width (WIDE_CARD_WIDTH_CLASS/wideCardWidthStyle,
-      // wide-card-width.ts), не буквально на всю ширину.
-      <div
-        key={wi}
-        style={opts.fullWidth ? wideCardWidthStyle(opts.wideWidthPx) : undefined}
-        className={`relative ${WORD_CARD}${opts.fullWidth ? ` ${WIDE_CARD_WIDTH_CLASS}` : ""}`}
-      >
+      // Задача "simplification of the card layout for letter practice" —
+      // КОЖНА картка (реальна вправа Й практика) завжди half-width у
+      // 2-колонковому режимі, full-width в 1-колонковому — без жодного
+      // винятку (попередні full-width/content-width класи практики
+      // прибрані цілком).
+      <div key={wi} className={`relative ${WORD_CARD}`}>
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -610,52 +610,78 @@ export function LetterGapsExercise({
                 .letter-group-row), щоб не подвоювався з gap-2 зовнішнього
                 flex-col контейнера. */}
             <div className="word-units-row">
-              {units.map((unit, ui) => (
-                <span key={ui} className="word-unit-group">
-                  {unitChunkGroups[ui].map((chunkChars, ci) => (
-                    <span key={ci} className="syllable-chunk">
-                      {groupChars(chunkChars).map((group, gi) => {
-                        if (group.type === "letters")
-                          return (
-                            <span
-                              key={gi}
-                              className="letter-tile-font letter-group-item whitespace-nowrap"
-                            >
-                              {group.text}
-                            </span>
-                          );
-                        gapIndex += 1;
-                        const gIdx = gapIndex;
-                        const status = gapLiveStatus(wi, gIdx);
-                        return (
-                          <input
-                            key={gi}
-                            ref={diacritics.fieldRef(`${wi},${gIdx}`)}
-                            maxLength={1}
-                            value={answers[wi][gIdx]}
-                            onChange={(e) => updateLetter(wi, gIdx, e.target.value, opts.gapOrder)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Backspace") handleBackspace(wi, gIdx, opts.gapOrder);
-                            }}
-                            onFocus={() => diacritics.onFocus(`${wi},${gIdx}`)}
-                            onBlur={diacritics.onBlur}
-                            disabled={opts.locked}
-                            className={`letter-tile-cell letter-tile-font letter-group-item border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
-                              hintedGaps.has(`${wi},${gIdx}`)
-                                ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                                : status === "correct"
-                                  ? "border-green-500 bg-green-50 dark:border-[var(--field-correct-border)] dark:bg-[var(--field-correct-bg)] dark:text-[var(--field-correct-ink)]"
-                                  : status === "incorrect"
-                                    ? "border-red-500 bg-red-50 dark:border-[var(--field-wrong-border)] dark:bg-[var(--field-wrong-bg)] dark:text-[var(--field-wrong-ink)]"
-                                    : "exercise-field glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50"
-                            }`}
-                          />
-                        );
-                      })}
-                    </span>
-                  ))}
-                </span>
-              ))}
+              {units.flatMap((unit, ui) => {
+                const unitEl = (
+                  <span key={ui} className="word-unit-group">
+                    {unitChunkGroups[ui].flatMap((chunkChars, ci) => {
+                      const chunkEl = (
+                        <span key={ci} className="syllable-chunk">
+                          {groupChars(chunkChars).map((group, gi) => {
+                            if (group.type === "letters")
+                              return (
+                                <span
+                                  key={gi}
+                                  className="letter-tile-font letter-group-item whitespace-nowrap"
+                                >
+                                  {group.text}
+                                </span>
+                              );
+                            gapIndex += 1;
+                            const gIdx = gapIndex;
+                            const status = gapLiveStatus(wi, gIdx);
+                            return (
+                              <input
+                                key={gi}
+                                ref={diacritics.fieldRef(`${wi},${gIdx}`)}
+                                maxLength={1}
+                                value={answers[wi][gIdx]}
+                                onChange={(e) => updateLetter(wi, gIdx, e.target.value, opts.gapOrder)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Backspace") handleBackspace(wi, gIdx, opts.gapOrder);
+                                }}
+                                onFocus={() => diacritics.onFocus(`${wi},${gIdx}`)}
+                                onBlur={diacritics.onBlur}
+                                disabled={opts.locked}
+                                className={`letter-tile-cell letter-tile-font letter-group-item border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
+                                  hintedGaps.has(`${wi},${gIdx}`)
+                                    ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                                    : status === "correct"
+                                      ? "border-green-500 bg-green-50 dark:border-[var(--field-correct-border)] dark:bg-[var(--field-correct-bg)] dark:text-[var(--field-correct-ink)]"
+                                      : status === "incorrect"
+                                        ? "border-red-500 bg-red-50 dark:border-[var(--field-wrong-border)] dark:bg-[var(--field-wrong-bg)] dark:text-[var(--field-wrong-ink)]"
+                                        : "exercise-field glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50"
+                                }`}
+                              />
+                            );
+                          })}
+                        </span>
+                      );
+                      // Задача "a lone visible letter attached to nothing
+                      // must not be alone on a line" — форсований розрив
+                      // УСЕРЕДИНІ ОДНІЄЇ (завеликої) одиниці, між її
+                      // власними силабічними фрагментами (opts.forcedBreak.
+                      // kind==="afterChunk", letterGapsPracticeLayout,
+                      // estimate-card-rows.ts).
+                      if (
+                        opts.forcedBreak?.kind === "afterChunk" &&
+                        opts.forcedBreak.unitIndex === ui &&
+                        opts.forcedBreak.chunkIndex === ci
+                      ) {
+                        return [chunkEl, <span key={`cbreak-${ci}`} aria-hidden="true" className="practice-forced-line-break" />];
+                      }
+                      return [chunkEl];
+                    })}
+                  </span>
+                );
+                // Задача "the last line must not end with a single unit
+                // either" — форсований розрив МІЖ двома ЦІЛИМИ одиницями
+                // переносу (opts.forcedBreak.kind==="afterUnit") —
+                // найтиповіший випадок (фраза з кількох слів).
+                if (opts.forcedBreak?.kind === "afterUnit" && opts.forcedBreak.unitIndex === ui) {
+                  return [unitEl, <span key={`ubreak-${ui}`} aria-hidden="true" className="practice-forced-line-break" />];
+                }
+                return [unitEl];
+              })}
             </div>
           </div>
         </div>
@@ -727,15 +753,21 @@ export function LetterGapsExercise({
   // (showToggle-картка TaskResult, той самий компонент, що звичайна
   // вправа), щоб не дублювати відповідь у двох місцях; лічильник спроб
   // лишається — у звичайної вправи нема свого еквівалента цього рядка.
-  // Задача "card pairing in the 2-column grid" — layout тепер завжди
-  // приходить від pairPracticeItems (flat-practice-layout.ts), в ОБОХ
-  // режимах (сцена-вигляд блоків і флет): displayNumber — наскрізна
-  // нумерація в новому парному порядку (1..N у межах активного блоку/
-  // флет-списку); full — картка без пари в цьому рядку, на всю ширину
-  // замість half-width.
+  // Задача "simplification of the card layout for letter practice" —
+  // layout тепер завжди приходить від pairPracticeItems
+  // (flat-practice-layout.ts), в ОБОХ режимах (сцена-вигляд блоків і
+  // флет): displayNumber — наскрізна нумерація в новому парному порядку
+  // (1..N у межах активного блоку/флет-списку); fillerAfter — лише для
+  // непарного КОРОТКОГО залишку перед групою довгих (renderMaybeFiller
+  // нижче вставляє невидиму "filler"-клітинку сітки, щоб сусідня довга
+  // картка не стала парою). forcedBreak — куди вставити форсований розрив
+  // усередині .word-units-row (renderWordCard), рахується ОКРЕМО (не
+  // частина layout — той самий letterGapsPracticeLayout виклик, що дав
+  // cardClass для пари, лише інше поле результату).
   function renderPracticeItem(
     wi: number,
-    layout: { displayNumber: number; full: boolean; wideWidthPx?: number },
+    layout: { displayNumber: number; fillerAfter?: boolean },
+    forcedBreak: LetterGapsForcedBreak | null,
     gapOrder: GapKey[],
     hideReveal = false
   ) {
@@ -771,8 +803,7 @@ export function LetterGapsExercise({
         hintDisabled: true,
         cardNumber: layout.displayNumber,
         practiceFooter: footer,
-        fullWidth: layout.full,
-        wideWidthPx: layout.wideWidthPx,
+        forcedBreak,
       });
     }
 
@@ -813,15 +844,7 @@ export function LetterGapsExercise({
       </p>
     ) : undefined;
     return (
-      // WIDE_CARD_WIDTH_CLASS/wideCardWidthStyle на ЦЬОМУ wrapper-div, не
-      // на самому renderWordCard — тут grid-дитина сітки САМЕ цей div
-      // (картка+статус-рядок разом), не внутрішня картка (на відміну від
-      // hideReveal-гілки вище, де renderWordCard — сам grid-дитина).
-      <div
-        key={wi}
-        style={layout.full ? wideCardWidthStyle(layout.wideWidthPx) : undefined}
-        className={`flex flex-col gap-1.5${layout.full ? ` ${WIDE_CARD_WIDTH_CLASS}` : ""}`}
-      >
+      <div key={wi} className="flex flex-col gap-1.5">
         {renderWordCard(wi, {
           detail: undefined,
           locked: false,
@@ -829,6 +852,7 @@ export function LetterGapsExercise({
           hintDisabled: true,
           cardNumber: layout.displayNumber,
           practiceFooter: footer,
+          forcedBreak,
         })}
         {isCorrect === true && (
           <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
@@ -837,28 +861,36 @@ export function LetterGapsExercise({
     );
   }
 
+  // Задача "an odd last card sits alone in a half-width column" —
+  // невидима "filler"-клітинка сітки (.practice-grid-filler, globals.css:
+  // display:none нижче md, щоб мобільний одноколонковий список лишався
+  // БЕЗ жодного зайвого елемента в потоці), що займає ДРУГУ клітинку рядка
+  // непарної короткої картки, коли за нею йдуть довгі (layout.fillerAfter,
+  // pairPracticeItems).
+  function renderMaybeFiller(layout: { fillerAfter?: boolean }, key: string) {
+    return layout.fillerAfter ? <div key={key} aria-hidden="true" className="practice-grid-filler" /> : null;
+  }
+
   if (isPractice && isSceneMode) {
     const activeIndices = practiceUseBlocks ? (practiceBlocks[practiceActiveBlock] ?? []) : practiceWordIndices;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
-    // Задача "card pairing in the 2-column grid" — той самий pairPracticeItems,
-    // що флет-режим нижче, рахований на активний блок; activeGapOrder далі
-    // будується з ЦЬОГО відображуваного порядку (не сирого activeIndices),
-    // інакше Tab/Enter-навігація між пропусками стрибала б за позиційним
-    // порядком, не за тим, що студент бачить на екрані (той самий принцип,
-    // що flatGapOrder нижче вже застосовує). lines — estimateLetterGapsCardRows,
-    // той самий точний естіматор, що blockDisplayOrder вище (НЕ chars.length —
-    // довжина в символах не пропорційна реальній кількості рядків картки,
-    // задача "pairing still mispairs cards 5/6, 7/8").
+    // Задача "simplification of the card layout for letter practice" —
+    // той самий pairPracticeItems, що флет-режим нижче, рахований на
+    // активний блок; activeGapOrder далі будується з ЦЬОГО відображуваного
+    // порядку (не сирого activeIndices), інакше Tab/Enter-навігація між
+    // пропусками стрибала б за позиційним порядком, не за тим, що студент
+    // бачить на екрані (той самий принцип, що flatGapOrder нижче вже
+    // застосовує). letterGapsPracticeLayout рахується ОДИН раз на слово —
+    // forcedBreakByWi зберігає ДРУГЕ поле результату (forcedBreak) для
+    // рендеру нижче, practiceRowWidthPx — РЕАЛЬНА виміряна half-колонкова
+    // ширина (чи фолбек, доки не готова), той самий принцип, що
+    // estimateLetterGapsCardRows вище.
+    const activeLayouts = activeIndices.map((wi) =>
+      letterGapsPracticeLayout(config.words[wi].chars, config.words[wi].hiddenLetters, practiceRowWidthPx)
+    );
+    const forcedBreakByWi = new Map(activeIndices.map((wi, i) => [wi, activeLayouts[i].forcedBreak]));
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi) => ({
-        id: wi,
-        cardClass: letterGapsCardClass(config.words[wi].chars, config.words[wi].hiddenLetters),
-        // wideWidthPx потрібен лише для cardClass:"wideSingleLine", але
-        // рахується для КОЖНОГО елемента — pairPracticeItems сам визначає,
-        // хто саме "wideSingleLine" (helper не знає наперед), і бере це
-        // значення лише звідти, де воно справді потрібне.
-        wideWidthPx: letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText),
-      }))
+      activeIndices.map((wi, i) => ({ id: wi, cardClass: activeLayouts[i].cardClass }))
     );
     const activeGapOrder = gapOrderFor(pairedActiveIndices.map((item) => item.id));
     // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
@@ -958,7 +990,10 @@ export function LetterGapsExercise({
                 одного. */}
             <div className={RESULT_ROW_GAP_CLASS}>
               <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-                {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, activeGapOrder, true))}
+                {pairedActiveIndices.flatMap((item) => [
+                  renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null, activeGapOrder, true),
+                  renderMaybeFiller(item, `filler-${item.id}`),
+                ])}
               </div>
               {answersPanel}
             </div>
@@ -967,7 +1002,10 @@ export function LetterGapsExercise({
           <>
             <div className={RESULT_ROW_GAP_CLASS}>
               <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-                {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, activeGapOrder, true))}
+                {pairedActiveIndices.flatMap((item) => [
+                  renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null, activeGapOrder, true),
+                  renderMaybeFiller(item, `filler-${item.id}`),
+                ])}
               </div>
               {answersPanel}
             </div>
@@ -1004,12 +1042,12 @@ export function LetterGapsExercise({
     // недооцінює/переоцінює реальну кількість рядків для слів з кількома
     // одиницями переносу чи видимими літерами). wi (id) лишається
     // джерелом для submitPractice/перевірки нижче.
+    const flatLayouts = practiceWordIndices.map((wi) =>
+      letterGapsPracticeLayout(config.words[wi].chars, config.words[wi].hiddenLetters, practiceRowWidthPx)
+    );
+    const flatForcedBreakByWi = new Map(practiceWordIndices.map((wi, i) => [wi, flatLayouts[i].forcedBreak]));
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi) => ({
-        id: wi,
-        cardClass: letterGapsCardClass(config.words[wi].chars, config.words[wi].hiddenLetters),
-        wideWidthPx: letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText),
-      }))
+      practiceWordIndices.map((wi, i) => ({ id: wi, cardClass: flatLayouts[i].cardClass }))
     );
     // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,
     // вище): перераховується на ВІДОБРАЖУВАНИЙ порядок слів (flatPracticeLayout
@@ -1021,7 +1059,10 @@ export function LetterGapsExercise({
     return (
       <div className={EXERCISE_STACK}>
         <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item, flatGapOrder, false))}
+          {flatPracticeLayout.flatMap((item) => [
+            renderPracticeItem(item.id, item, flatForcedBreakByWi.get(item.id) ?? null, flatGapOrder, false),
+            renderMaybeFiller(item, `filler-${item.id}`),
+          ])}
         </div>
 
         {diacritics.rect && diacritics.activeKey && (
