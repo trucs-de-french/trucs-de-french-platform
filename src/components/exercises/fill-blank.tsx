@@ -29,6 +29,8 @@ import {
   fillBlankWordPoolUsedLabel,
   fillBlankFieldPlaceholder,
   poolRemainingLabel,
+  poolIntruderLabel,
+  poolIntruderCount,
 } from "@/lib/exercises/default-task-labels";
 import { useT } from "@/lib/i18n/context";
 import { normalize } from "@/lib/exercises/grade";
@@ -144,6 +146,15 @@ export function FillBlankExercise({
   const [answers, setAnswers] = useState<string[]>(() => Array(blankCount).fill(""));
   const isPractice = !!practice;
   const practiceSet = new Set(practice?.onlyItemIds ?? []);
+  // Задача "fill_blank: show intruder count too" — той самий intruderCount,
+  // що drag-drop.tsx, лише тут "скільки пропусків зараз заповнювати"
+  // залежить від режиму: сцена — УСІ пропуски (blankCount), практика —
+  // лише ЩЕ НЕ виправлені (practiceSet.size, НЕ blankCount: template тут
+  // завжди повний, звужується лише wordBank, sanitizeFillBlankForPractice/
+  // filterWordBank). Число СТАЛЕ під час самого викреслювання (не залежить
+  // від crossedOut) — залежить лише від config.wordBank.length і режиму,
+  // не від того, що студент уже клікнув.
+  const intruderCount = poolIntruderCount(config.wordBank?.length ?? 0, isPractice ? practiceSet.size : blankCount);
   const practiceCheck = usePracticeCheck(taskId);
   const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
@@ -425,20 +436,35 @@ export function FillBlankExercise({
               onClick={() => setBankExpanded((v) => !v)}
             >
               <span className="word-pool-label">{crossOutPoolLabel(lang)}</span>
-              <span className="word-pool-count">
-                {/* Десктоп/планшет — незмінний текст "X з Y"; мобільний
-                    (<=640px, CSS нижче) — "N restants" того самого вигляду,
-                    що й у drag-банку (poolRemainingLabel, той самий i18n
-                    ключ pool.*, що image-match.tsx/drag-drop.tsx). Два
-                    <span> з display-перемикачем — той самий прийом, що
-                    .scroll-hint-desktop/-mobile (crossword.tsx), не
-                    JS-перевірка ширини. */}
-                <span className="word-pool-count-desktop">
-                  {fillBlankWordPoolUsedLabel(lang, crossedOut.size, config.wordBank.length)}
+              {/* .word-pool-count-group — та сама обгортка, що drag-drop.tsx
+                  (лічильник + "N intrus" поряд, перед шевроном): на
+                  десктопі весь рядок лишається nowrap/space-between
+                  (.word-pool-label-row), на мобільному (@media max-width:
+                  640px, globals.css) переносить ЦІЛУ групу пілюль під
+                  підпис, а якщо й сама група не влазить — переноситься
+                  вже всередині себе (та сама CSS-умова, що drag_drop,
+                  жодних нових правил не додано). */}
+              <span className="word-pool-count-group flex items-center gap-2">
+                <span className="word-pool-count">
+                  {/* Десктоп/планшет — незмінний текст "X з Y"; мобільний
+                      (<=640px, CSS нижче) — "N restants" того самого вигляду,
+                      що й у drag-банку (poolRemainingLabel, той самий i18n
+                      ключ pool.*, що image-match.tsx/drag-drop.tsx). Два
+                      <span> з display-перемикачем — той самий прийом, що
+                      .scroll-hint-desktop/-mobile (crossword.tsx), не
+                      JS-перевірка ширини. */}
+                  <span className="word-pool-count-desktop">
+                    {fillBlankWordPoolUsedLabel(lang, crossedOut.size, config.wordBank.length)}
+                  </span>
+                  <span className="word-pool-count-mobile">
+                    {poolRemainingLabel(lang, config.wordBank.length - crossedOut.size)}
+                  </span>
                 </span>
-                <span className="word-pool-count-mobile">
-                  {poolRemainingLabel(lang, config.wordBank.length - crossedOut.size)}
-                </span>
+                {intruderCount > 0 && (
+                  <span className="word-pool-count word-pool-count--intruder">
+                    {poolIntruderLabel(lang, intruderCount)}
+                  </span>
+                )}
               </span>
               <span className="word-pool-fb-chevron" aria-hidden="true">
                 {bankExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}

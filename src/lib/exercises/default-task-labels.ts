@@ -111,8 +111,31 @@ export function poolRemainingLabel(lang: UiLang, count: number): string {
 export function fillBlankWordPoolUsedLabel(lang: UiLang, used: number, total: number): string {
   return t(lang, "pool.usedOfTotal", { used, total });
 }
-export function dragDropIntruderLabel(lang: UiLang, count: number): string {
+// Перейменовано з dragDropIntruderLabel (задача "fill_blank: show
+// intruder count too") — та сама функція, тепер спільна для drag_drop і
+// fill_blank (обидва .word-pool-count--intruder), жодної drag_drop-
+// специфічної логіки тут і не було.
+export function poolIntruderLabel(lang: UiLang, count: number): string {
   return lang === "en" ? `${count} extra` : `${count} intrus`;
+}
+// Скільки слів банку "зайві" (не рахуючи принаймні ОДНЕ слово на кожен
+// пропуск, що студент МАЄ заповнити зараз) — той самий intruderCount, що
+// drag-drop.tsx вже рахує. Clamp до 0 (ніколи від'ємне): банк, менший за
+// кількість пропусків, не має жодного зайвого слова, а не "мінус N".
+// bankSize/blanksToFill — уже готові числа від викликача: сцена передає
+// повний розмір банку й ВСІ пропуски завдання; практика — відфільтрований
+// розмір банку (filterWordBank, sanitize.ts) і лише пропуски, що СТУДЕНТ
+// ще має заповнити (не всі пропуски завдання) — рівність з результатом
+// сцени тримається, доки адмінський банк дійсно містить по слову на
+// КОЖЕН пропуск (filterWordBank забирає слово лише тоді, коли справді
+// знаходить відповідний запис): пропуск, чиєї відповіді в банку взагалі
+// не було (банк — суто довідковий список, не зобов'язаний покривати
+// кожен пропуск), filterWordBank не звужує — тоді практичне число може
+// вийти ТРОХИ більшим за сценове для цього конкретного завдання. Формула
+// й тут лишається буквальною "розмір банку мінус пропуски" (так, як
+// задача й просить), не вгадуванням, яке саме слово "зайве".
+export function poolIntruderCount(bankSize: number, blanksToFill: number): number {
+  return Math.max(0, bankSize - blanksToFill);
 }
 // sort_columns — той самий .word-pool, що fill_blank/drag_drop/image_match,
 // але пул (на відміну від них) не зникає з розмітки, коли спорожнів (часткова

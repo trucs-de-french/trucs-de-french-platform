@@ -23,7 +23,8 @@ import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
   dragPoolLabel,
   poolRemainingLabel,
-  dragDropIntruderLabel,
+  poolIntruderLabel,
+  poolIntruderCount,
   dragDropSlotPlaceholder,
   dragDropSlotPlaceholderShort,
 } from "@/lib/exercises/default-task-labels";
@@ -153,7 +154,7 @@ export function DragDropExercise({
   // компонента (раніше жило лише всередині IIFE рендера нижче), бо
   // useWordPoolCarousel (той самий хук, що image-match.tsx) потребує
   // remaining ДО рендера, для recompute() на зміну кількості чипів.
-  const intruderCount = config.bank.length - totalBlanks;
+  const intruderCount = poolIntruderCount(config.bank.length, totalBlanks);
   const remaining = config.bank.length - usedBankIndices.size;
   const poolTrackRef = useRef<HTMLDivElement>(null);
   const carousel = useWordPoolCarousel(poolTrackRef, remaining);
@@ -259,7 +260,7 @@ export function DragDropExercise({
                 </span>
                 {intruderCount > 0 && (
                   <span className="word-pool-count word-pool-count--intruder">
-                    {dragDropIntruderLabel(lang, intruderCount)}
+                    {poolIntruderLabel(lang, intruderCount)}
                   </span>
                 )}
               </span>
@@ -459,7 +460,7 @@ export function DragDropExercise({
               </span>
               {intruderCount > 0 && (
                 <span className="word-pool-count word-pool-count--intruder">
-                  {dragDropIntruderLabel(lang, intruderCount)}
+                  {poolIntruderLabel(lang, intruderCount)}
                 </span>
               )}
             </span>
