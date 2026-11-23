@@ -11,6 +11,7 @@ import {
   confirmedSolvedBlankIds,
   shouldAutoReveal,
   shouldShowAttemptFooter,
+  aggregateWrongItems,
 } from "./error-review";
 
 let failures = 0;
@@ -263,6 +264,174 @@ function assert(condition: boolean, label: string) {
 
 {
   assert(shouldShowAttemptFooter(undefined, undefined) === false, "footer never shows before any attempt");
+}
+
+// --- aggregateWrongItems: "unanswered items from unattempted blocks never
+// reach mistakes" (bug fix) — an item the student never touched in ANY
+// historical mistakes row must count as wrong, not silently vanish. -------
+
+// letter_gaps: block 1 (words 0-2) answered, block 2 (words 3-4) never
+// attempted at all (null -> studentLetters: [] in every row that exists).
+{
+  const config = { words: [{}, {}, {}, {}, {}] };
+  const detail = {
+    words: [
+      { studentLetters: ["x"], correctLetters: ["a"], isCorrect: false }, // wrong, in scope
+      { studentLetters: ["y"], correctLetters: ["b"], isCorrect: false }, // wrong, in scope
+      { studentLetters: ["c"], correctLetters: ["c"], isCorrect: true }, // correct, in scope
+      { studentLetters: [], correctLetters: ["d"], isCorrect: false }, // never attempted (block 2)
+      { studentLetters: [], correctLetters: ["e"], isCorrect: false }, // never attempted (block 2)
+    ],
+  };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "letter_gaps", config);
+  assert(
+    [...out].sort().join(",") === "0,1,3,4",
+    "letter_gaps: block 1's wrong words AND block 2's never-attempted words are all wrong; the correct word 2 is not"
+  );
+}
+
+// letter_gaps: fully correct (all in scope, all correct) -> zero mistakes.
+{
+  const config = { words: [{}, {}, {}] };
+  const detail = {
+    words: [
+      { studentLetters: ["a"], correctLetters: ["a"], isCorrect: true },
+      { studentLetters: ["b"], correctLetters: ["b"], isCorrect: true },
+      { studentLetters: ["c"], correctLetters: ["c"], isCorrect: true },
+    ],
+  };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "letter_gaps", config);
+  assert(out.length === 0, "letter_gaps: a fully correct submission of every word gives zero mistakes");
+}
+
+// letter_gaps: fully unanswered — no mistakes row exists at all (the task
+// was never submitted even once), but the task's own word count is known.
+{
+  const config = { words: [{}, {}, {}] };
+  const out = aggregateWrongItems([], "letter_gaps", config);
+  assert(
+    [...out].sort().join(",") === "0,1,2",
+    "letter_gaps: with no mistakes row at all, every configured word counts as wrong, not zero"
+  );
+}
+
+// letter_gaps: partially filled word (some letters typed, some left empty,
+// but the array is dense/full-length — the real shape letter-gaps.tsx always
+// sends for an ATTEMPTED word) stays wrong via the normal per-row path, not
+// the new fallback — the fix must not change this already-correct case.
+{
+  const config = { words: [{}] };
+  const detail = {
+    words: [{ studentLetters: ["a", ""], correctLetters: ["a", "b"], isCorrect: false }],
+  };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "letter_gaps", config);
+  assert([...out].join(",") === "0", "letter_gaps: a partially filled (attempted) word is still wrong, as before");
+}
+
+// letter_rearrangement: block 2 never attempted (inScope: false) is wrong,
+// same shape as letter_gaps but via the explicit inScope field.
+{
+  const config = { words: [{}, {}] };
+  const detail = {
+    words: [
+      { letters: [], isCorrect: true, inScope: true },
+      { letters: [], isCorrect: false, inScope: false },
+    ],
+  };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "letter_rearrangement", config);
+  assert(
+    [...out].join(",") === "1",
+    "letter_rearrangement: the never-attempted word (inScope: false) counts as wrong"
+  );
+}
+
+// multiple_choice: item "b" never answered in any row -> omitted from every
+// row's detail.items entirely (gradeMultipleChoice's own scoping) -> must
+// still end up wrong via the config-aware fallback.
+{
+  const config = { items: [{ id: "a" }, { id: "b" }] };
+  const detail = { items: [{ id: "a", options: [{ correct: true, selected: false }] }] };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "multiple_choice", config);
+  assert(
+    [...out].sort().join(",") === "a,b",
+    "multiple_choice: item a is wrong as answered, item b (never answered) is also wrong"
+  );
+}
+
+// true_false: statement "b" never answered.
+{
+  const config = { statements: [{ id: "a" }, { id: "b" }] };
+  const detail = { statements: [{ id: "a", isCorrect: false }] };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "true_false", config);
+  assert([...out].sort().join(",") === "a,b", "true_false: the never-answered statement b is also wrong");
+}
+
+// word_choice: sentence "b" never answered.
+{
+  const config = { sentences: [{ id: "a" }, { id: "b" }] };
+  const detail = { sentences: [{ id: "a", isCorrect: false }] };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "word_choice", config);
+  assert([...out].sort().join(",") === "a,b", "word_choice: the never-answered sentence b is also wrong");
+}
+
+// matching: pair "p2" never answered (gradeMatching's completePairs omits
+// unanswered lefts from pairPoints entirely).
+{
+  const config = {
+    pairs: [
+      { id: "p1", left: "chat", right: "cat" },
+      { id: "p2", left: "chien", right: "dog" },
+    ],
+  };
+  const detail = { pairPoints: [{ id: "p1", isCorrect: false }] };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "matching", config);
+  assert([...out].sort().join(",") === "p1,p2", "matching: the never-answered pair p2 is also wrong");
+}
+
+// table_fill: row "r2" never answered (gradeTableFill's answeredRowIds
+// omits unanswered rows from blanks entirely).
+{
+  const config = {
+    rows: [
+      { id: "r1", left: "a", right: "1" },
+      { id: "r2", left: "b", right: "2" },
+    ],
+  };
+  const detail = { blanks: [{ rowId: "r1", isCorrect: false }] };
+  const out = aggregateWrongItems([{ createdAt: "2026-01-01T00:00:00Z", detail }], "table_fill", config);
+  assert([...out].sort().join(",") === "r1,r2", "table_fill: the never-answered row r2 is also wrong");
+}
+
+// Confirms the legitimate purpose of the scope check is preserved: a NEWER
+// row that only covers block 1 must not override an OLDER row where block 2
+// was genuinely attempted and fixed — the fallback must only add ids never
+// seen by ANY row, not let an unscoped newer row shadow a scoped older one.
+{
+  const config = { words: [{}, {}] };
+  const olderRowBlock2Fixed = {
+    words: [
+      { studentLetters: [], correctLetters: ["a"], isCorrect: false }, // block 1, not this row's concern
+      { studentLetters: ["b"], correctLetters: ["b"], isCorrect: true }, // block 2, fixed here
+    ],
+  };
+  const newerRowBlock1Only = {
+    words: [
+      { studentLetters: ["x"], correctLetters: ["a"], isCorrect: false }, // block 1, still wrong
+      { studentLetters: [], correctLetters: ["b"], isCorrect: false }, // block 2, not attempted THIS time
+    ],
+  };
+  const out = aggregateWrongItems(
+    [
+      { createdAt: "2026-01-01T00:00:00Z", detail: olderRowBlock2Fixed },
+      { createdAt: "2026-01-02T00:00:00Z", detail: newerRowBlock1Only },
+    ],
+    "letter_gaps",
+    config
+  );
+  assert(
+    [...out].join(",") === "0",
+    "letter_gaps: word 1 was genuinely fixed in an older row and must stay out of the wrong set, even though the newest row didn't re-cover it"
+  );
 }
 
 if (failures > 0) {
