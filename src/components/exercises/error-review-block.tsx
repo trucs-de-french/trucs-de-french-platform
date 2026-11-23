@@ -13,6 +13,7 @@ import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review
 import { GlassBlock } from "@/components/glass-block";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskPanelHeader } from "./task-panel-header";
+import { BlockTabs } from "./block-navigation";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import type { TaskTypeKey } from "@/lib/exercises/default-task-labels";
 import { MultipleChoiceExercise } from "./multiple-choice";
@@ -411,8 +412,31 @@ function ErrorReviewPractice({
   // далі має власний внутрішній EXERCISE_STACK (вкладений flex-контейнер,
   // не той самий) — цей зовнішній рівень зачіпає лише відстань заголовок↔
   // exerciseNode, внутрішня розкладка самої вправи незмінна.
+  //
+  // Задача "every opened exercise must show the plaque" — 7 типів
+  // (multiple_choice/true_false/word_choice/drag_drop/image_match/
+  // listening/reorder) не в жодному Set (error-review.ts), тож
+  // showWrapperHeader тут ЗАВЖДИ true (в обох flow) — їхня ВЛАСНА
+  // практична гілка (if (isPractice) return (...)) ніколи не малює
+  // BlockTabs сама (на відміну від реальної вправи нижче, тим самим
+  // компонентом), тож плашка була відсутня взагалі в "Робота над
+  // помилками" для цих 7 типів. Додавати BlockTabs УСЕРЕДИНІ exerciseNode
+  // (у самому компоненті вправи) НЕ підходить: .task-header-strip-anchor
+  // (globals.css) рахує свій від'ємний margin відносно верхнього краю
+  // .glass-block-panel і МУСИТЬ бути ПЕРШОЮ дитиною контенту панелі —
+  // TaskPanelHeader нижче вже є попереднім сиблінгом exerciseNode у цій
+  // самій обгортці, тож анкор усередині exerciseNode був би НЕ першим.
+  // BlockTabs тут, ПЕРЕД TaskPanelHeader, — єдине місце, де плашка може
+  // бути справжньою першою дитиною панелі для цих 7 типів. Безпечно для
+  // решти (plaqueText undefined у флет-режимі, де ці 7 типів і так сюди
+  // доходять, і для типів, чий showWrapperHeader false — вони взагалі не
+  // доходять до return нижче): BlockTabs повертає null, коли нема що
+  // показати (plaqueText falsy і немає вкладок) — жодної порожньої
+  // плашки, жодного дубля для типів, що вже малюють власну (ті не
+  // потрапляють у цю гілку взагалі).
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         instructionText={configForHeader.instructions ?? instructionDefaults?.instruction}
         subInstructionText={taskTranslationLine(
