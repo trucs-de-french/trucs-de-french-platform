@@ -1,7 +1,7 @@
 // Немає тестового фреймворку в проєкті (package.json) — простий assert-
 // скрипт, той самий принцип, що format-reveal-answer.test.ts.
 // Запуск вручну: npx tsx src/lib/exercises/flat-practice-layout.test.ts
-import { pairPracticeItems, FLAT_PRACTICE_LONG_WORD_THRESHOLD } from "./flat-practice-layout";
+import { pairPracticeItems } from "./flat-practice-layout";
 
 let failures = 0;
 function assert(condition: boolean, label: string) {
@@ -11,23 +11,27 @@ function assert(condition: boolean, label: string) {
   }
 }
 
-const T = FLAT_PRACTICE_LONG_WORD_THRESHOLD;
-assert(T === 8, "threshold derived from the layout constants is 8 tiles");
-
-// Довжини для точних кількостей рядків (lineCountFor): 1 рядок <= T,
-// 2 рядки — (T, 2T], 3 рядки — (2T, 3T].
+// lines — та сама величина, що викликачі (letter-gaps.tsx/letter-
+// rearrangement.tsx) тепер передають з estimateLetterGapsCardRows/
+// estimateLetterRearrangementCardRows (estimate-card-rows.ts) — ЦЕЙ файл
+// лише перевіряє чисту логіку парування/сортування за вже готовим
+// числом рядків, не саму оцінку (та має власні тести, estimate-card-
+// rows.test.ts, якщо існує — тут lines задаються напряму, без проксі
+// через довжину символів, задача "pairing still mispairs cards 5/6, 7/8":
+// довжина символів НЕ пропорційна реальній кількості рядків для
+// letter_gaps, звідси й перехід на lines замість length).
 const SHORT = 1;
-const LONG_2_LINES = T + 1;
-const LONG_3_LINES = 2 * T + 1;
+const LINES_2 = 2;
+const LINES_3 = 3;
 
 // --- all-short: усі парами, жодного full-рядка -----------------------------
 
 {
   const out = pairPracticeItems([
-    { id: "a", length: SHORT },
-    { id: "b", length: SHORT },
-    { id: "c", length: SHORT },
-    { id: "d", length: SHORT },
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "c", lines: SHORT },
+    { id: "d", lines: SHORT },
   ]);
   assert(out.map((i) => i.id).join(",") === "a,b,c,d", "all-short (even count) keeps original order");
   assert(out.every((i) => !i.full), "all-short even count has no full-width row");
@@ -38,10 +42,10 @@ const LONG_3_LINES = 2 * T + 1;
 
 {
   const out = pairPracticeItems([
-    { id: "p", length: LONG_2_LINES },
-    { id: "q", length: LONG_3_LINES },
-    { id: "r", length: LONG_2_LINES },
-    { id: "s", length: LONG_3_LINES },
+    { id: "p", lines: LINES_2 },
+    { id: "q", lines: LINES_3 },
+    { id: "r", lines: LINES_2 },
+    { id: "s", lines: LINES_3 },
   ]);
   assert(out.map((i) => i.id).join(",") === "p,q,r,s", "all-long (even count) keeps original order");
   assert(out.every((i) => !i.full), "all-long even count has no full-width row");
@@ -51,9 +55,9 @@ const LONG_3_LINES = 2 * T + 1;
 
 {
   const out = pairPracticeItems([
-    { id: "a", length: SHORT },
-    { id: "b", length: SHORT },
-    { id: "c", length: SHORT },
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "c", lines: SHORT },
   ]);
   assert(out.map((i) => i.id).join(",") === "a,b,c", "odd shorts with no longs keep original order");
   assert(
@@ -66,10 +70,10 @@ const LONG_3_LINES = 2 * T + 1;
 
 {
   const out = pairPracticeItems([
-    { id: "a", length: SHORT },
-    { id: "b", length: SHORT },
-    { id: "c", length: SHORT },
-    { id: "long2", length: LONG_2_LINES },
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "c", lines: SHORT },
+    { id: "long2", lines: LINES_2 },
   ]);
   assert(
     out.map((i) => i.id).join(",") === "a,b,c,long2",
@@ -85,10 +89,10 @@ const LONG_3_LINES = 2 * T + 1;
 
 {
   const out = pairPracticeItems([
-    { id: "a", length: SHORT },
-    { id: "b", length: SHORT },
-    { id: "c", length: SHORT },
-    { id: "long3", length: LONG_3_LINES },
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "c", lines: SHORT },
+    { id: "long3", lines: LINES_3 },
   ]);
   assert(
     out.map((i) => i.id).join(",") === "a,b,c,long3",
@@ -105,11 +109,11 @@ const LONG_3_LINES = 2 * T + 1;
 
 {
   const out = pairPracticeItems([
-    { id: "a", length: SHORT },
-    { id: "b", length: SHORT },
-    { id: "p", length: LONG_2_LINES },
-    { id: "q", length: LONG_2_LINES },
-    { id: "r", length: LONG_2_LINES },
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "p", lines: LINES_2 },
+    { id: "q", lines: LINES_2 },
+    { id: "r", lines: LINES_2 },
   ]);
   assert(out.map((i) => i.id).join(",") === "a,b,p,q,r", "shorts first (paired), then longs (paired + odd one last)");
   assert(out[0]!.full === false && out[1]!.full === false, "the two shorts pair up");
@@ -121,10 +125,10 @@ const LONG_3_LINES = 2 * T + 1;
 
 {
   const out = pairPracticeItems([
-    { id: "a", length: SHORT },
-    { id: "b", length: SHORT },
-    { id: "p", length: LONG_2_LINES },
-    { id: "q", length: LONG_3_LINES },
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "p", lines: LINES_2 },
+    { id: "q", lines: LINES_3 },
   ]);
   assert(out.map((i) => i.id).join(",") === "a,b,p,q", "even shorts then even longs, both groups stay in order");
   assert(out.every((i) => !i.full), "no full-width row needed when both groups are even");
@@ -140,30 +144,30 @@ const LONG_3_LINES = 2 * T + 1;
 // --- single card: always stands alone, full-width --------------------------
 
 {
-  const outShort = pairPracticeItems([{ id: "only", length: SHORT }]);
+  const outShort = pairPracticeItems([{ id: "only", lines: SHORT }]);
   assert(outShort.length === 1 && outShort[0]!.full === true, "a single short card stands alone, full-width");
 
-  const outLong = pairPracticeItems([{ id: "only", length: LONG_2_LINES }]);
+  const outLong = pairPracticeItems([{ id: "only", lines: LINES_2 }]);
   assert(outLong.length === 1 && outLong[0]!.full === true, "a single long card stands alone, full-width");
 }
 
-// --- threshold boundary (affects line count, not a per-item flag) ----------
+// --- 3+ lines never pairs with anything shorter than itself-1 --------------
 
 {
+  // A long-long pair where one has 2 lines and the other 4 lines is still a
+  // normal pair (pairing only restricts the SHORT/first-long boundary — two
+  // "long" items never get a line-difference check between each other).
   const out = pairPracticeItems([
-    { id: "over", length: T + 1 },
-    { id: "exact", length: T },
+    { id: "p", lines: LINES_2 },
+    { id: "q", lines: 4 },
   ]);
-  assert(
-    out.map((i) => i.id).join(",") === "exact,over",
-    "an item exactly at the threshold is short (1 line, sorts before an over-threshold item), not long"
-  );
+  assert(out.every((i) => !i.full), "two long items always pair with each other regardless of their own line gap");
 }
 
 // --- ids are passed through untouched, only order/numbering/full change ---
 
 {
-  const items = [{ id: 42, length: 1 }, { id: 7, length: 50 }];
+  const items = [{ id: 42, lines: 1 }, { id: 7, lines: 5 }];
   const out = pairPracticeItems(items);
   assert(out.every((i) => typeof i.id === "number"), "ids keep their original type/value, never regenerated");
   assert(new Set(out.map((i) => i.id)).size === 2, "every input id appears exactly once in the output");

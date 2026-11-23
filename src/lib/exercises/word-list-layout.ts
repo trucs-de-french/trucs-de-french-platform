@@ -9,10 +9,21 @@
 // за замовчуванням у CSS grid), номер+підказка мають лишатись на ОДНІЙ
 // висоті в обох картках рядка, а не "спливати" до центру короткої картки;
 // на горизонтальне вирівнювання (зліва) не впливає — це вісь flex-col.
+// flex-1 (задача "equal card height" — rows still had uneven heights
+// despite grid stretch) — коли ЦЯ картка не сама є grid-дитиною, а
+// вкладена в додатковий flex-col wrapper (letter-gaps.tsx: флет-режим
+// практики, wrapper навколо картки+рядка "Правильно"), САМЕ wrapper
+// розтягується на висоту рядка (grid stretch), а вкладена картка без
+// flex-1 лишається на висоті свого вмісту — звідси порожній простір під
+// короткою карткою попри те, що сітка вже стягнула сусідні клітинки до
+// однакової висоти. flex-1 всередині flex-контейнера займає всю вільну
+// висоту; поза flex-контейнером (картка — САМА grid-дитина, як у
+// сцена-вигляді практики й у реальній вправі) ця властивість інертна —
+// grid-дитини й так уже стягнуті, зміна нічого не чіпає.
 export const WORD_CARD =
   // word-card — маркер для globals.css (поле-на-картці .word-card .exercise-field),
   // та сама роль, що .glass-item-card для інших типів вправ.
-  "word-card flex min-w-0 flex-col justify-start gap-2 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white p-3.5 glass-gap-shadow dark:shadow-sm dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
+  "word-card flex flex-1 min-w-0 flex-col justify-start gap-2 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white p-3.5 glass-gap-shadow dark:shadow-sm dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
 
 // Розбиває фразу на "одиниці переносу" за пробілом — сам пробіл ВІДКИДАЄТЬСЯ
 // (він стає gap-2 у розкладці, не окремим елементом). Спільна для

@@ -825,9 +825,15 @@ export function LetterGapsExercise({
     // будується з ЦЬОГО відображуваного порядку (не сирого activeIndices),
     // інакше Tab/Enter-навігація між пропусками стрибала б за позиційним
     // порядком, не за тим, що студент бачить на екрані (той самий принцип,
-    // що flatGapOrder нижче вже застосовує).
+    // що flatGapOrder нижче вже застосовує). lines — estimateLetterGapsCardRows,
+    // той самий точний естіматор, що blockDisplayOrder вище (НЕ chars.length —
+    // довжина в символах не пропорційна реальній кількості рядків картки,
+    // задача "pairing still mispairs cards 5/6, 7/8").
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi) => ({ id: wi, length: config.words[wi].chars.length }))
+      activeIndices.map((wi) => ({
+        id: wi,
+        lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
+      }))
     );
     const activeGapOrder = gapOrderFor(pairedActiveIndices.map((item) => item.id));
     // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
@@ -952,17 +958,21 @@ export function LetterGapsExercise({
     // Крок 5 — флет-режим (інлайн-картка сцени, error-review-block.tsx
     // БЕЗ openMode): довгий список однорядкових full-width карток
     // замінюється на 2-колонкову сітку (та сама TWO_COLUMN_GRID_CLASS, що
-    // сцена-вигляд блоків). Задача "card pairing in the 2-column grid" —
-    // pairPracticeItems (flat-practice-layout.ts) тепер явно парує короткі
-    // з короткими/довгі з довгими рядками (замість старого "короткі-
-    // спочатку/довгі-в-кінці ОДНИМ списком", що лишало непарну коротку в
-    // одному рядку з ПЕРШИМ довгим, навіть коли різниця висот карток
-    // велика — баг зі скріншота задачі). length — word.chars.length (ВСІ
-    // символи слова, включно з видимими літерами, не лише приховані gaps —
-    // саме так ТЗ описує "довжину слова" тут). wi (id) лишається джерелом
-    // для submitPractice/перевірки нижче.
+    // сцена-вигляд блоків). pairPracticeItems (flat-practice-layout.ts)
+    // явно парує короткі з короткими/довгі з довгими рядками (замість
+    // старого "короткі-спочатку/довгі-в-кінці ОДНИМ списком", що лишало
+    // непарну коротку в одному рядку з ПЕРШИМ довгим). lines —
+    // estimateLetterGapsCardRows, той самий точний естіматор, що
+    // активний блок сцена-вигляду вище (НЕ chars.length — задача "pairing
+    // still mispairs cards 5/6, 7/8": довжина символів systematично
+    // недооцінює/переоцінює реальну кількість рядків для слів з кількома
+    // одиницями переносу чи видимими літерами). wi (id) лишається
+    // джерелом для submitPractice/перевірки нижче.
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi) => ({ id: wi, length: config.words[wi].chars.length }))
+      practiceWordIndices.map((wi) => ({
+        id: wi,
+        lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
+      }))
     );
     // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,
     // вище): перераховується на ВІДОБРАЖУВАНИЙ порядок слів (flatPracticeLayout

@@ -630,8 +630,13 @@ export function LetterRearrangementExercise({
     // рахований ОКРЕМО на кожен активний блок (активний блок — те саме
     // activeIndices, що й check/submitPractice нижче, порядок рендеру тут
     // ніяк не чіпає payload перевірки — wi (id) лишається джерелом істини).
+    // lines — estimateLetterRearrangementCardRows, той самий точний
+    // естіматор, що blockDisplayOrder реальної вправи.
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi) => ({ id: wi, length: config.words[wi].shuffledLetters.length }))
+      activeIndices.map((wi) => ({
+        id: wi,
+        lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
+      }))
     );
     const sceneCheckButtonEl = (
       <button
@@ -704,9 +709,13 @@ export function LetterRearrangementExercise({
     // коротку в одному рядку з ПЕРШИМ довгим, навіть коли різниця висот
     // карток велика — баг зі скріншота задачі); wi (id) лишається джерелом
     // для submitPractice/перевірки нижче, лише порядок рендеру й видимі
-    // номери міняються.
+    // номери міняються. lines — estimateLetterRearrangementCardRows, той
+    // самий точний естіматор, що blockDisplayOrder реальної вправи.
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi) => ({ id: wi, length: config.words[wi].shuffledLetters.length }))
+      practiceWordIndices.map((wi) => ({
+        id: wi,
+        lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
+      }))
     );
     return (
       <div className={EXERCISE_STACK}>
