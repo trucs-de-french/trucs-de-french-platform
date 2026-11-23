@@ -38,6 +38,11 @@ import {
 } from "@/lib/exercises/estimate-card-rows";
 import { buildRevealedWordDetail, type RevealedWordDetail } from "@/lib/exercises/format-reveal-answer";
 import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
+import {
+  letterRearrangementWideCardWidthPx,
+  WIDE_CARD_WIDTH_CLASS,
+  wideCardWidthStyle,
+} from "@/lib/exercises/wide-card-width";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -428,6 +433,12 @@ export function LetterRearrangementExercise({
       // замість half-width. undefined/false для реальної вправи — вона й
       // далі ніколи не займає повний рядок (та сама поведінка, що завжди).
       fullWidth?: boolean;
+      // Задача "wide standalone card should be content-width, not full
+      // row width" — готова ЗОВНІШНЯ ширина (px, letterRearrangementWideCardWidthPx)
+      // для fullWidth-картки: застосовується ЛИШЕ коли fullWidth truthy,
+      // через --wide-card-w (style) + md:w-[var(--wide-card-w)] (клас
+      // нижче) — на мобільному (без md:) НЕ застосовується.
+      wideWidthPx?: number;
     }
   ) {
     const word = config.words[wi];
@@ -454,8 +465,14 @@ export function LetterRearrangementExercise({
       // Картка НІКОЛИ не займає повний рядок у РЕАЛЬНІЙ вправі — завжди
       // half-width у 2-колонковому режимі, full-width в 1-колонковому.
       // opts.fullWidth (лише практика, pairPracticeItems) — єдиний виняток:
-      // непарна картка без пари в рядку сітки.
-      <div key={wi} className={`relative ${WORD_CARD}${opts.fullWidth ? " md:col-span-2" : ""}`}>
+      // непарна/orphan картка без пари в рядку сітки, тепер content-width
+      // (WIDE_CARD_WIDTH_CLASS/wideCardWidthStyle, wide-card-width.ts), не
+      // буквально на всю ширину.
+      <div
+        key={wi}
+        style={opts.fullWidth ? wideCardWidthStyle(opts.wideWidthPx) : undefined}
+        className={`relative ${WORD_CARD}${opts.fullWidth ? ` ${WIDE_CARD_WIDTH_CLASS}` : ""}`}
+      >
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -579,7 +596,7 @@ export function LetterRearrangementExercise({
   // новому парному порядку; full — картка без пари в цьому рядку (непарний
   // короткий/довгий залишок), рендериться на весь рядок сітки
   // (md:col-span-2, renderWordCard нижче) замість half-width.
-  function renderPracticeItem(wi: number, layout: { displayNumber: number; full: boolean }) {
+  function renderPracticeItem(wi: number, layout: { displayNumber: number; full: boolean; wideWidthPx?: number }) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
@@ -623,6 +640,7 @@ export function LetterRearrangementExercise({
       revealedWordDetail,
       practiceFooter: footer,
       fullWidth: layout.full,
+      wideWidthPx: layout.wideWidthPx,
     });
   }
 
@@ -637,11 +655,17 @@ export function LetterRearrangementExercise({
     // lines — estimateLetterRearrangementCardRows, той самий точний
     // естіматор, що blockDisplayOrder реальної вправи.
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi) => ({
-        id: wi,
-        lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
-        orphan: letterRearrangementIsOrphan(config.words[wi].shuffledLetters.length),
-      }))
+      activeIndices.map((wi) => {
+        const orphan = letterRearrangementIsOrphan(config.words[wi].shuffledLetters.length);
+        return {
+          id: wi,
+          lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
+          orphan,
+          wideWidthPx: orphan
+            ? letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText)
+            : undefined,
+        };
+      })
     );
     const sceneCheckButtonEl = (
       <button
@@ -717,11 +741,17 @@ export function LetterRearrangementExercise({
     // номери міняються. lines — estimateLetterRearrangementCardRows, той
     // самий точний естіматор, що blockDisplayOrder реальної вправи.
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi) => ({
-        id: wi,
-        lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
-        orphan: letterRearrangementIsOrphan(config.words[wi].shuffledLetters.length),
-      }))
+      practiceWordIndices.map((wi) => {
+        const orphan = letterRearrangementIsOrphan(config.words[wi].shuffledLetters.length);
+        return {
+          id: wi,
+          lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
+          orphan,
+          wideWidthPx: orphan
+            ? letterRearrangementWideCardWidthPx(config.words[wi].shuffledLetters.length, config.words[wi].hintText)
+            : undefined,
+        };
+      })
     );
     return (
       <div className={EXERCISE_STACK}>

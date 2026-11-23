@@ -35,6 +35,7 @@ import {
   orderByEstimatedRows,
 } from "@/lib/exercises/estimate-card-rows";
 import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
+import { letterGapsWideCardWidthPx, WIDE_CARD_WIDTH_CLASS, wideCardWidthStyle } from "@/lib/exercises/wide-card-width";
 import { buildGapRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
@@ -516,6 +517,13 @@ export function LetterGapsExercise({
       // undefined/false для реальної вправи — вона й далі ніколи не займає
       // повний рядок.
       fullWidth?: boolean;
+      // Задача "wide standalone card should be content-width, not full
+      // row width" — готова ЗОВНІШНЯ ширина (px, letterGapsWideCardWidthPx)
+      // для fullWidth-картки: застосовується ЛИШЕ коли fullWidth truthy,
+      // через --wide-card-w (style) + md:w-[var(--wide-card-w)] (клас
+      // нижче) — на мобільному (без md:) НЕ застосовується, картка й так
+      // на всю ширину єдиної колонки.
+      wideWidthPx?: number;
     }
   ) {
     const word = config.words[wi];
@@ -545,8 +553,14 @@ export function LetterGapsExercise({
       // Картка НІКОЛИ не займає повний рядок у РЕАЛЬНІЙ вправі — завжди
       // half-width у 2-колонковому режимі, full-width в 1-колонковому.
       // opts.fullWidth (лише сцена-вигляд практики, pairPracticeItems) —
-      // єдиний виняток: непарна картка без пари в рядку сітки.
-      <div key={wi} className={`relative ${WORD_CARD}${opts.fullWidth ? " md:col-span-2" : ""}`}>
+      // єдиний виняток: непарна/orphan/overflow картка без пари в рядку
+      // сітки, тепер content-width (WIDE_CARD_WIDTH_CLASS/wideCardWidthStyle,
+      // wide-card-width.ts), не буквально на всю ширину.
+      <div
+        key={wi}
+        style={opts.fullWidth ? wideCardWidthStyle(opts.wideWidthPx) : undefined}
+        className={`relative ${WORD_CARD}${opts.fullWidth ? ` ${WIDE_CARD_WIDTH_CLASS}` : ""}`}
+      >
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -725,7 +739,7 @@ export function LetterGapsExercise({
   // замість half-width.
   function renderPracticeItem(
     wi: number,
-    layout: { displayNumber: number; full: boolean },
+    layout: { displayNumber: number; full: boolean; wideWidthPx?: number },
     gapOrder: GapKey[],
     hideReveal = false
   ) {
@@ -762,6 +776,7 @@ export function LetterGapsExercise({
         cardNumber: layout.displayNumber,
         practiceFooter: footer,
         fullWidth: layout.full,
+        wideWidthPx: layout.wideWidthPx,
       });
     }
 
@@ -802,11 +817,15 @@ export function LetterGapsExercise({
       </p>
     ) : undefined;
     return (
-      // md:col-span-2 на цьому wrapper-div, не на самому renderWordCard —
-      // тут grid-дитина сітки САМЕ цей div (картка+статус-рядок разом), не
-      // внутрішня картка (на відміну від hideReveal-гілки вище, де
-      // renderWordCard — сам grid-дитина).
-      <div key={wi} className={`flex flex-col gap-1.5${layout.full ? " md:col-span-2" : ""}`}>
+      // WIDE_CARD_WIDTH_CLASS/wideCardWidthStyle на ЦЬОМУ wrapper-div, не
+      // на самому renderWordCard — тут grid-дитина сітки САМЕ цей div
+      // (картка+статус-рядок разом), не внутрішня картка (на відміну від
+      // hideReveal-гілки вище, де renderWordCard — сам grid-дитина).
+      <div
+        key={wi}
+        style={layout.full ? wideCardWidthStyle(layout.wideWidthPx) : undefined}
+        className={`flex flex-col gap-1.5${layout.full ? ` ${WIDE_CARD_WIDTH_CLASS}` : ""}`}
+      >
         {renderWordCard(wi, {
           detail: undefined,
           locked: false,
@@ -835,12 +854,20 @@ export function LetterGapsExercise({
     // довжина в символах не пропорційна реальній кількості рядків картки,
     // задача "pairing still mispairs cards 5/6, 7/8").
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi) => ({
-        id: wi,
-        lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
-        overflowsColumn: letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters),
-        orphan: letterGapsIsOrphan(config.words[wi].chars, config.words[wi].hiddenLetters),
-      }))
+      activeIndices.map((wi) => {
+        const overflowsColumn = letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters);
+        const orphan = letterGapsIsOrphan(config.words[wi].chars, config.words[wi].hiddenLetters);
+        return {
+          id: wi,
+          lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
+          overflowsColumn,
+          orphan,
+          wideWidthPx:
+            overflowsColumn || orphan
+              ? letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText)
+              : undefined,
+        };
+      })
     );
     const activeGapOrder = gapOrderFor(pairedActiveIndices.map((item) => item.id));
     // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
@@ -987,12 +1014,20 @@ export function LetterGapsExercise({
     // одиницями переносу чи видимими літерами). wi (id) лишається
     // джерелом для submitPractice/перевірки нижче.
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi) => ({
-        id: wi,
-        lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
-        overflowsColumn: letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters),
-        orphan: letterGapsIsOrphan(config.words[wi].chars, config.words[wi].hiddenLetters),
-      }))
+      practiceWordIndices.map((wi) => {
+        const overflowsColumn = letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters);
+        const orphan = letterGapsIsOrphan(config.words[wi].chars, config.words[wi].hiddenLetters);
+        return {
+          id: wi,
+          lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
+          overflowsColumn,
+          orphan,
+          wideWidthPx:
+            overflowsColumn || orphan
+              ? letterGapsWideCardWidthPx(config.words[wi].chars, config.words[wi].hintText)
+              : undefined,
+        };
+      })
     );
     // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,
     // вище): перераховується на ВІДОБРАЖУВАНИЙ порядок слів (flatPracticeLayout

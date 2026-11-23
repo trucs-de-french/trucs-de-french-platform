@@ -38,8 +38,23 @@
 // lines сам по собі більше НЕ визначає full — картка з багатьма рядками,
 // але контентом, що влазить у колонку (НЕ orphan/overflow), лишається
 // half-width, просто вища за сусідню.
-export type FlatPracticeItemInput<Id> = { id: Id; lines: number; overflowsColumn?: boolean; orphan?: boolean };
-export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number; full: boolean };
+//
+// wideWidthPx (задача "wide standalone card should be content-width, not
+// full row width") — опційна готова ЗОВНІШНЯ ширина (px) full-width
+// картки, рахована викликачем (letterGapsWideCardWidthPx/
+// letterRearrangementWideCardWidthPx, wide-card-width.ts) ЛИШЕ для
+// orphan/overflowsColumn елементів — використовується тут ТІЛЬКИ для
+// сортування "найширша спочатку" (крок 5 нижче), і передається НАСКРІЗНО
+// в FlatPracticeLayoutItem без зміни, щоб викликач застосував те саме
+// значення як CSS-ширину картки (jsx) без повторного рахування.
+export type FlatPracticeItemInput<Id> = {
+  id: Id;
+  lines: number;
+  overflowsColumn?: boolean;
+  orphan?: boolean;
+  wideWidthPx?: number;
+};
+export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number; full: boolean; wideWidthPx?: number };
 
 // Задача "card pairing in the 2-column grid" — раніше (layoutFlatPracticeItems,
 // видалено) короткі й довгі просто йшли одним списком (короткі-спочатку,
@@ -63,6 +78,11 @@ export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number; full: 
 //    між собою як завжди;
 // 4. непарна довга в кінці групи довгих — сама, half-width (той самий
 //    принцип).
+// 5. (задача "order wide cards widest-to-narrowest") full-width рядки
+//    (крок 0) сортуються за wideWidthPx ЗА ЗМЕНШЕННЯМ (найширша перша),
+//    стабільно для рівних значень (тай-брейк за вихідним індексом, не
+//    лише надія на стабільність Array.sort) — акуратний "сходовий" вигляд
+//    зліва (картки left-aligned, вужчі внизу).
 // displayNumber — наскрізна нумерація В ЦЬОМУ новому порядку рядків,
 // 1-based; id (перевірка/збереження/API) лишається незмінним — порядок
 // рендеру й видимі номери міняються, нічого більше. Мобільний (1-колонковий)
@@ -110,7 +130,11 @@ export function pairPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatP
     rows.push({ items: [remainingLongs[remainingLongs.length - 1]], full: false });
   }
 
-  for (const fw of fullWidthItems) {
+  const sortedFullWidthItems = fullWidthItems
+    .map((item, i) => ({ item, i }))
+    .sort((a, b) => (b.item.wideWidthPx ?? 0) - (a.item.wideWidthPx ?? 0) || a.i - b.i)
+    .map(({ item }) => item);
+  for (const fw of sortedFullWidthItems) {
     rows.push({ items: [fw], full: true });
   }
 
@@ -118,7 +142,7 @@ export function pairPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatP
   let n = 1;
   for (const row of rows) {
     for (const item of row.items) {
-      ordered.push({ id: item.id, displayNumber: n++, full: row.full });
+      ordered.push({ id: item.id, displayNumber: n++, full: row.full, wideWidthPx: item.wideWidthPx });
     }
   }
   return ordered;

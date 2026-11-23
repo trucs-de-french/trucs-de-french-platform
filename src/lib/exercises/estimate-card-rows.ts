@@ -190,6 +190,22 @@ export function letterGapsIsOrphan(chars: (string | null)[], hiddenLetters: stri
   return full.rows === 1;
 }
 
+// Задача "wide standalone card should be content-width, not full row
+// width" — скільки МІСЦЯ займе слово, якщо покласти ВСІ його одиниці
+// переносу в ОДИН рядок (WORD_GAP_PX між ними, як і в звичайному
+// пакуванні вище) — БЕЗ урахування будь-якої ширини рядка-обмеження. Для
+// orphan-картки (letterGapsIsOrphan: full.rows===1 на FULL_ROW_WIDTH_PX)
+// це ТОЧНЕ значення фактичної потрібної ширини (за визначенням, усе влазить
+// в один рядок на full-width); для overflowsColumn-картки це ПЕРЕОЦІНКА
+// (слово насправді потребує кількох рядків навіть на full-width), але
+// wide-card-width.ts однаково обрізає результат до FULL_ROW_WIDTH_PX —
+// переоцінка нічого не псує, картка просто лишається full-width, як і
+// раніше.
+export function letterGapsSingleLineContentWidth(chars: (string | null)[]): number {
+  const units = splitPhraseUnits(chars);
+  return units.reduce((sum, unit, i) => sum + (i > 0 ? WORD_GAP_PX : 0) + cellsWidth(unit), 0);
+}
+
 // Скільки однакових плиток-літер (FIXED_CELL_PX) влазить в один рядок
 // ширини rowWidthPx — той самий розрахунок, що раніше був "захардкожений"
 // лише на REFERENCE_ROW_WIDTH_PX (half-width); задача "orphan card"
@@ -222,6 +238,14 @@ export function letterRearrangementIsOrphan(letterCount: number): boolean {
   const kFull = rearrangementTilesPerLine(FULL_ROW_WIDTH_PX);
   const fullRows = Math.max(1, Math.ceil(letterCount / kFull));
   return fullRows === 1;
+}
+
+// Задача "wide standalone card should be content-width, not full row
+// width" — той самий принцип, що letterGapsSingleLineContentWidth: скільки
+// МІСЦЯ займуть ВСІ плитки-літери в ОДНОМУ рядку (без обмеження ширини).
+export function letterRearrangementSingleLineContentWidth(letterCount: number): number {
+  if (letterCount <= 0) return 0;
+  return letterCount * FIXED_CELL_PX + (letterCount - 1) * FIXED_CELL_GAP_PX;
 }
 
 // Мішає картки за оціненою кількістю рядків — сортування за зростанням,

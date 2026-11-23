@@ -279,7 +279,7 @@ const LINES_3 = 3;
   assert(out.length === 1 && out[0]!.full === true, "a card flagged both orphan and overflowsColumn is still full-width (no double-counting bug)");
 }
 
-// --- all orphans: every card stands alone, full-width, in original order ---
+// --- all orphans, no wideWidthPx given (tie): keeps original order ---------
 
 {
   const out = pairPracticeItems([
@@ -287,8 +287,56 @@ const LINES_3 = 3;
     { id: "y", lines: LINES_3, orphan: true },
     { id: "z", lines: LINES_2, orphan: true },
   ]);
-  assert(out.map((i) => i.id).join(",") === "x,y,z", "all-orphan input keeps original order");
+  assert(out.map((i) => i.id).join(",") === "x,y,z", "all-orphan input with no wideWidthPx (all tie at 0) keeps original order");
   assert(out.every((i) => i.full), "every orphan card renders full-width, none paired");
+}
+
+// --- orphan cards are ordered widest-to-narrowest (task "staircase") ------
+
+{
+  const out = pairPracticeItems([
+    { id: "narrow", lines: LINES_2, orphan: true, wideWidthPx: 200 },
+    { id: "wide", lines: LINES_2, orphan: true, wideWidthPx: 500 },
+    { id: "medium", lines: LINES_2, orphan: true, wideWidthPx: 350 },
+  ]);
+  assert(
+    out.map((i) => i.id).join(",") === "wide,medium,narrow",
+    "orphan/full-width rows are reordered widest-to-narrowest by wideWidthPx, regardless of input order"
+  );
+  assert(
+    out.map((i) => i.displayNumber).join(",") === "1,2,3",
+    "displayNumber is renumbered 1..N in the new widest-to-narrowest order"
+  );
+}
+
+// --- widest-to-narrowest ordering is stable for ties (same wideWidthPx) ---
+
+{
+  const out = pairPracticeItems([
+    { id: "a", lines: LINES_2, orphan: true, wideWidthPx: 300 },
+    { id: "b", lines: LINES_2, orphan: true, wideWidthPx: 500 },
+    { id: "c", lines: LINES_2, orphan: true, wideWidthPx: 300 },
+  ]);
+  assert(
+    out.map((i) => i.id).join(",") === "b,a,c",
+    "ties in wideWidthPx (a and c, both 300) keep their original relative order after the wider one (b)"
+  );
+}
+
+// --- widest-to-narrowest ordering only applies within the full-width bucket,
+// --- it never reorders relative to paired short/long rows -----------------
+
+{
+  const out = pairPracticeItems([
+    { id: "s1", lines: SHORT },
+    { id: "s2", lines: SHORT },
+    { id: "narrowOrphan", lines: LINES_2, orphan: true, wideWidthPx: 200 },
+    { id: "wideOrphan", lines: LINES_2, orphan: true, wideWidthPx: 500 },
+  ]);
+  assert(
+    out.map((i) => i.id).join(",") === "s1,s2,wideOrphan,narrowOrphan",
+    "paired shorts still come first; only the orphan bucket itself is sorted widest-first"
+  );
 }
 
 // --- mix: shorts + longs + orphans, each bucket ordered independently -----
