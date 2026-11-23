@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { Eye } from "lucide-react";
 import type { ReorderPublic, ReorderDetail, ReorderAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
@@ -12,7 +13,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { TaskPanelHeader } from "./task-panel-header";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab } from "./task-result";
@@ -582,9 +583,12 @@ export function ReorderExercise({
                   type="button"
                   onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
                   disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-                  className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                  aria-label={tt("button.showAnswer")}
+                  title={tt("button.showAnswer")}
+                  className={BUTTON_REVEAL_ANSWER}
                 >
-                  {tt("button.showAnswer")}
+                  <Eye size={14} aria-hidden="true" />
+                  {tt("button.answerShort")}
                 </button>
               )}
             </div>

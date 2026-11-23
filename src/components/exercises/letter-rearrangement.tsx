@@ -20,7 +20,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SortableTileRow } from "./sortable-tile-row";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { TaskResult } from "./task-result";
@@ -638,9 +638,12 @@ export function LetterRearrangementExercise({
                 type="button"
                 onClick={() => practiceCheck.reveal(key, true)}
                 disabled={!!practiceCheck.revealPending[key]}
-                className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                aria-label={t("button.showAnswer")}
+                title={t("button.showAnswer")}
+                className={BUTTON_REVEAL_ANSWER}
               >
-                {t("button.showAnswer")}
+                <Eye size={14} aria-hidden="true" />
+                {t("button.answerShort")}
               </button>
             )}
           </div>

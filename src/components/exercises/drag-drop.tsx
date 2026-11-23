@@ -12,7 +12,8 @@ import { hintExplanationText } from "./hint-explanation";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { Eye } from "lucide-react";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
@@ -368,9 +369,12 @@ export function DragDropExercise({
                         type="button"
                         onClick={() => practiceCheck.reveal(s.id, true)}
                         disabled={!!practiceCheck.revealPending[s.id]}
-                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                        aria-label={t("button.showAnswer")}
+                        title={t("button.showAnswer")}
+                        className={BUTTON_REVEAL_ANSWER}
                       >
-                        {t("button.showAnswer")}
+                        <Eye size={14} aria-hidden="true" />
+                        {t("button.answerShort")}
                       </button>
                     )}
                   </div>

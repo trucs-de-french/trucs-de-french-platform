@@ -2,13 +2,14 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye } from "lucide-react";
 import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { MatchingBoard } from "./matching-board";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { TaskResult, TaskResultPairRows } from "./task-result";
@@ -538,9 +539,12 @@ export function MatchingExercise({
                       type="button"
                       onClick={() => practiceCheck.reveal(id, true)}
                       disabled={!!practiceCheck.revealPending[id]}
-                      className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                      aria-label={t("button.showAnswer")}
+                      title={t("button.showAnswer")}
+                      className={BUTTON_REVEAL_ANSWER}
                     >
-                      {t("button.showAnswer")}
+                      <Eye size={14} aria-hidden="true" />
+                      {t("button.answerShort")}
                     </button>
                   )}
                 </>

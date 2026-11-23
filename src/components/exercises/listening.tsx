@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Check } from "lucide-react";
+import { Check, Eye } from "lucide-react";
 import type { ListeningPublic, ListeningDetail, ListeningAnswer, GradeResult } from "@/lib/exercises/types";
 import { isYouTubeUrl, isGdriveUrl, toEmbedUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
@@ -18,7 +18,7 @@ import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
@@ -204,9 +204,12 @@ export function ListeningExercise({
                         type="button"
                         onClick={() => practiceCheck.reveal(q.id, true)}
                         disabled={!!practiceCheck.revealPending[q.id]}
-                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                        aria-label={t("button.showAnswer")}
+                        title={t("button.showAnswer")}
+                        className={BUTTON_REVEAL_ANSWER}
                       >
-                        {t("button.showAnswer")}
+                        <Eye size={14} aria-hidden="true" />
+                        {t("button.answerShort")}
                       </button>
                     )}
                   </div>

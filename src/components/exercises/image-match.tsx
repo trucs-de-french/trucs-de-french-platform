@@ -13,7 +13,8 @@ import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } fro
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { Eye } from "lucide-react";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -232,9 +233,12 @@ export function ImageMatchExercise({
                         type="button"
                         onClick={() => practiceCheck.reveal(item.id, true)}
                         disabled={!!practiceCheck.revealPending[item.id]}
-                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                        aria-label={t("button.showAnswer")}
+                        title={t("button.showAnswer")}
+                        className={BUTTON_REVEAL_ANSWER}
                       >
-                        {t("button.showAnswer")}
+                        <Eye size={14} aria-hidden="true" />
+                        {t("button.answerShort")}
                       </button>
                     )}
                   </div>

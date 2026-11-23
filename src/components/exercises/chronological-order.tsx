@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { Eye } from "lucide-react";
 import type {
   ChronologicalOrderPublic,
   ChronologicalOrderDetail,
@@ -28,7 +29,7 @@ import {
   COMPACT_IMAGE_FILL,
   ITEM_NUMBER_BADGE,
 } from "./answer-card-style";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
@@ -676,9 +677,12 @@ export function ChronologicalOrderExercise({
                   type="button"
                   onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
                   disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-                  className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                  aria-label={t("button.showAnswer")}
+                  title={t("button.showAnswer")}
+                  className={BUTTON_REVEAL_ANSWER}
                 >
-                  {t("button.showAnswer")}
+                  <Eye size={14} aria-hidden="true" />
+                  {t("button.answerShort")}
                 </button>
               )}
             </div>

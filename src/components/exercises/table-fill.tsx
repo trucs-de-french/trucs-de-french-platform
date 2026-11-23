@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { Eye } from "lucide-react";
 import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
@@ -454,9 +455,12 @@ export function TableFillExercise({
                 type="button"
                 onClick={() => practiceCheck.reveal(row.id, true)}
                 disabled={!!practiceCheck.revealPending[row.id]}
-                className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                aria-label={tt("button.showAnswer")}
+                title={tt("button.showAnswer")}
+                className={BUTTON_REVEAL_ANSWER}
               >
-                {tt("button.showAnswer")}
+                <Eye size={14} aria-hidden="true" />
+                {tt("button.answerShort")}
               </button>
             )}
           </div>

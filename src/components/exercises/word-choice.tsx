@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Eye } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS, WORD_CHOICE_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -17,7 +17,7 @@ import { plural } from "@/lib/i18n/plural";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -565,9 +565,12 @@ export function WordChoiceExercise({
                         type="button"
                         onClick={() => practiceCheck.reveal(s.id, true)}
                         disabled={!!practiceCheck.revealPending[s.id]}
-                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                        aria-label={t("button.showAnswer")}
+                        title={t("button.showAnswer")}
+                        className={BUTTON_REVEAL_ANSWER}
                       >
-                        {t("button.showAnswer")}
+                        <Eye size={14} aria-hidden="true" />
+                        {t("button.answerShort")}
                       </button>
                     )}
                   </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X } from "lucide-react";
+import { Check, X, Eye } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -12,7 +12,7 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { COMPACT_IMAGE_FILL, ITEM_CARD_WRAP as CARD_WRAP } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
@@ -240,9 +240,12 @@ export function MultipleChoiceExercise({
                       type="button"
                       onClick={() => practiceCheck.reveal(item.id, true)}
                       disabled={!!practiceCheck.revealPending[item.id]}
-                      className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                      aria-label={t("button.showAnswer")}
+                      title={t("button.showAnswer")}
+                      className={BUTTON_REVEAL_ANSWER}
                     >
-                      {t("button.showAnswer")}
+                      <Eye size={14} aria-hidden="true" />
+                      {t("button.answerShort")}
                     </button>
                   )}
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Eye } from "lucide-react";
 import type { SortColumnsPublic, SortColumnsDetail, SortColumnsAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
@@ -14,7 +15,7 @@ import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult } from "./task-result";
@@ -448,9 +449,12 @@ export function SortColumnsExercise({
                   type="button"
                   onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
                   disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-                  className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                  aria-label={t("button.showAnswer")}
+                  title={t("button.showAnswer")}
+                  className={BUTTON_REVEAL_ANSWER}
                 >
-                  {t("button.showAnswer")}
+                  <Eye size={14} aria-hidden="true" />
+                  {t("button.answerShort")}
                 </button>
               )}
             </div>

@@ -83,13 +83,15 @@ export const STUDENT_BUTTON_SECONDARY_IDLE =
 export const STUDENT_BUTTON_SECONDARY_ACTIVE =
   "font-heading rounded border border-brand bg-brand px-2 py-0.5 text-xs font-medium text-white shadow-sm transition-colors";
 
-// Допоміжна кнопка практики "Робота над помилками" ("Показати відповідь"
-// тощо, use-practice-check.ts) — той самий вигляд, що STUDENT_BUTTON_
-// SECONDARY_IDLE (компактна пілюля), але з гарантованою зоною дотику
-// ≥44px на мобільному: max-md:min-h-11 — той самий прийом, що reorder.tsx
-// (extraTileClassName) — на md+ (десктоп) min-height не застосовується,
-// вигляд лишається БАЙТОВО тим самим, що STUDENT_BUTTON_SECONDARY_IDLE.
-export const STUDENT_BUTTON_SECONDARY_TOUCH = `${STUDENT_BUTTON_SECONDARY_IDLE} max-md:min-h-11`;
+// Кнопка "Показати відповідь" практики "Робота над помилками" — задача
+// "variant 1, golden outline pill": раніше сіра/біла STUDENT_BUTTON_
+// SECONDARY_IDLE-пілюля (ця константа звалась STUDENT_BUTTON_SECONDARY_
+// TOUCH), тепер окрема CSS-специфікація (.reveal-answer-pill, globals.css
+// — border/bg/text через --gold-border-* токени, 28px/мобільний 44px
+// touch-target, hover/active/focus-visible/disabled, hairline на Retina
+// в обох темах). Візуальна специфікація повністю в CSS-класі (як-от
+// BUTTON_CHECK/.btn-check) — тут лише сам клас, без Tailwind-утиліт.
+export const BUTTON_REVEAL_ANSWER = "reveal-answer-pill";
 
 // Кнопка-посилання "Практики"/додаткових блоків посилань (scene_links,
 // студентська сторінка сцени) — той самий розмір (rounded-md px-3 py-1.5
@@ -121,9 +123,11 @@ export const STUDENT_TOGGLE_HEADER_BUTTON =
 // text-neutral-400, губилась на тонованому фоні кольорових блоків
 // конструктора (ConstructorBlock, constructor-block.tsx). min-h-9/min-w-9
 // (36px) — мінімальна зона дотику з задачі; max-md:min-h-11/min-w-11 (44px)
-// — більша зона на мобільних/тач (той самий прийом, що вже
-// STUDENT_BUTTON_SECONDARY_TOUCH вище). rounded-[10px] — радіус саме з
-// задачі (не rounded-md=6px і не rounded-lg=8px).
+// — більша зона на мобільних/тач (той самий прийом Tailwind-утиліти, що
+// раніше STUDENT_BUTTON_SECONDARY_TOUCH; та кнопка тепер окрема CSS-
+// специфікація, BUTTON_REVEAL_ANSWER вище, прийом лишився лише тут).
+// rounded-[10px] — радіус саме з задачі (не rounded-md=6px і не
+// rounded-lg=8px).
 export const ICON_BUTTON =
   "inline-flex shrink-0 items-center justify-center rounded-[10px] min-h-9 min-w-9 max-md:min-h-11 max-md:min-w-11 bg-transparent text-[#3b36c4] transition-colors hover:bg-[#e8eafc] hover:text-[#2f2c6b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4b46da] disabled:opacity-35 disabled:pointer-events-none dark:text-[#a8a4ff] dark:hover:bg-[rgba(168,164,255,0.16)] dark:hover:text-[#c7c4ff]";
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { Eye } from "lucide-react";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
@@ -23,7 +24,7 @@ import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
@@ -772,9 +773,12 @@ export function LetterGapsExercise({
                 type="button"
                 onClick={() => practiceCheck.reveal(key, true)}
                 disabled={!!practiceCheck.revealPending[key]}
-                className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                aria-label={t("button.showAnswer")}
+                title={t("button.showAnswer")}
+                className={BUTTON_REVEAL_ANSWER}
               >
-                {t("button.showAnswer")}
+                <Eye size={14} aria-hidden="true" />
+                {t("button.answerShort")}
               </button>
             )}
           </div>

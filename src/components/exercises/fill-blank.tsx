@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useId } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye } from "lucide-react";
 import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import {
@@ -13,7 +13,7 @@ import {
   taskTranslationLine,
 } from "@/lib/exercises/default-instructions";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { usePracticeCheck } from "./use-practice-check";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
@@ -571,9 +571,12 @@ export function FillBlankExercise({
                   type="button"
                   onClick={() => practiceCheck.reveal(String(i), true)}
                   disabled={!!practiceCheck.revealPending[String(i)]}
-                  className={`ml-1 ${STUDENT_BUTTON_SECONDARY_TOUCH}`}
+                  aria-label={t("button.showAnswer")}
+                  title={t("button.showAnswer")}
+                  className={`ml-1 ${BUTTON_REVEAL_ANSWER}`}
                 >
-                  {t("button.showAnswer")}
+                  <Eye size={14} aria-hidden="true" />
+                  {t("button.answerShort")}
                 </button>
               )}
               {i < blankCount && !result && !isPractice && visibleTranslations.has(i) && hints[i] && answers[i] && (

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { Eye } from "lucide-react";
 import type { TrueFalsePublic, TrueFalseDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -16,7 +17,7 @@ import { EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 
@@ -317,9 +318,12 @@ export function TrueFalseExercise({
                         type="button"
                         onClick={() => practiceCheck.reveal(s.id, true)}
                         disabled={!!practiceCheck.revealPending[s.id]}
-                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                        aria-label={t("button.showAnswer")}
+                        title={t("button.showAnswer")}
+                        className={BUTTON_REVEAL_ANSWER}
                       >
-                        {t("button.showAnswer")}
+                        <Eye size={14} aria-hidden="true" />
+                        {t("button.answerShort")}
                       </button>
                     )}
                   </div>

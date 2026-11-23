@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useId, useMemo } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Eye } from "lucide-react";
 import type {
   CheckboxGridPublic,
   CheckboxGridDetail,
@@ -17,7 +17,7 @@ import { useT } from "@/lib/i18n/context";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, rowPointsTabStatus } from "./task-result";
@@ -430,9 +430,12 @@ export function CheckboxGridExercise({
                   type="button"
                   onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
                   disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-                  className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                  aria-label={t("button.showAnswer")}
+                  title={t("button.showAnswer")}
+                  className={BUTTON_REVEAL_ANSWER}
                 >
-                  {t("button.showAnswer")}
+                  <Eye size={14} aria-hidden="true" />
+                  {t("button.answerShort")}
                 </button>
               )}
             </div>
