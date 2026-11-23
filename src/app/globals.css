@@ -4467,6 +4467,34 @@ button, input, textarea, select, label, nav, aside {
     height: 40px;
   }
 }
+/* Задача "fill_blank practice: show solved words instead of dashed dots"
+   — слово пропуску поза практикою, що сервер підтвердив правильним
+   (fill-blank.tsx, config.solvedTexts), замінює нейтральну заглушку
+   "···": звичайний текст речення (не форма), лише з легким акцентом —
+   напівжирний, --glass-answer-text (той самий індиго-токен, що скляні
+   кнопки-відповіді, та сама колірна родина, що .item-number-badge),
+   дуже світлий індиго-тінт фону замість рамки/пунктиру. box-decoration-
+   break:clone — тінт фону лишається рівним на кожному рядку окремо, якщо
+   слово (рідко) розбите переносом усередині дуже вузької панелі. */
+.fill-blank-solved-word {
+  display: inline;
+  font-weight: 600;
+  padding: 1px 4px;
+  margin: 0 1px;
+  border-radius: 4px;
+  color: var(--glass-answer-text);
+  background: rgba(75, 70, 218, 0.08);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.dark .fill-blank-solved-word {
+  background: rgba(243, 217, 139, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .fill-blank-solved-word {
+    background: rgba(243, 217, 139, 0.12);
+  }
+}
 .glass-answer-btn {
   background: var(--glass-answer-bg);
   border: var(--glass-answer-border-width, 1.5px) solid var(--glass-answer-border);

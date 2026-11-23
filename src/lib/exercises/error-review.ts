@@ -658,3 +658,35 @@ export function shouldRenderWrapperHeader(taskType: string, flow: ErrorReviewPra
   if (OWN_HEADER_SCENE_ONLY_TASK_TYPES.has(taskType)) return flow === "flat";
   return true;
 }
+
+// Задача "fill_blank practice: show solved words instead of dashed dots" —
+// які пропуски безпечно показати студенту як готове слово (замість "···")
+// у режимі практики. Правило: fill_blank градує ВСІ пропуски разом в
+// ОДНОМУ submit (gradeFillBlank — studentAnswers[i] ?? "", жодного
+// "негradованого" стану не існує), і aggregateWrongItems бере лише
+// НАЙНОВІШИЙ валідний (positionalCount-сумісний) рядок mistakes — тож коли
+// wrongItemIds НЕПОРОЖНІЙ, це означає, що ЩОНАЙМЕНШЕ один валідний рядок
+// дійсно оцінив КОЖЕН пропуск поточного template. Пропуск поза
+// remainingItemIds тоді — підтверджено правильний: або (а) його там
+// ніколи не було (правильний з найостаннішої спроби), або (б) він був,
+// але вже виправлений (correctedItemIds, practice/check: correctedSet.add
+// лише на r.correct===true, НІКОЛИ з practice/reveal — показ відповіді не
+// позначає елемент виправленим). Коли ж wrongItemIds ПОРОЖНІЙ — жодного
+// валідного рядка взагалі не було (шаблон змінили після всіх історичних
+// спроб, positionalCount-фільтр відкинув усе) — тоді ЖОДЕН пропуск не має
+// підтвердження, і функція свідомо повертає [] (лишити нейтральні "···"
+// для всіх, а не вгадувати).
+export function confirmedSolvedBlankIds(
+  blankCount: number,
+  wrongItemIds: string[],
+  remainingItemIds: string[]
+): string[] {
+  if (wrongItemIds.length === 0) return [];
+  const remainingSet = new Set(remainingItemIds);
+  const solved: string[] = [];
+  for (let i = 0; i < blankCount; i++) {
+    const id = String(i);
+    if (!remainingSet.has(id)) solved.push(id);
+  }
+  return solved;
+}

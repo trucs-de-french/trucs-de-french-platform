@@ -30,6 +30,7 @@ import {
   buildErrorReviewEntry,
   isMistakePracticeSupported,
   isWholePracticeTaskType,
+  confirmedSolvedBlankIds,
   type MistakeRowLike,
 } from "@/lib/exercises/error-review";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
@@ -38,10 +39,12 @@ import {
   sanitizeMatchingForPractice,
   sanitizeDragDropForPractice,
   sanitizeImageMatchForPractice,
+  sanitizeFillBlankForPractice,
+  BLANK_RE,
 } from "@/lib/exercises/sanitize";
 import { getTaskBarText } from "@/lib/exercises/task-bar-text";
 import type { GradableTaskType } from "@/lib/exercises/gradable-types";
-import type { MatchingConfig, DragDropConfig, ImageMatchConfig } from "@/lib/exercises/types";
+import type { MatchingConfig, DragDropConfig, ImageMatchConfig, FillBlankConfig } from "@/lib/exercises/types";
 import type { ErrorReviewEntryData, ErrorReviewEmptyState } from "@/components/exercises/error-review-block";
 import type { createClient } from "@/lib/supabase/server";
 
@@ -164,6 +167,20 @@ export async function loadSceneErrorReviewEntries(
       });
       const isWholePractice = review.mode === "whole" && isWholePracticeTaskType(taskType);
       const config = taskConfigById.get(taskId) ?? {};
+      // Задача "fill_blank practice: show solved words instead of dashed
+      // dots" — той самий принцип, що matching/drag_drop/image_match нижче
+      // (page.tsx, errorReviewEntries, дзеркально): лише сервер (повний
+      // config.template) може дати слово для пропусків поза помилками.
+      // confirmedSolvedBlankIds вирішує, які саме безпечно показати, з
+      // review.wrongItemIds/remainingItemIds, що вже рахує
+      // buildErrorReviewEntry вище для цього самого запису.
+      function fillBlankPracticeConfig(cfg: FillBlankConfig) {
+        const blankCount = [...(cfg.template ?? "").matchAll(BLANK_RE)].length;
+        return sanitizeFillBlankForPractice(
+          cfg,
+          confirmedSolvedBlankIds(blankCount, review.wrongItemIds, review.remainingItemIds)
+        );
+      }
       return {
         taskId,
         title: taskTitleById.get(taskId) ?? "",
@@ -210,7 +227,9 @@ export async function loadSceneErrorReviewEntries(
                 ? sanitizeDragDropForPractice(config as unknown as DragDropConfig, review.remainingItemIds)
                 : taskType === "image_match"
                   ? sanitizeImageMatchForPractice(config as unknown as ImageMatchConfig, review.remainingItemIds)
-                  : sanitizeConfigForStudent(taskType as GradableTaskType, config)
+                  : taskType === "fill_blank"
+                    ? fillBlankPracticeConfig(config as unknown as FillBlankConfig)
+                    : sanitizeConfigForStudent(taskType as GradableTaskType, config)
             : isWholePractice
               ? sanitizeConfigForStudent(taskType as GradableTaskType, config)
               : null,

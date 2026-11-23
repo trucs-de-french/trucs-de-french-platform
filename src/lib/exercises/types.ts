@@ -794,6 +794,14 @@ export type FillBlankPublic = {
   // hint-explanation.tsx) по мові інтерфейсу студента; відсутня мова чи
   // весь об'єкт — дефолт із hintExplanation.fill_blank (uk/fr/en.ts).
   hintLegend?: { uk?: string; fr?: string; en?: string };
+  // Задача "fill_blank practice: show solved words instead of dashed
+  // dots" — лише режим практики (sanitizeFillBlankForPractice,
+  // sanitize.ts), ключ — String(blankIndex), той самий формат, що
+  // practice.onlyItemIds. Присутній ТІЛЬКИ для пропусків, підтверджено
+  // правильних (confirmedSolvedBlankIds, error-review.ts) — ніколи для
+  // помилкових/ще не виправлених. Звичайний (не практика) sanitizeFillBlank
+  // цього поля взагалі не задає.
+  solvedTexts?: Record<string, string>;
 };
 
 // chars — явна маска на рівні символів (null на прихованих позиціях, сам

@@ -465,16 +465,27 @@ export function FillBlankExercise({
               {frenchNbsp(seg)}
               {i < blankCount && isPractice && !practiceSet.has(String(i)) && (
                 // Пропуск ПОЗА поточною практикою (вже виправлений чи не
-                // мав помилки) — нейтральна заглушка замість поля вводу:
-                // речення лишається читабельним, але нередагованим, бо
-                // правильне значення цього пропуску клієнту невідоме
-                // (FillBlankPublic не містить відповідей).
-                <span
-                  aria-hidden
-                  className="mx-1 inline-block w-16 rounded border border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-2 py-0.5 text-center text-neutral-400 dark:bg-[var(--card-field-bg)] dark:border-[var(--card-field-border)] dark:text-[rgba(179,191,224,0.8)]"
-                >
-                  ···
-                </span>
+                // мав помилки) — задача "fill_blank practice: show solved
+                // words instead of dashed dots": якщо сервер підтвердив
+                // це слово безпечним (config.solvedTexts[String(i)],
+                // sanitizeFillBlankForPractice/confirmedSolvedBlankIds —
+                // НІКОЛИ для помилкових/ще не виправлених), показуємо його
+                // звичайним текстом із легким акцентом — речення читається
+                // як цілий текст, не як форма. Нейтральна заглушка "···"
+                // лишається фолбеком лише на той рідкий випадок, коли
+                // сервер свідомо НЕ підтвердив жодного пропуску (шаблон
+                // змінили після всіх історичних спроб) — тоді
+                // config.solvedTexts взагалі відсутній.
+                config.solvedTexts?.[String(i)] ? (
+                  <span className="fill-blank-solved-word">{config.solvedTexts[String(i)]}</span>
+                ) : (
+                  <span
+                    aria-hidden
+                    className="mx-1 inline-block w-16 rounded border border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-2 py-0.5 text-center text-neutral-400 dark:bg-[var(--card-field-bg)] dark:border-[var(--card-field-border)] dark:text-[rgba(179,191,224,0.8)]"
+                  >
+                    ···
+                  </span>
+                )
               )}
               {i < blankCount && (!isPractice || practiceSet.has(String(i))) && (
                 // relative-обгортка inline-block — та сама схема, що

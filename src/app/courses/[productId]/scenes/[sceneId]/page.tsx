@@ -14,6 +14,8 @@ import {
   sanitizeMatchingForPractice,
   sanitizeDragDropForPractice,
   sanitizeImageMatchForPractice,
+  sanitizeFillBlankForPractice,
+  BLANK_RE,
 } from "@/lib/exercises/sanitize";
 import { summarizeMistake } from "@/lib/exercises/summarize-mistake";
 import {
@@ -21,6 +23,7 @@ import {
   buildErrorReviewEntry,
   isPracticeItemsTaskType,
   isWholePracticeTaskType,
+  confirmedSolvedBlankIds,
 } from "@/lib/exercises/error-review";
 import { isGradableTaskType, type GradableTaskType } from "@/lib/exercises/gradable-types";
 import { buildSceneSummary, type SceneTaskProgressRow } from "@/lib/exercises/scene-summary";
@@ -51,6 +54,7 @@ import type {
   MatchingConfig,
   DragDropConfig,
   ImageMatchConfig,
+  FillBlankConfig,
 } from "@/lib/exercises/types";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { toEmbedUrl } from "@/lib/video";
@@ -616,6 +620,21 @@ export default async function ScenePage({
     const review = errorReviewByTask.get(m.task_id)!;
     const taskType = taskTypeById.get(m.task_id) ?? "";
     const isWholePractice = review.mode === "whole" && isWholePracticeTaskType(taskType);
+    // Задача "fill_blank practice: show solved words instead of dashed
+    // dots" — той самий принцип, що matching/drag_drop/image_match нижче:
+    // лише сервер (повний config.template, з реальними відповідями) може
+    // дати слово для пропусків поза помилками. confirmedSolvedBlankIds
+    // (error-review.ts) вирішує, які саме безпечно показати, з тих самих
+    // review.wrongItemIds/remainingItemIds, що вже рахує
+    // buildErrorReviewEntry вище для цього самого запису — жодної нової
+    // БД-перевірки.
+    function fillBlankPracticeConfig(config: FillBlankConfig) {
+      const blankCount = [...(config.template ?? "").matchAll(BLANK_RE)].length;
+      return sanitizeFillBlankForPractice(
+        config,
+        confirmedSolvedBlankIds(blankCount, review.wrongItemIds, review.remainingItemIds)
+      );
+    }
     return {
       taskId: m.task_id,
       title: taskTitleById.get(m.task_id) ?? "",
@@ -667,7 +686,9 @@ export default async function ScenePage({
                     (taskConfigById.get(m.task_id) ?? {}) as unknown as ImageMatchConfig,
                     review.remainingItemIds
                   )
-                : sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
+                : taskType === "fill_blank"
+                  ? fillBlankPracticeConfig((taskConfigById.get(m.task_id) ?? {}) as unknown as FillBlankConfig)
+                  : sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
           : isWholePractice
             ? sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
             : null,

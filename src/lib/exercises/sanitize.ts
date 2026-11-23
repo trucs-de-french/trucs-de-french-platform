@@ -137,6 +137,31 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
   };
 }
 
+// Задача "fill_blank practice: show solved words instead of dashed dots"
+// — той самий принцип, що sanitizeDragDropForPractice/sanitizeMatchingFor
+// Practice: лише сервер, маючи повний (несанітизований) config, може
+// дістати справжнє слово пропуску. solvedBlankIds — ВЖЕ звужений і
+// перевірений викликачем список (confirmedSolvedBlankIds, error-review.ts
+// — не імпортується сюди напряму, щоб не створювати циклічний імпорт із
+// error-review.ts, який сам імпортує звідси BLANK_RE/parseBlankMarker):
+// ця функція нічого не вирішує САМА про "підтверджено правильний", лише
+// бере перший прийнятний варіант (parseBlankMarker.answers[0], той самий,
+// що practice/reveal) для КОЖНОГО id із переданого списку. Пропуски поза
+// ним (помилкові/ще не виправлені) лишаються без жодного тексту — той
+// самий template:"{{}}" без відповідей, що звичайний sanitizeFillBlank.
+export function sanitizeFillBlankForPractice(config: FillBlankConfig, solvedBlankIds: string[]): FillBlankPublic {
+  const base = sanitizeFillBlank(config);
+  if (solvedBlankIds.length === 0) return base;
+  const matches = [...config.template.matchAll(BLANK_RE)];
+  const solvedTexts: Record<string, string> = {};
+  for (const id of solvedBlankIds) {
+    const raw = matches[Number(id)]?.[1];
+    const first = raw !== undefined ? parseBlankMarker(raw).answers[0] : undefined;
+    if (first) solvedTexts[id] = first;
+  }
+  return Object.keys(solvedTexts).length > 0 ? { ...base, solvedTexts } : base;
+}
+
 export function resolveLetterGapsPoints(config: LetterGapsConfig): number {
   return config.points ?? 1;
 }

@@ -8,6 +8,7 @@ import {
   buildErrorReviewEntry,
   deriveMistakesChips,
   shouldRenderWrapperHeader,
+  confirmedSolvedBlankIds,
 } from "./error-review";
 
 let failures = 0;
@@ -191,6 +192,44 @@ function assert(condition: boolean, label: string) {
     assert(shouldRenderWrapperHeader(type, "flat") === true, `${type}: wrapper header renders in flat flow`);
     assert(shouldRenderWrapperHeader(type, "scene") === true, `${type}: wrapper header renders in scene flow`);
   }
+}
+
+// --- confirmedSolvedBlankIds (fill_blank practice — "show solved words
+// instead of dashed dots": which blank ids are safe to reveal as plain
+// text, never the wrong/still-unsolved ones) ---------------------------
+
+{
+  // 4-blank sentence, blank "1" is still wrong (in remainingItemIds) —
+  // every other blank (never wrong, or wrong-but-corrected) is solved.
+  const out = confirmedSolvedBlankIds(4, ["1", "2"], ["1"]);
+  assert(
+    [...out].sort().join(",") === "0,2,3",
+    "not in wrongItemIds (0, 3) or wrong-but-corrected (2) are solved; still-wrong (1) is not"
+  );
+}
+
+{
+  // wrongItemIds is empty — this is intentionally ambiguous upstream
+  // (aggregateWrongItems returns [] both when every blank was correct on
+  // the latest valid attempt, AND when no valid attempt covering the
+  // current template exists at all, e.g. the teacher changed the blank
+  // count after every past submission). Without a way to tell those
+  // apart, the function takes the SAFE reading of an empty wrongItemIds —
+  // reveal nothing — rather than guessing that an empty list means
+  // "everything is confirmed correct".
+  const out = confirmedSolvedBlankIds(3, [], []);
+  assert(out.length === 0, "empty wrongItemIds reveals nothing — no confirmed signal to act on, not even blank 0");
+}
+
+{
+  // Every blank is still wrong — none solved.
+  const out = confirmedSolvedBlankIds(2, ["0", "1"], ["0", "1"]);
+  assert(out.length === 0, "no blank is solved while all of them remain wrong");
+}
+
+{
+  const out = confirmedSolvedBlankIds(0, [], []);
+  assert(out.length === 0, "zero blanks never produces a solved id");
 }
 
 if (failures > 0) {
