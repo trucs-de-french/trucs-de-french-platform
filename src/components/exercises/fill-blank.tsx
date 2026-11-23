@@ -150,21 +150,6 @@ export function FillBlankExercise({
     practice?.failedAttempts ?? {}
   );
   const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
-  // Коригування стану під час рендеру (React-рекомендований патерн — НЕ
-  // useEffect, щоб уникнути react-hooks/set-state-in-effect): коли
-  // remainingItemIds змінюється (елемент виправлено й зник після
-  // router.refresh()), скидаємо локальні результати попередньої спроби, щоб
-  // застарілий "✓"/"✕" не лишався на екрані для вже інших елементів.
-  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
-  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
-    setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults({});
-  }
-
-  // Пропуски, де брали підказку "перша літера" — один раз на пропуск,
-  // повторний клік нічого не робить (кнопка неактивна, applyHint нижче).
-  const [hintedBlanks, setHintedBlanks] = useState<Set<number>>(new Set());
-  const [hintPending, setHintPending] = useState(false);
   // Довідкові бульбашки — суто локальний UI-стан на сесію проходження, не
   // зберігається на сервері й не впливає на перевірку. За ІНДЕКСОМ у
   // wordBank, не за текстом — щоб клік на одне слово не викреслював інше
@@ -174,8 +159,32 @@ export function FillBlankExercise({
   // на кожну зміну тексту: слово банку викреслюється, щойно текст у БУДЬ-
   // ЯКОМУ пропуску збігається з ним (чи знову повертається, коли текст
   // змінили/стерли), якщо його не викреслено вручну. Видиме/aria-стан —
-  // crossedOut = union обох множин (нижче).
+  // crossedOut = union обох множин (нижче). Декларація — ДО reset-блоку
+  // нижче (не після, як раніше): той блок тепер скидає й цей стан.
   const [manualCrossedOut, setManualCrossedOut] = useState<Set<number>>(new Set());
+  // Коригування стану під час рендеру (React-рекомендований патерн — НЕ
+  // useEffect, щоб уникнути react-hooks/set-state-in-effect): коли
+  // remainingItemIds змінюється (елемент виправлено й зник після
+  // router.refresh()), скидаємо локальні результати попередньої спроби, щоб
+  // застарілий "✓"/"✕" не лишався на екрані для вже інших елементів.
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
+  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(onlyItemIdsKey);
+    setPracticeResults({});
+    // Задача "pool shows only what's needed" — щойно розв'язаний пропуск
+    // прибирає своє слово з config.wordBank (sanitizeFillBlankForPractice),
+    // тож сам масив коротшає й наступні слова зсуваються на інші індекси.
+    // manualCrossedOut зберігає ІНДЕКСИ (не текст, коментар вище) — без
+    // цього скидання стара позиція вказувала б уже на ІНШЕ слово після
+    // того самого router.refresh(), що й змінює onlyItemIdsKey. Той самий
+    // момент/умова, що скидання practiceResults вище.
+    setManualCrossedOut(new Set());
+  }
+
+  // Пропуски, де брали підказку "перша літера" — один раз на пропуск,
+  // повторний клік нічого не робить (кнопка неактивна, applyHint нижче).
+  const [hintedBlanks, setHintedBlanks] = useState<Set<number>>(new Set());
+  const [hintPending, setHintPending] = useState(false);
   // Підказка-переклад (лампочка біля пропуску, незалежна від applyHint/
   // hintedBlanks вище — ОКРЕМИЙ стан, щоб не зачепити "перша літера": той
   // стан очищується в updateAnswer на кожній зміні поля, а "використано"

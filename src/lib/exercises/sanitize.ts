@@ -137,6 +137,33 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
   };
 }
 
+// Задача "fill_blank/drag_drop practice: word pool shows only what's
+// needed" — спільний примітив для fill_blank (wordBank) і drag_drop
+// (bank): видаляє з bank РІВНО ОДНЕ входження на кожен запис
+// excludedVariants (список прийнятних варіантів слова, що більше НЕ
+// потрібне в пулі — розв'язаний пропуск/речення поза практикою), звіряючи
+// регістро-незалежно й без зайвих пробілів (case-insensitive, trimmed —
+// НЕ grade.ts normalize(): той живе в grade.ts, яке САМЕ імпортує з
+// sanitize.ts, тож normalize() сюди призвело б до циклічного імпорту;
+// завдання прямо просить лише "case-insensitive, trimmed", не повну
+// діакритико-незалежну звірку). Дублікати (те саме слово кілька разів у
+// bank) — знімається стільки копій, скільки записів excludedVariants
+// справді збіглося, не більше: слово, що лишилось потрібним (ще не
+// розв'язаний пропуск/речення ПОЗА excludedVariants) чи є реальним
+// "зайвим словом" (інтрудер, не прив'язаний до жодного пропуску), ніколи
+// не видаляється. Порядок інших слів у bank НЕ змінюється (виклик
+// shuffle() лишається за викликачем, як і раніше).
+export function filterWordBank(bank: string[], excludedVariants: string[][]): string[] {
+  if (excludedVariants.length === 0) return bank;
+  const remaining = [...bank];
+  for (const variants of excludedVariants) {
+    const variantSet = new Set(variants.map((v) => v.trim().toLowerCase()));
+    const idx = remaining.findIndex((word) => variantSet.has(word.trim().toLowerCase()));
+    if (idx !== -1) remaining.splice(idx, 1);
+  }
+  return remaining;
+}
+
 // Задача "fill_blank practice: show solved words instead of dashed dots"
 // — той самий принцип, що sanitizeDragDropForPractice/sanitizeMatchingFor
 // Practice: лише сервер, маючи повний (несанітизований) config, може
@@ -144,22 +171,33 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
 // перевірений викликачем список (confirmedSolvedBlankIds, error-review.ts
 // — не імпортується сюди напряму, щоб не створювати циклічний імпорт із
 // error-review.ts, який сам імпортує звідси BLANK_RE/parseBlankMarker):
-// ця функція нічого не вирішує САМА про "підтверджено правильний", лише
-// бере перший прийнятний варіант (parseBlankMarker.answers[0], той самий,
-// що practice/reveal) для КОЖНОГО id із переданого списку. Пропуски поза
-// ним (помилкові/ще не виправлені) лишаються без жодного тексту — той
-// самий template:"{{}}" без відповідей, що звичайний sanitizeFillBlank.
+// ця функція нічого не вирішує САМА про "підтверджено правильний".
+// solvedTexts[id] — перший прийнятний варіант (parseBlankMarker.
+// answers[0], той самий, що practice/reveal), для рядка в тексті вправи;
+// wordBank — той самий filterWordBank вище, з УСІМА прийнятними
+// варіантами кожного розв'язаного пропуску (не лише перший), бо вчителька
+// могла покласти в банк будь-який із них (задача "pool shows only what's
+// needed": лічильник "N sur M utilisés" після цього вже рахує САМЕ
+// звужений банк, бо M = config.wordBank.length на клієнті).
 export function sanitizeFillBlankForPractice(config: FillBlankConfig, solvedBlankIds: string[]): FillBlankPublic {
   const base = sanitizeFillBlank(config);
   if (solvedBlankIds.length === 0) return base;
   const matches = [...config.template.matchAll(BLANK_RE)];
   const solvedTexts: Record<string, string> = {};
+  const solvedVariants: string[][] = [];
   for (const id of solvedBlankIds) {
     const raw = matches[Number(id)]?.[1];
-    const first = raw !== undefined ? parseBlankMarker(raw).answers[0] : undefined;
-    if (first) solvedTexts[id] = first;
+    if (raw === undefined) continue;
+    const { answers } = parseBlankMarker(raw);
+    if (answers[0]) solvedTexts[id] = answers[0];
+    if (answers.length > 0) solvedVariants.push(answers);
   }
-  return Object.keys(solvedTexts).length > 0 ? { ...base, solvedTexts } : base;
+  const wordBank = base.wordBank ? filterWordBank(base.wordBank, solvedVariants) : base.wordBank;
+  return {
+    ...base,
+    ...(Object.keys(solvedTexts).length > 0 ? { solvedTexts } : {}),
+    wordBank,
+  };
 }
 
 export function resolveLetterGapsPoints(config: LetterGapsConfig): number {
@@ -685,16 +723,27 @@ export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
 // error-review-block.tsx) — той самий принцип, що sanitizeMatchingForPractice:
 // bank тут СПІЛЬНИЙ пул, прив'язка слова до конкретного пропуску — секрет,
 // тож лише сервер (маючи повний, несанітизований config) може звузити його
-// до слів, потрібних САМЕ реченням sentenceIds (без зайвих дистракторів з
-// речень поза практикою — задача явно просить "пул лише з відповідей
-// помилкових елементів"). Перший варіант ({{chien|chiot}} -> "chien") кожного
-// пропуску цих речень, перемішаний.
+// до слів, потрібних САМЕ реченням sentenceIds. Задача "pool shows only
+// what's needed" (ревізія попередньої версії цієї функції — коментар
+// нижче лишений як історія): РАНІШЕ bank тут перебудовувався з нуля лише
+// з відповідей речень sentenceIds, тож жодний справжній "зайвий" дистрактор
+// адміна (config.bank може мати БІЛЬШЕ слів, ніж усього пропусків —
+// intruderCount у drag-drop.tsx рахує саме цю різницю) ніколи не потрапляв
+// у практику. Тепер: filterWordBank прибирає з АДМІНСЬКОГО config.bank
+// РІВНО ОДНЕ слово на кожен пропуск речень ПОЗА sentenceIds (вирішених чи
+// просто ніколи не помилкових — обидва випадки тут не практикуються,
+// рівна причина не показувати їхнє слово) — і лишає все інше: слова
+// пропусків речень sentenceIds (ніколи не видаляються) і справжні
+// дистрактори (не збігаються з жодним пропуском узагалі). Перший варіант
+// ({{chien|chiot}} -> "chien") кожного пропуску цих речень, перемішаний.
 export function sanitizeDragDropForPractice(config: DragDropConfig, sentenceIds: string[]): DragDropPublic {
   const idSet = new Set(sentenceIds);
-  const sentences = getDragDropSentences(config).filter((s) => idSet.has(s.id));
-  const bank = sentences.flatMap((s) =>
-    [...s.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).answers[0])
-  );
+  const allSentences = getDragDropSentences(config);
+  const sentences = allSentences.filter((s) => idSet.has(s.id));
+  const excludedVariants = allSentences
+    .filter((s) => !idSet.has(s.id))
+    .flatMap((s) => [...s.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).answers));
+  const bank = filterWordBank(config.bank, excludedVariants);
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
