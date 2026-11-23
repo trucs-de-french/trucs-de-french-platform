@@ -21,21 +21,33 @@ export function chunk<T>(items: T[], size: number): T[][] {
 
 // Задача "unify matching group splitting, no singleton rule" (пізніше
 // узагальнено під ту саму задачу для letter_gaps/letter_rearrangement/
-// table_fill, EXERCISE_BLOCK_SIZE=10) — ЄДИНЕ місце, що ділить елементи на
-// групи/блоки фіксованого розміру, коли залишок РІВНО 1 елемент лишав би
-// останній блок одним-єдиним елементом (виглядає як помилка розмітки, не
-// навігація): звичайний chunk(size), і лише коли ОСТАННЯ група виявилась
-// рівно 1 елементом — зливаємо її в ПОПЕРЕДНЮ. Залишок 2..size-1 — без
-// змін (як і раніше), лише залишок 1 обробляється інакше. n<=size — один
-// блок (навіть n=1), без злиття (нема з чим зливати) — той самий "один
-// блок" принцип, що chunk()/splitEvenly() нижче.
-export function chunkWithoutSingleton<T>(items: T[], size: number): T[][] {
+// table_fill, EXERCISE_BLOCK_SIZE=10), ще пізніше — задача "block rule:
+// do not create a trailing block of 1 or 2 cards" (minTail — ЗАГАЛЬНИЙ
+// параметр, не лише 2) — ЄДИНЕ місце, що ділить елементи на групи/блоки
+// фіксованого розміру, коли залишок МЕНШИЙ за minTail лишав би останній
+// блок "занадто коротким" (виглядає як помилка розмітки, не навігація):
+// звичайний chunk(size), і лише коли ОСТАННЯ група коротша за minTail —
+// зливаємо її в ПОПЕРЕДНЮ (та лишається ЦІЛОЮ, size елементів, перед
+// злиттям — тож результат завжди ≥ size, ніколи знову < minTail; жодного
+// циклу/повторного злиття не потрібно). Залишок ≥ minTail — без змін
+// (як і раніше), лише залишок < minTail обробляється інакше. n<=size —
+// один блок (навіть n=1), без злиття (нема з чим зливати) — той самий
+// "один блок" принцип, що chunk()/splitEvenly() нижче.
+export function chunkWithMinTail<T>(items: T[], size: number, minTail: number): T[][] {
   const groups = chunk(items, size);
-  if (groups.length >= 2 && groups[groups.length - 1].length === 1) {
+  if (groups.length >= 2 && groups[groups.length - 1].length < minTail) {
     const last = groups.pop()!;
     groups[groups.length - 1] = [...groups[groups.length - 1], ...last];
   }
   return groups;
+}
+
+// minTail=2 (залишок РІВНО 1 — єдиний "занадто короткий" випадок) — той
+// самий helper/поведінка, що й раніше (перейменовано на chunkWithMinTail,
+// цей виклик лишається ТОЧНО тим самим для matching і всіх інших наявних
+// викликачів, що очікують "лише залишок 1 зливається").
+export function chunkWithoutSingleton<T>(items: T[], size: number): T[][] {
+  return chunkWithMinTail(items, size, 2);
 }
 
 // matching — ПАРА (2 елементи), розмір групи 5 — делегує на

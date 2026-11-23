@@ -21,7 +21,7 @@ import { TaskResult, TaskResultGapRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
-import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton } from "@/lib/exercises/exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton, chunkWithMinTail } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
@@ -344,13 +344,19 @@ export function LetterGapsExercise({
   }
 
   // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE слів, той самий
-  // chunk(), що звичайна вправа (wordBlocks вище), лише на
-  // practiceWordIndices (знімок помилок, не всю вправу). blockCount<=1 —
-  // БЕЗ вкладок/футера нижче (той самий built-in захист, що BlockTabs/
-  // BlockNavigation уже мають для звичайної вправи), плашка+заголовок
-  // лишаються завжди.
+  // поріг, що звичайна вправа (wordBlocks вище, chunkWithoutSingleton,
+  // minTail=2), лише на practiceWordIndices (знімок помилок, не всю
+  // вправу) — АЛЕ з minTail=3, не 2 (задача "block rule: do not create a
+  // trailing block of 1 or 2 cards" — ЛИШЕ практика цих двох типів):
+  // залишок 1 чи 2 елементи зливається в ПОПЕРЕДНІЙ блок (11/12 -> один
+  // блок; 13 -> 10,3; 21 -> 10,11; 22 -> 10,12; 23 -> 10,10,3). Картки
+  // зберігають той самий розмір/вигляд незалежно від розміру блоку (11 чи
+  // 12 карток — звичайна 2-колонкова сітка, без жодної спеціальної
+  // розмітки). blockCount<=1 — БЕЗ вкладок/футера нижче (той самий
+  // built-in захист, що BlockTabs/BlockNavigation уже мають для звичайної
+  // вправи), плашка+заголовок лишаються завжди.
   const isSceneMode = !!practice?.scene;
-  const practiceBlocks = isSceneMode ? chunkWithoutSingleton(practiceWordIndices, EXERCISE_BLOCK_SIZE) : [];
+  const practiceBlocks = isSceneMode ? chunkWithMinTail(practiceWordIndices, EXERCISE_BLOCK_SIZE, 3) : [];
   const practiceBlockCount = practiceBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
   const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);

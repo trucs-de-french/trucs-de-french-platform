@@ -13,7 +13,7 @@
 // потрібен окремий знімок, а не live remainingItemIds напряму), і (3) що
 // елемент лишається у СВОЄМУ блоці незалежно від того, виправлені чи ні
 // інші елементи того самого блоку.
-import { EXERCISE_BLOCK_SIZE, chunk, chunkMatchingPairs, chunkWithoutSingleton } from "./exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunk, chunkMatchingPairs, chunkWithoutSingleton, chunkWithMinTail } from "./exercise-blocks";
 
 let failures = 0;
 function assert(condition: boolean, label: string) {
@@ -116,6 +116,63 @@ function range(n: number): string[] {
     JSON.stringify(chunkWithoutSingleton([] as string[], 10)) === "[]",
     "chunkWithoutSingleton: empty input produces no blocks, not a crash"
   );
+}
+
+// --- chunkWithMinTail — задача "block rule: do not create a trailing ------
+// --- block of 1 or 2 cards": ЗАГАЛЬНИЙ параметр minTail, не лише 2 --------
+
+{
+  const sizeFor = (n: number, minTail: number) => sizes(chunkWithMinTail(range(n), 10, minTail)).join(",");
+
+  // minTail=1 — tail<1 ніколи не true (мінімальний можливий хвіст — 1
+  // елемент) -> жодного злиття НІКОЛИ, результат ЗАВЖДИ точно chunk(n,10).
+  for (const n of [1, 2, 3, 9, 10, 11, 12, 13, 21, 22, 23]) {
+    assert(
+      sizeFor(n, 1) === sizes(chunk(range(n), 10)).join(","),
+      `chunkWithMinTail minTail=1, n=${n}: identical to plain chunk() (tail<1 never happens)`
+    );
+  }
+
+  // minTail=2 — той самий результат, що chunkWithoutSingleton (лише
+  // хвіст РІВНО 1 зливається).
+  assert(sizeFor(1, 2) === "1", "minTail=2, n=1: one block of 1");
+  assert(sizeFor(2, 2) === "2", "minTail=2, n=2: one block of 2");
+  assert(sizeFor(3, 2) === "3", "minTail=2, n=3: one block of 3");
+  assert(sizeFor(9, 2) === "9", "minTail=2, n=9: one block of 9");
+  assert(sizeFor(10, 2) === "10", "minTail=2, n=10: one block of 10");
+  assert(sizeFor(11, 2) === "11", "minTail=2, n=11: tail 1 merges -> one block of 11");
+  assert(sizeFor(12, 2) === "10,2", "minTail=2, n=12: tail 2 is NOT < 2, no merge -> 10,2");
+  assert(sizeFor(13, 2) === "10,3", "minTail=2, n=13: tail 3, no merge -> 10,3");
+  assert(sizeFor(21, 2) === "10,11", "minTail=2, n=21: tail 1 merges -> 10,11");
+  assert(sizeFor(22, 2) === "10,10,2", "minTail=2, n=22: tail 2 is NOT < 2, no merge -> 10,10,2");
+  assert(sizeFor(23, 2) === "10,10,3", "minTail=2, n=23: tail 3, no merge -> 10,10,3");
+
+  // minTail=3 — задача: тепер хвости 1 ЧИ 2 зливаються (не лише 1).
+  assert(sizeFor(1, 3) === "1", "minTail=3, n=1: one block of 1 (single group, no merge attempted)");
+  assert(sizeFor(2, 3) === "2", "minTail=3, n=2: one block of 2 (single group, no merge attempted)");
+  assert(sizeFor(3, 3) === "3", "minTail=3, n=3: one block of 3");
+  assert(sizeFor(9, 3) === "9", "minTail=3, n=9: one block of 9");
+  assert(sizeFor(10, 3) === "10", "minTail=3, n=10: one block of 10");
+  assert(sizeFor(11, 3) === "11", "minTail=3, n=11: tail 1 merges -> one block of 11");
+  assert(sizeFor(12, 3) === "12", "minTail=3, n=12: tail 2 now ALSO merges -> one block of 12");
+  assert(sizeFor(13, 3) === "10,3", "minTail=3, n=13: tail 3 is NOT < 3, no merge -> 10,3");
+  assert(sizeFor(21, 3) === "10,11", "minTail=3, n=21: tail 1 merges -> 10,11");
+  assert(sizeFor(22, 3) === "10,12", "minTail=3, n=22: tail 2 now ALSO merges -> 10,12");
+  assert(sizeFor(23, 3) === "10,10,3", "minTail=3, n=23: tail 3 is NOT < 3, no merge -> 10,10,3");
+
+  // Порожній список — не крашиться, для будь-якого minTail.
+  assert(JSON.stringify(chunkWithMinTail([] as string[], 10, 3)) === "[]", "chunkWithMinTail: empty input produces no blocks, not a crash");
+
+  // chunkWithoutSingleton(items, size) делегує на chunkWithMinTail(items,
+  // size, 2) — та сама поведінка, перевірена вище через sizeFor(n,2) —
+  // тут лише підтверджуємо, що САМА chunkWithoutSingleton (не internal
+  // chunkWithMinTail напряму) дає ІДЕНТИЧНИЙ результат на кількох n.
+  for (const n of [1, 11, 12, 21, 22]) {
+    assert(
+      JSON.stringify(chunkWithoutSingleton(range(n), 10)) === JSON.stringify(chunkWithMinTail(range(n), 10, 2)),
+      `chunkWithoutSingleton(n=${n}) delegates to chunkWithMinTail(..., 2) unchanged`
+    );
+  }
 }
 
 // letter_gaps/letter_rearrangement/table_fill — ЕЛЕМЕНТ = слово/рядок,
