@@ -24,7 +24,7 @@ import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
@@ -360,16 +360,11 @@ export function LetterGapsExercise({
     });
     setPracticeFailedAttempts(result.failedAttempts);
     if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
-    // Автоматичне розкриття після 2 невдалих спроб — лише флет-режим,
-    // той самий принцип, що letter-rearrangement.tsx: сцена-вигляд
-    // показує відповідь лише через панель "Правильні відповіді"/пілюлю.
-    if (!isSceneMode) {
-      for (const r of result.results) {
-        if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-          practiceCheck.reveal(r.itemId, false);
-        }
-      }
-    }
+    // Задача "unify attempt/reveal behaviour" — без автоматичного
+    // розкриття в жодному потоці (shouldAutoReveal, error-review.ts,
+    // завжди false): сцена-вигляд і далі показує відповідь лише через
+    // панель "Правильні відповіді" (reveal(id, true) на відкриття панелі,
+    // revealBlockAnswers нижче), флет — своєю пілюлею "Відповідь" поруч.
   }
 
   // ==== Гілка блоків (>10 слів) ====
@@ -751,6 +746,42 @@ export function LetterGapsExercise({
       });
     }
 
+    // Задача "unify attempt/reveal behaviour" — флет-режим (на відміну від
+    // сцена-вигляду вище) не має блочної панелі "Правильні відповіді", тож
+    // лишається ЄДИНИМ способом розкрити відповідь: той самий футер
+    // (крапки спроб), що сцена-вигляд, + пілюля "Відповідь" (не кнопка
+    // BUTTON_REVEAL_ANSWER) — той самий .practice-reveal-pill, що
+    // letter-rearrangement.tsx. Розкрита відповідь — рядок "Правильне
+    // слово" у ТОМУ Ж слоті footer (correct-answer-label/correct-answer-
+    // word, той самий вигляд, що Task A), замінює крапки після розкриття.
+    const footer = shouldShowAttemptFooter(isCorrect, itemRevealed) ? (
+      <div className="practice-attempt-footer">
+        <span className="practice-attempt-dots" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+            />
+          ))}
+        </span>
+        <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
+        <button
+          type="button"
+          onClick={() => practiceCheck.reveal(key, true)}
+          disabled={!!practiceCheck.revealPending[key]}
+          aria-label={t("button.showAnswer")}
+          className="practice-reveal-pill"
+        >
+          <Eye size={14} aria-hidden="true" />
+          {t("button.answerShort")}
+        </button>
+      </div>
+    ) : itemRevealed ? (
+      <p className="text-sm dark:text-[var(--text-muted-caption)]">
+        <span className="correct-answer-label">{t("answer.correctWordLabel")} </span>
+        <span className="correct-answer-word text-[#3b36c4]">{itemRevealed.join(", ")}</span>
+      </p>
+    ) : undefined;
     return (
       <div key={wi} className="flex flex-col gap-1.5">
         {renderWordCard(wi, {
@@ -759,34 +790,10 @@ export function LetterGapsExercise({
           gapOrder,
           hintDisabled: true,
           cardNumber: flatLayout ? flatLayout.displayNumber : pos + 1,
+          practiceFooter: footer,
         })}
         {isCorrect === true && (
           <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
-        )}
-        {isCorrect === false && (
-          <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
-            <span className="text-red-600 dark:text-red-400">
-              {t("status.incorrectRetryCount", { n: attempts })}
-            </span>
-            {!itemRevealed && (
-              <button
-                type="button"
-                onClick={() => practiceCheck.reveal(key, true)}
-                disabled={!!practiceCheck.revealPending[key]}
-                aria-label={t("button.showAnswer")}
-                title={t("button.showAnswer")}
-                className={BUTTON_REVEAL_ANSWER}
-              >
-                <Eye size={14} aria-hidden="true" />
-                {t("button.answerShort")}
-              </button>
-            )}
-          </div>
-        )}
-        {itemRevealed && (
-          <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-            <span className="exercise-answer-label">{t("answer.correctWordLabel")}</span> {itemRevealed.join(", ")}
-          </p>
         )}
       </div>
     );

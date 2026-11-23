@@ -136,11 +136,9 @@ export function TrueFalseExercise({
       return next;
     });
     setPracticeFailedAttempts(result.failedAttempts);
-    for (const r of result.results) {
-      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-        practiceCheck.reveal(r.itemId, false);
-      }
-    }
+    // Задача "unify attempt/reveal behaviour" — без автоматичного
+    // розкриття (shouldAutoReveal, error-review.ts, завжди false), лише
+    // кнопкою "Відповідь" (BUTTON_REVEAL_ANSWER, reveal(id, true)).
   }
 
   const practiceAllAnswered = practiceStatements.every((s) => answers[s.id] !== undefined);

@@ -161,10 +161,9 @@ export function CheckboxGridExercise({
     setPracticeCorrect(correct);
     setPracticeDetail(r.detail as CheckboxGridDetail | undefined);
     setPracticeFailedAttempts(r.failedAttempts);
-    const attempts = r.failedAttempts[WHOLE_TASK_ITEM_ID] ?? 0;
-    if (!correct && attempts >= 2 && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) {
-      practiceCheck.reveal(WHOLE_TASK_ITEM_ID, false);
-    }
+    // Задача "unify attempt/reveal behaviour" — без автоматичного
+    // розкриття (shouldAutoReveal, error-review.ts, завжди false), лише
+    // кнопкою "Відповідь" (BUTTON_REVEAL_ANSWER, reveal(id, true)).
   }
 
   function toggleCell(rowId: string, columnId: string) {

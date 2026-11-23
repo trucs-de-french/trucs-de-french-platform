@@ -7,7 +7,7 @@ import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } f
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
@@ -21,6 +21,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
+import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { buildTableFillAnswerRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 function cellKey(rowId: string, side: "left" | "right") {
@@ -380,16 +381,11 @@ export function TableFillExercise({
     });
     setPracticeFailedAttempts(result.failedAttempts);
     if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
-    // Автоматичне розкриття після 2 невдалих спроб — лише флет-режим,
-    // той самий принцип, що letter-rearrangement.tsx: сцена-вигляд
-    // показує відповідь лише через панель "Правильні відповіді".
-    if (!isSceneMode) {
-      for (const r of result.results) {
-        if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-          practiceCheck.reveal(r.itemId, false);
-        }
-      }
-    }
+    // Задача "unify attempt/reveal behaviour" — без автоматичного
+    // розкриття в жодному потоці (shouldAutoReveal, error-review.ts,
+    // завжди false): сцена-вигляд і далі показує відповідь лише через
+    // панель "Правильні відповіді" (reveal(id, true) на відкриття панелі,
+    // revealBlockAnswers нижче), флет — своєю пілюлею "Відповідь" поруч.
   }
 
   // hideReveal — лише сцена-вигляд (крок 3b): інлайн-кнопка "Показати
@@ -441,33 +437,45 @@ export function TableFillExercise({
         </div>
       )
     ) : (
+      // Задача "unify attempt/reveal behaviour" — флет-режим (на відміну
+      // від сцена-вигляду вище) не має блочної панелі "Правильні
+      // відповіді", тож лишається ЄДИНИМ способом розкрити відповідь: той
+      // самий футер (крапки спроб), що сцена-вигляд, + пілюля "Відповідь"
+      // (не кнопка BUTTON_REVEAL_ANSWER) — той самий .practice-reveal-pill,
+      // що letter-rearrangement.tsx/letter-gaps.tsx. Розкрита відповідь —
+      // рядок "Правильне слово" (correct-answer-label/correct-answer-word,
+      // той самий вигляд, що Task A), замінює крапки після розкриття.
       <>
         {isCorrect === true && (
           <p className="text-xs font-medium text-green-600 dark:text-green-400">{tt("status.correct")}</p>
         )}
-        {isCorrect === false && (
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-red-600 dark:text-red-400">
-              {tt("status.incorrectRetryCount", { n: attempts })}
+        {shouldShowAttemptFooter(isCorrect, revealedAnswer) && (
+          <div className="practice-attempt-footer">
+            <span className="practice-attempt-dots" aria-hidden="true">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+                />
+              ))}
             </span>
-            {!revealedAnswer && (
-              <button
-                type="button"
-                onClick={() => practiceCheck.reveal(row.id, true)}
-                disabled={!!practiceCheck.revealPending[row.id]}
-                aria-label={tt("button.showAnswer")}
-                title={tt("button.showAnswer")}
-                className={BUTTON_REVEAL_ANSWER}
-              >
-                <Eye size={14} aria-hidden="true" />
-                {tt("button.answerShort")}
-              </button>
-            )}
+            <span className="practice-attempt-label">{tt("status.failedAttemptShort", { n: attempts })}</span>
+            <button
+              type="button"
+              onClick={() => practiceCheck.reveal(row.id, true)}
+              disabled={!!practiceCheck.revealPending[row.id]}
+              aria-label={tt("button.showAnswer")}
+              className="practice-reveal-pill"
+            >
+              <Eye size={14} aria-hidden="true" />
+              {tt("button.answerShort")}
+            </button>
           </div>
         )}
         {revealedAnswer && (
-          <p className="text-xs italic text-amber-700 dark:text-amber-400">
-            <span className="exercise-answer-label">{tt("answer.correctAnswerLabel")}</span> {revealedAnswer.join(" / ")}
+          <p className="text-sm dark:text-[var(--text-muted-caption)]">
+            <span className="correct-answer-label">{tt("answer.correctAnswerLabel")} </span>
+            <span className="correct-answer-word text-[#3b36c4]">{revealedAnswer.join(" / ")}</span>
           </p>
         )}
       </>

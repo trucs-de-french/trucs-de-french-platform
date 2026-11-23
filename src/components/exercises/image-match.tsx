@@ -138,11 +138,9 @@ export function ImageMatchExercise({
       return next;
     });
     setPracticeFailedAttempts(r.failedAttempts);
-    for (const x of r.results) {
-      if (!x.correct && (r.failedAttempts[x.itemId] ?? 0) >= 2 && !practiceCheck.revealed[x.itemId]) {
-        practiceCheck.reveal(x.itemId, false);
-      }
-    }
+    // Задача "unify attempt/reveal behaviour" — без автоматичного
+    // розкриття (shouldAutoReveal, error-review.ts, завжди false), лише
+    // кнопкою "Відповідь" (BUTTON_REVEAL_ANSWER, reveal(id, true)).
   }
 
   if (isPractice) {

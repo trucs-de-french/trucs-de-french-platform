@@ -251,16 +251,11 @@ export function MatchingExercise({
     });
     setPracticeFailedAttempts(result.failedAttempts);
     if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
-    // Автоматичне розкриття після 2 невдалих спроб — лише флет-режим,
-    // той самий принцип, що letter-rearrangement.tsx: сцена-вигляд
-    // показує відповідь лише через панель "Правильні пари".
-    if (!isSceneMode) {
-      for (const r of result.results) {
-        if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-          practiceCheck.reveal(r.itemId, false);
-        }
-      }
-    }
+    // Задача "unify attempt/reveal behaviour" — без автоматичного
+    // розкриття в жодному потоці (shouldAutoReveal, error-review.ts,
+    // завжди false): сцена-вигляд і далі показує відповідь лише через
+    // панель "Правильні пари" (reveal(id, true) на відкриття панелі,
+    // revealBlockAnswers нижче), флет — кнопкою "Відповідь" поруч.
   }
 
   const usedRights = new Set(Object.values(pairs));

@@ -20,7 +20,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SortableTileRow } from "./sortable-tile-row";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { TaskResult } from "./task-result";
@@ -29,6 +29,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { usePracticeCheck } from "./use-practice-check";
+import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { estimateLetterRearrangementCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
 import { buildRevealedWordDetail, type RevealedWordDetail } from "@/lib/exercises/format-reveal-answer";
@@ -289,20 +290,11 @@ export function LetterRearrangementExercise({
     });
     setPracticeFailedAttempts(result.failedAttempts);
     if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
-    // Автоматичне розкриття після 2 невдалих спроб — лише флет-режим
-    // (інлайн-картка сцени, старий продуктовий принцип, use-practice-
-    // check.ts fromButton=false коментар). Сцена-вигляд (крок 3c) має
-    // власний контракт: відповідь показується ЛИШЕ по натисканню пілюлі
-    // "Відповідь" — автовиклик тут раніше й розкривав картку сам, без
-    // натискання, щойно result.failedAttempts (із сервера, через
-    // router.refresh() чи напряму з відповіді) сягав 2.
-    if (!isSceneMode) {
-      for (const r of result.results) {
-        if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-          practiceCheck.reveal(r.itemId, false);
-        }
-      }
-    }
+    // Задача "unify attempt/reveal behaviour" — без автоматичного
+    // розкриття в жодному потоці (shouldAutoReveal, error-review.ts,
+    // завжди false): єдиний спосіб розкрити відповідь тепер — та сама
+    // пілюля "Відповідь" (practice-reveal-pill, renderPracticeItem нижче),
+    // в обох режимах (sceneStyle і флет) однаково.
   }
 
   // ==== Гілка блоків (>10 слів) ====
@@ -561,10 +553,17 @@ export function LetterRearrangementExercise({
   // сцена-вигляд блоків) і сцена-вигляду блоків (крок 3c: "варіант 3 —
   // крапки спроб", усередині картки). Два зовсім різні рендери під
   // sceneStyle.
+  // Задача "unify attempt/reveal behaviour" — sceneStyle і флет-режим
+  // раніше мали ДВА окремих рендери (крапки+пілюля в картці проти
+  // окремого статус-рядка+кнопки під карткою): тепер ОДИН спільний футер
+  // (крапки спроб + пілюля "Відповідь", renderWordCard's opts.
+  // practiceFooter/revealedWordDetail), той самий у sceneStyle і флет —
+  // відмінність між режимами лишається лише в нумерації картки
+  // (flatLayout, "довгі слова в кінці списку", крок 5 флет-режиму, не
+  // стосується футера/розкриття).
   function renderPracticeItem(
     wi: number,
     pos: number,
-    sceneStyle = false,
     // Крок 5 (флет-режим, "довгі слова в кінці списку") — displayNumber з
     // layoutFlatPracticeItems замінює pos+1; undefined для sceneStyle (там
     // нумерація лишається позиційною, не перепорядкованою).
@@ -575,93 +574,44 @@ export function LetterRearrangementExercise({
     const attempts = practiceFailedAttempts[key] ?? 0;
     const itemRevealed = practiceCheck.revealed[key];
 
-    if (sceneStyle) {
-      // Розкрите слово — підсвічування плиток+рядок "Правильне слово"
-      // через ТОЙ САМИЙ renderWordCard, що реальна вправа (opts.
-      // revealedWordDetail), а не окремий текст. Поки не розкрите (і не
-      // виправлене) — футер "спроби" (крапки+пілюля), лише коли вже є
-      // бодай одна невдала спроба; коректний елемент — узагалі без
-      // футера й без тексту (зелені/кольорові плитки й так це показують).
-      const revealedWordDetail = itemRevealed ? buildRevealedWordDetail(itemRevealed[0], orders[wi]) : undefined;
-      const showFooter = isCorrect === false && !itemRevealed;
-      const footer = showFooter ? (
-        <div className="practice-attempt-footer">
-          <span className="practice-attempt-dots" aria-hidden="true">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-              />
-            ))}
-          </span>
-          <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
-          <button
-            type="button"
-            onClick={() => practiceCheck.reveal(key, true)}
-            disabled={!!practiceCheck.revealPending[key]}
-            aria-label={t("button.showAnswer")}
-            className="practice-reveal-pill"
-          >
-            <Eye size={14} aria-hidden="true" />
-            {t("button.answerShort")}
-          </button>
-        </div>
-      ) : undefined;
-      return renderWordCard(wi, {
-        detail: undefined,
-        locked: false,
-        hintDisabled: true,
-        cardNumber: pos + 1,
-        revealedWordDetail,
-        practiceFooter: footer,
-      });
-    }
-
-    return (
-      <div key={wi} className="flex flex-col gap-1.5">
-        {renderWordCard(wi, {
-          detail: undefined,
-          locked: false,
-          hintDisabled: true,
-          cardNumber: flatLayout ? flatLayout.displayNumber : pos + 1,
-        })}
-        {isCorrect === true && (
-          <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
-        )}
-        {isCorrect === false && (
-          <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
-            <span className="text-red-600 dark:text-red-400">
-              {t("status.incorrectRetryCount", { n: attempts })}
-            </span>
-            {!itemRevealed && (
-              <button
-                type="button"
-                onClick={() => practiceCheck.reveal(key, true)}
-                disabled={!!practiceCheck.revealPending[key]}
-                aria-label={t("button.showAnswer")}
-                title={t("button.showAnswer")}
-                className={BUTTON_REVEAL_ANSWER}
-              >
-                <Eye size={14} aria-hidden="true" />
-                {t("button.answerShort")}
-              </button>
-            )}
-          </div>
-        )}
-        {itemRevealed && (
-          // Задача "Правильне слово: look exactly like on the scene page" —
-          // та сама розмітка/класи, що вже є у renderWordCard вище
-          // (correct-answer-label/correct-answer-word, сірувато-індиго
-          // лейбл + серифне слово кольору #3b36c4), замість старого
-          // italic/amber тексту, лише в цьому флет-режимі практики (крок
-          // sceneStyle вище ВЖЕ використовує renderWordCard напряму).
-          <p className="pl-1 text-sm dark:text-[var(--text-muted-caption)]">
-            <span className="correct-answer-label">{t("answer.correctWordLabel")} </span>
-            <span className="correct-answer-word text-[#3b36c4]">{itemRevealed.join(", ")}</span>
-          </p>
-        )}
+    // Розкрите слово — підсвічування плиток+рядок "Правильне слово" через
+    // ТОЙ САМИЙ renderWordCard, що реальна вправа (opts.revealedWordDetail),
+    // а не окремий текст. Поки не розкрите (і не виправлене) — футер
+    // "спроби" (крапки+пілюля), лише коли є бодай одна невдала спроба;
+    // коректний елемент — узагалі без футера й без тексту (зелені/кольорові
+    // плитки й так це показують).
+    const revealedWordDetail = itemRevealed ? buildRevealedWordDetail(itemRevealed[0], orders[wi]) : undefined;
+    const footer = shouldShowAttemptFooter(isCorrect, itemRevealed) ? (
+      <div className="practice-attempt-footer">
+        <span className="practice-attempt-dots" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+            />
+          ))}
+        </span>
+        <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
+        <button
+          type="button"
+          onClick={() => practiceCheck.reveal(key, true)}
+          disabled={!!practiceCheck.revealPending[key]}
+          aria-label={t("button.showAnswer")}
+          className="practice-reveal-pill"
+        >
+          <Eye size={14} aria-hidden="true" />
+          {t("button.answerShort")}
+        </button>
       </div>
-    );
+    ) : undefined;
+    return renderWordCard(wi, {
+      detail: undefined,
+      locked: false,
+      hintDisabled: true,
+      cardNumber: flatLayout ? flatLayout.displayNumber : pos + 1,
+      revealedWordDetail,
+      practiceFooter: footer,
+    });
   }
 
   if (isPractice && isSceneMode) {
@@ -711,13 +661,13 @@ export function LetterRearrangementExercise({
             checkButton={sceneCheckButtonEl}
           >
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, true))}
+              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
             </div>
           </BlockNavigation>
         ) : (
           <>
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, true))}
+              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
             </div>
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
@@ -762,7 +712,7 @@ export function LetterRearrangementExercise({
           {t("letterrearr.swapHintDesktop")}
         </p>
         <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item.displayNumber - 1, false, item))}
+          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item.displayNumber - 1, item))}
         </div>
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}

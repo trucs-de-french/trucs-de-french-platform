@@ -9,6 +9,8 @@ import {
   deriveMistakesChips,
   shouldRenderWrapperHeader,
   confirmedSolvedBlankIds,
+  shouldAutoReveal,
+  shouldShowAttemptFooter,
 } from "./error-review";
 
 let failures = 0;
@@ -230,6 +232,37 @@ function assert(condition: boolean, label: string) {
 {
   const out = confirmedSolvedBlankIds(0, [], []);
   assert(out.length === 0, "zero blanks never produces a solved id");
+}
+
+// --- shouldAutoReveal / shouldShowAttemptFooter (задача "unify attempt/
+// reveal behaviour" — product decision: practice NEVER auto-reveals the
+// answer, in either flow; a decision point important enough to pin down
+// with a test, even though the function itself takes no arguments) ------
+
+{
+  assert(shouldAutoReveal() === false, "auto-reveal must never happen, in either flow");
+}
+
+{
+  assert(
+    shouldShowAttemptFooter(false, undefined) === true,
+    "footer shows after a wrong attempt that is not yet revealed"
+  );
+}
+
+{
+  assert(
+    shouldShowAttemptFooter(false, ["chien"]) === false,
+    "footer hides once the item is revealed, even if the last attempt was wrong"
+  );
+}
+
+{
+  assert(shouldShowAttemptFooter(true, undefined) === false, "footer never shows for a correct item");
+}
+
+{
+  assert(shouldShowAttemptFooter(undefined, undefined) === false, "footer never shows before any attempt");
 }
 
 if (failures > 0) {

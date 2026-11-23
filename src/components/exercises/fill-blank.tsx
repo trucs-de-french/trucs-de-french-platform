@@ -302,11 +302,9 @@ export function FillBlankExercise({
       return next;
     });
     setPracticeFailedAttempts(practiceResult.failedAttempts);
-    for (const r of practiceResult.results) {
-      if (!r.correct && (practiceResult.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-        practiceCheck.reveal(r.itemId, false);
-      }
-    }
+    // Задача "unify attempt/reveal behaviour" — без автоматичного
+    // розкриття (shouldAutoReveal, error-review.ts, завжди false), лише
+    // кнопкою "Відповідь" (BUTTON_REVEAL_ANSWER, reveal(id, true)).
   }
 
   function updateAnswer(i: number, value: string) {

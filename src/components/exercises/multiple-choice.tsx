@@ -205,11 +205,10 @@ export function MultipleChoiceExercise({
       return next;
     });
     setPracticeFailedAttempts(result.failedAttempts);
-    for (const r of result.results) {
-      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
-        practiceCheck.reveal(r.itemId, false);
-      }
-    }
+    // Задача "unify attempt/reveal behaviour" — автоматичного розкриття
+    // після 2 спроб більше немає (shouldAutoReveal, error-review.ts,
+    // завжди false): єдиний спосіб побачити відповідь — кнопка "Відповідь"
+    // (BUTTON_REVEAL_ANSWER нижче, reveal(id, true)).
   }
 
   const practiceAllAnswered = practiceItems.every((it) => (selections[it.id] ?? []).length > 0);
