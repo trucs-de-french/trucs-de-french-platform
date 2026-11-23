@@ -594,8 +594,18 @@ export function ReorderExercise({
             </div>
           )}
           {revealedAnswer && (
-            <p className="text-sm italic text-amber-700 dark:text-amber-400">
-              <span className="exercise-answer-label">{tt("answer.correctOrderLabel")}</span> {revealedAnswer.join("; ")}
+            // Задача "Правильне слово: look exactly like on the scene page" —
+            // та сама розмітка/класи, що вже є у renderCard вище
+            // (exercise-answer-label text-neutral-600/correct-answer-word
+            // #3b36c4), замість старого italic/amber тексту — тут немає
+            // sceneStyle-розгалуження (reorder — whole-режим, один рендер
+            // для флет і сцена-вигляду мистейк-сторінки), тож це єдине
+            // місце, що потребувало вирівнювання.
+            <p className="break-words text-sm [overflow-wrap:anywhere]">
+              <span className="exercise-answer-label text-neutral-600 dark:text-[var(--text-muted-caption)]">
+                {tt("answer.correctOrderLabel")}{" "}
+              </span>
+              <span className="correct-answer-word text-[#3b36c4]">{revealedAnswer.join("; ")}</span>
             </p>
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}

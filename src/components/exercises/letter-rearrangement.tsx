@@ -649,8 +649,15 @@ export function LetterRearrangementExercise({
           </div>
         )}
         {itemRevealed && (
-          <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-            <span className="exercise-answer-label">{t("answer.correctWordLabel")}</span> {itemRevealed.join(", ")}
+          // Задача "Правильне слово: look exactly like on the scene page" —
+          // та сама розмітка/класи, що вже є у renderWordCard вище
+          // (correct-answer-label/correct-answer-word, сірувато-індиго
+          // лейбл + серифне слово кольору #3b36c4), замість старого
+          // italic/amber тексту, лише в цьому флет-режимі практики (крок
+          // sceneStyle вище ВЖЕ використовує renderWordCard напряму).
+          <p className="pl-1 text-sm dark:text-[var(--text-muted-caption)]">
+            <span className="correct-answer-label">{t("answer.correctWordLabel")} </span>
+            <span className="correct-answer-word text-[#3b36c4]">{itemRevealed.join(", ")}</span>
           </p>
         )}
       </div>
