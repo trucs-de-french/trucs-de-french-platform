@@ -59,3 +59,23 @@ export const EXERCISE_BODY_ITEMS_GAP = "gap-4";
 // Між підписом (напр. "Визначення: ...") і його контентом (плитки літер,
 // картки) всередині ОДНОГО елемента тіла — найдрібніший рівень ритму.
 export const EXERCISE_LABEL_GAP = "gap-2";
+
+// Задача "verdict pill almost touching the cards above it" — відступ ПЕРЕД
+// рядком результату (TaskResult: пілюля балів + вердикт-чіп À revoir/
+// Presque/Parfait) — 12px до 640px (Tailwind sm), 14px від 640px. ОДНЕ
+// число скрізь, де вправа рендерить картку-сітку/список ПОТІМ TaskResult
+// (чи блоковий answersPanel, що ТЕЖ є TaskResult) — найбільш типовий
+// викликач: `<div className={RESULT_ROW_GAP_CLASS}>{content}{resultRow}</div>`.
+// Корінь бага (letter_gaps/table_fill, практика сцена-вигляду блоків,
+// openMode="scene") — грід слів/рядків і answersPanel передавались
+// BlockNavigation ДВОМА ОКРЕМИМИ дітьми (без спільної обгортки), а
+// BlockNavigation.contentRef — звичайний div БЕЗ gap (контент+футер
+// check/←/→ мають власний margin-top, flex-gap тут зламав би ЙОГО
+// відступ) — звідси "дотик" (~0px) замість відступу. Інші вже-гарні
+// випадки (multiple_choice/true_false/word_choice/reorder renderBlock(),
+// fill_blank/drag_drop/image_match/listening/chronological_order/
+// sort_columns/checkbox_grid "whole"-результат) лишаються на своєму
+// власному gap-3 (12px, без десктопного збільшення) — не "дотик", уже
+// комфортно, свідомо НЕ переписані цією задачею (зміна лише заради
+// байтової ідентичності з цим числом, не виправлення бага).
+export const RESULT_ROW_GAP_CLASS = "flex flex-col gap-3 sm:gap-[14px]";

@@ -11,7 +11,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
-import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP, RESULT_ROW_GAP_CLASS } from "@/lib/spacing";
 import { TaskResult, TaskResultAnswerRows, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -888,17 +888,28 @@ export function TableFillExercise({
             onChangeBlock={setPracticeActiveBlock}
             checkButton={sceneCheckButtonEl}
           >
-            <div className="flex flex-col gap-2">
-              {activeRows.map((row, i) => renderPracticeRow(row, practiceBlockBase + i + 1, true))}
+            {/* Задача "verdict pill almost touching the cards above it" —
+                рядки+answersPanel тепер ОДНА спільна обгортка
+                (RESULT_ROW_GAP_CLASS, spacing.ts), не два окремих дитини
+                BlockNavigation: contentRef там — звичайний div БЕЗ gap
+                (щоб не зіпсувати margin-top рядка check/←/→ під ним),
+                тож без цієї обгортки рядки й answersPanel торкались одне
+                одного. */}
+            <div className={RESULT_ROW_GAP_CLASS}>
+              <div className="flex flex-col gap-2">
+                {activeRows.map((row, i) => renderPracticeRow(row, practiceBlockBase + i + 1, true))}
+              </div>
+              {answersPanel}
             </div>
-            {answersPanel}
           </BlockNavigation>
         ) : (
           <>
-            <div className="flex flex-col gap-2">
-              {activeRows.map((row, i) => renderPracticeRow(row, practiceBlockBase + i + 1, true))}
+            <div className={RESULT_ROW_GAP_CLASS}>
+              <div className="flex flex-col gap-2">
+                {activeRows.map((row, i) => renderPracticeRow(row, practiceBlockBase + i + 1, true))}
+              </div>
+              {answersPanel}
             </div>
-            {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
         )}

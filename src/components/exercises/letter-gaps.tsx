@@ -15,7 +15,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { EXERCISE_STACK } from "@/lib/spacing";
+import { EXERCISE_STACK, RESULT_ROW_GAP_CLASS } from "@/lib/spacing";
 import { WORD_CARD, splitPhraseUnits } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -924,17 +924,28 @@ export function LetterGapsExercise({
             onChangeBlock={setPracticeActiveBlock}
             checkButton={sceneCheckButtonEl}
           >
-            <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, activeGapOrder, true))}
+            {/* Задача "verdict pill almost touching the cards above it" —
+                грід+answersPanel тепер ОДНА спільна обгортка
+                (RESULT_ROW_GAP_CLASS, spacing.ts), не два окремих дитини
+                BlockNavigation: contentRef там — звичайний div БЕЗ gap
+                (щоб не зіпсувати margin-top рядка check/←/→ під ним), тож
+                без цієї обгортки грід і answersPanel торкались одне
+                одного. */}
+            <div className={RESULT_ROW_GAP_CLASS}>
+              <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
+                {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, activeGapOrder, true))}
+              </div>
+              {answersPanel}
             </div>
-            {answersPanel}
           </BlockNavigation>
         ) : (
           <>
-            <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, activeGapOrder, true))}
+            <div className={RESULT_ROW_GAP_CLASS}>
+              <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
+                {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, activeGapOrder, true))}
+              </div>
+              {answersPanel}
             </div>
-            {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
         )}

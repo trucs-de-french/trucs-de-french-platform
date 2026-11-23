@@ -10,7 +10,7 @@ import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } fro
 import { TaskPanelHeader } from "./task-panel-header";
 import { MatchingBoard } from "./matching-board";
 import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
-import { EXERCISE_STACK } from "@/lib/spacing";
+import { EXERCISE_STACK, RESULT_ROW_GAP_CLASS } from "@/lib/spacing";
 import { chunkMatchingPairs } from "@/lib/exercises/exercise-blocks";
 import { TaskResult, TaskResultPairRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -446,7 +446,7 @@ export function MatchingExercise({
     }
 
     return (
-      <div className="flex flex-col gap-[14px] md:gap-[16px]">
+      <div className={RESULT_ROW_GAP_CLASS}>
         <MatchingBoard
           leftItems={blockLeft}
           rightItems={blockRight}
@@ -658,13 +658,13 @@ export function MatchingExercise({
             onChangeBlock={setPracticeActiveBlock}
             checkButton={sceneCheckButtonEl}
           >
-            <div className="flex flex-col gap-[14px] md:gap-[16px]">
+            <div className={RESULT_ROW_GAP_CLASS}>
               {board}
               {answersPanel}
             </div>
           </BlockNavigation>
         ) : (
-          <div className="flex flex-col gap-[14px] md:gap-[16px]">
+          <div className={RESULT_ROW_GAP_CLASS}>
             {board}
             {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
@@ -801,7 +801,7 @@ export function MatchingExercise({
       />
 
       {!useBlocks ? (
-        <div className="flex flex-col gap-[14px] md:gap-[16px]">
+        <div className={RESULT_ROW_GAP_CLASS}>
           <MatchingBoard
             leftItems={config.left}
             rightItems={config.right}
