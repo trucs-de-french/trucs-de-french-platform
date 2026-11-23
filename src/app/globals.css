@@ -9989,6 +9989,14 @@ button.scene-bar:active .scene-bar-toggle {
   .word-pool--fb-collapsed .word-pool-chips {
     display: none;
   }
+  /* Підказка-речення під чипами (.word-pool-hint, fill-blank.tsx) —
+     ховається РАЗОМ із чипами, коли банк згорнутий, те саме правило,
+     що .word-pool-chips вище (стосується лише .word-pool--fb — інші
+     споживачі .word-pool-hint, image_match/drag_drop/sort_columns,
+     не мають згортання взагалі). */
+  .word-pool--fb-collapsed .word-pool-hint {
+    display: none;
+  }
 }
 @media (max-width: 640px) and (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool-fb-chevron {

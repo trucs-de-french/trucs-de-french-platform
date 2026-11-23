@@ -102,6 +102,7 @@ export const en: Record<MessageKey, string> = {
   "pool.dragHintGapMouse": "Drag a word into the gap",
   "pool.dragHintColumnMouse": "Drag a word into the right column",
   "pool.openWordList": "Open the word list",
+  "pool.crossOutHint": "Type the word in the blank. Tap a word to cross it off the list.",
 
   "common.outOf": "{a} of {b}",
 

@@ -105,6 +105,7 @@ export const uk = {
   "pool.dragHintGapMouse": "Перетягніть слово мишею в пропуск",
   "pool.dragHintColumnMouse": "Перетягніть слово мишею в потрібну колонку",
   "pool.openWordList": "Розкрийте список слів",
+  "pool.crossOutHint": "Впишіть слово в пропуск. Натисніть на слово, щоб викреслити його зі списку.",
 
   "common.outOf": "{a} з {b}",
 

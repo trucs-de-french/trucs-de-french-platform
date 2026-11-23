@@ -448,6 +448,14 @@ export function FillBlankExercise({
                 </button>
               ))}
             </div>
+            {/* Той самий .word-pool-hint, що image_match/drag_drop/
+                sort_columns (один текст, не touch/mouse-пара — тут нічого
+                не тягнуть) — ховається разом із чипами, коли банк згорнутий
+                (.word-pool--fb-collapsed .word-pool-hint нижче,
+                globals.css, те саме правило, що й .word-pool-chips). */}
+            <p className="word-pool-hint" aria-hidden="false">
+              {t("pool.crossOutHint")}
+            </p>
           </div>
         )}
 
