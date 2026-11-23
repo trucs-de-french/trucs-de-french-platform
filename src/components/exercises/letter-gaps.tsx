@@ -21,14 +21,18 @@ import { TaskResult, TaskResultGapRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
-import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
-import { estimateLetterGapsCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
+import {
+  estimateLetterGapsCardRows,
+  letterGapsOverflowsColumn,
+  orderByEstimatedRows,
+} from "@/lib/exercises/estimate-card-rows";
 import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
 import { buildGapRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
@@ -155,7 +159,7 @@ export function LetterGapsExercise({
   // рендера) — свідомо, щоб вигляд/поведінка наявних коротких вправ не
   // залежали від логіки блоків узагалі.
   const wordBlocks = useMemo(
-    () => chunk(config.words.map((_, wi) => wi), EXERCISE_BLOCK_SIZE),
+    () => chunkWithoutSingleton(config.words.map((_, wi) => wi), EXERCISE_BLOCK_SIZE),
     [config.words]
   );
   const blockCount = wordBlocks.length;
@@ -334,7 +338,7 @@ export function LetterGapsExercise({
   // BlockNavigation уже мають для звичайної вправи), плашка+заголовок
   // лишаються завжди.
   const isSceneMode = !!practice?.scene;
-  const practiceBlocks = isSceneMode ? chunk(practiceWordIndices, EXERCISE_BLOCK_SIZE) : [];
+  const practiceBlocks = isSceneMode ? chunkWithoutSingleton(practiceWordIndices, EXERCISE_BLOCK_SIZE) : [];
   const practiceBlockCount = practiceBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
   const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);
@@ -833,6 +837,7 @@ export function LetterGapsExercise({
       activeIndices.map((wi) => ({
         id: wi,
         lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
+        overflowsColumn: letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters),
       }))
     );
     const activeGapOrder = gapOrderFor(pairedActiveIndices.map((item) => item.id));
@@ -983,6 +988,7 @@ export function LetterGapsExercise({
       practiceWordIndices.map((wi) => ({
         id: wi,
         lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
+        overflowsColumn: letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters),
       }))
     );
     // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,

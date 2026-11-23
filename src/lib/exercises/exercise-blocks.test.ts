@@ -13,7 +13,7 @@
 // потрібен окремий знімок, а не live remainingItemIds напряму), і (3) що
 // елемент лишається у СВОЄМУ блоці незалежно від того, виправлені чи ні
 // інші елементи того самого блоку.
-import { EXERCISE_BLOCK_SIZE, chunk, chunkMatchingPairs } from "./exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunk, chunkMatchingPairs, chunkWithoutSingleton } from "./exercise-blocks";
 
 let failures = 0;
 function assert(condition: boolean, label: string) {
@@ -90,6 +90,32 @@ function sizes(blocks: unknown[][]): number[] {
 
 function range(n: number): string[] {
   return Array.from({ length: n }, (_, i) => `pair-${i}`);
+}
+
+// --- chunkWithoutSingleton — the generic helper letter_gaps/letter_rearrangement/
+// table_fill now use (size 10) and chunkMatchingPairs delegates to (size 5) --
+
+{
+  const sizeFor10 = (n: number) => sizes(chunkWithoutSingleton(range(n), 10)).join(",");
+  assert(sizeFor10(1) === "1", "size 10: 1 item gives one block of 1");
+  assert(sizeFor10(2) === "2", "size 10: 2 items give one block of 2");
+  assert(sizeFor10(10) === "10", "size 10: 10 items stay one block (no second block to merge with)");
+  assert(sizeFor10(11) === "11", "size 10: 11 items give one merged block of 11, not 10,1");
+  assert(sizeFor10(12) === "10,2", "size 10: 12 items give 10,2 (remainder 2, no merge)");
+  assert(sizeFor10(20) === "10,10", "size 10: 20 items give 10,10 (remainder 0, no merge)");
+  assert(sizeFor10(21) === "10,11", "size 10: 21 items give 10,11 (singleton merges into the previous block)");
+  assert(sizeFor10(22) === "10,10,2", "size 10: 22 items give 10,10,2 (remainder 2, no merge)");
+
+  const sizeFor5 = (n: number) => sizes(chunkWithoutSingleton(range(n), 5)).join(",");
+  assert(sizeFor5(1) === "1", "size 5: 1 item gives one block of 1");
+  assert(sizeFor5(5) === "5", "size 5: 5 items stay one block");
+  assert(sizeFor5(6) === "6", "size 5: 6 items give one merged block of 6, not 5,1");
+  assert(sizeFor5(11) === "5,6", "size 5: 11 items give 5,6 (singleton merges into the previous block)");
+
+  assert(
+    JSON.stringify(chunkWithoutSingleton([] as string[], 10)) === "[]",
+    "chunkWithoutSingleton: empty input produces no blocks, not a crash"
+  );
 }
 
 // letter_gaps/letter_rearrangement/table_fill — ЕЛЕМЕНТ = слово/рядок,

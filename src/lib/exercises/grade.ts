@@ -29,7 +29,7 @@ import {
 } from "./sanitize";
 import { placementCells } from "./word-search-grid";
 import { sanitizeWordForGrid } from "./grid-word";
-import { EXERCISE_BLOCK_SIZE, chunk, CARD_BLOCK_MAX, splitEvenly } from "./exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton, CARD_BLOCK_MAX, splitEvenly } from "./exercise-blocks";
 import { normalizeWordSearchConfig, normalizeCrosswordConfig, selectWordsForBlock } from "./grid-blocks";
 import type {
   FillBlankConfig,
@@ -178,7 +178,7 @@ function pointsWithHints(
 // розрахунок, що був до цього фіксу.
 function blockPointsPossible(totalPoints: number, totalCount: number, answeredIndices: number[]): number {
   if (totalCount === 0) return 0;
-  const chunks = chunk(
+  const chunks = chunkWithoutSingleton(
     Array.from({ length: totalCount }, (_, i) => i),
     EXERCISE_BLOCK_SIZE
   );

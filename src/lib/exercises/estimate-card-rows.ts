@@ -108,6 +108,32 @@ export function estimateLetterGapsCardRows(chars: (string | null)[], hiddenLette
   return Math.max(1, rows);
 }
 
+// Задача "a lone card in the last row must stay half-width" — чи є в слові
+// одиниця, що НАВІТЬ після розбиття на силабічні фрагменти (той самий шлях,
+// що estimateLetterGapsCardRows вище, packIntoRows) лишає бодай один
+// фрагмент ШИРШИМ за REFERENCE_ROW_WIDTH_PX (300px, половинна картка) —
+// це і є "контент, що насправді не влазить в одну колонку" (дуже довге,
+// нерозривне слово), на відміну від звичайного "картка потребує кілька
+// рядків" (просто переносить слова/фрагменти рядками, завжди влазить у
+// REFERENCE_ROW_WIDTH_PX, full-width НЕ потрібен). pairPracticeItems
+// (flat-practice-layout.ts) використовує це, а не "lines", щоб вирішити, чи
+// одинока картка в кінці списку лишається full-width, чи йде half-width, як
+// усі інші.
+export function letterGapsOverflowsColumn(chars: (string | null)[], hiddenLetters: string[]): boolean {
+  const units = splitPhraseUnits(chars);
+  let gapOffset = 0;
+  for (const unit of units) {
+    const unitWidth = cellsWidth(unit);
+    if (unitWidth > REFERENCE_ROW_WIDTH_PX) {
+      const word = reconstructUnitWord(unit, hiddenLetters, gapOffset);
+      const chunkWidths = sliceUnitByChunks(unit, splitIntoSyllableChunks(word)).map(cellsWidth);
+      if (chunkWidths.some((w) => w > REFERENCE_ROW_WIDTH_PX)) return true;
+    }
+    gapOffset += unit.filter((c) => c === null).length;
+  }
+  return false;
+}
+
 // letter_rearrangement: плитки-літери без змістовних груп — звичайний
 // збалансований перенос (chunkIntoRows, use-working-tile-layout.ts), k —
 // скільки клітинок влазить у референсний рядок.

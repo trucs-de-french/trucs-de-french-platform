@@ -1,4 +1,4 @@
-# Matching "no singleton" group rule — block-progress impact audit
+# "No singleton" block rule — block-progress impact audit
 
 Context: `chunkMatchingPairs` (`src/lib/exercises/exercise-blocks.ts`) changes
 how matching pairs are grouped into blocks of 5, merging a trailing lone pair
@@ -7,6 +7,14 @@ into the previous group instead of leaving it alone (11 pairs: `5,5,1` ->
 21, ...). This document is the read-only audit requested for that change's
 effect on already-stored `public.progress.block_progress` — **no SQL in this
 file was run, and none of it is a write.**
+
+**Update (follow-up task):** the same "no singleton" rule has been
+generalized to `chunkWithoutSingleton(items, size)`, the helper
+`chunkMatchingPairs` now delegates to, and is applied to the other three
+fixed-size-chunked types — `letter_gaps`/`letter_rearrangement`/`table_fill`,
+size `EXERCISE_BLOCK_SIZE` (10) instead of 5. The audit below (matching,
+size 5) applies unchanged; see "Generalization to letter_gaps/
+letter_rearrangement/table_fill" further down for the size-10 case.
 
 ## Finding: no misread risk for the visual "block checked" state
 
@@ -130,3 +138,86 @@ merged block for that task. Given the narrow, low-severity nature described
 above, no further action is proposed here — this is purely so you can decide
 whether to also do something about it (e.g. a manual one-off cleanup of those
 specific stale keys, decided separately, outside this task).
+
+## Generalization to letter_gaps/letter_rearrangement/table_fill (size 10)
+
+Same rule, same helper (`chunkWithoutSingleton`, `chunkMatchingPairs` is now a
+thin size-5 wrapper over it), same risk shape — only the item unit and the
+chunk size change: element = word (`config.words`) for `letter_gaps`/
+`letter_rearrangement`, row (`config.rows`) for `table_fill`; size =
+`EXERCISE_BLOCK_SIZE` (10), not 5. Affected item counts: `% 10 === 1` (11,
+21, 31, ...).
+
+**Scoring note specific to letter_gaps/letter_rearrangement:** unlike
+`table_fill` (whose points are computed per-row, scoped by `rowId` presence —
+chunking never enters `gradeTableFill`), `gradeLetterGaps`/
+`gradeLetterRearrangement` split `config.points` across blocks via
+`blockPointsPossible` (`grade.ts`), which re-derives the client's block
+boundaries with its own `chunk(...)` call to recognize which block was
+submitted. That call has been updated to the same `chunkWithoutSingleton`,
+so server and client agree on boundaries *going forward* — this generalization
+does not introduce a new client/server mismatch. The only residual exposure
+is the same *historical stale key* shape as matching's Query 2 below: a
+student who already submitted the task's old last (singleton) block before
+this ships, then resubmits the new merged block afterward.
+
+**No misread risk for the visual "block checked" state:** same reasoning as
+matching above — `letter-gaps.tsx`/`letter-rearrangement.tsx`/`table-fill.tsx`
+all keep `blockResults`/`practiceBlockAttempted` as plain `useState` maps,
+never rehydrated from `block_progress`.
+
+### Query 3 — how many letter_gaps/letter_rearrangement/table_fill tasks have `count % 10 == 1`
+
+```sql
+-- READ-ONLY.
+select
+  t.id as task_id,
+  t.type,
+  t.scene_id,
+  t.task_group_id,
+  jsonb_array_length(coalesce(t.config -> (case when t.type = 'table_fill' then 'rows' else 'words' end), '[]'::jsonb)) as item_count,
+  jsonb_array_length(coalesce(t.config -> (case when t.type = 'table_fill' then 'rows' else 'words' end), '[]'::jsonb)) % 10 as remainder
+from public.tasks t
+where t.type in ('letter_gaps', 'letter_rearrangement', 'table_fill')
+  and jsonb_array_length(coalesce(t.config -> (case when t.type = 'table_fill' then 'rows' else 'words' end), '[]'::jsonb)) % 10 = 1
+order by item_count desc;
+```
+
+### Query 4 — which (user, task) pairs are exposed to the double-count risk for these three types
+
+Same shape as matching's Query 2: exposed = a task with `item_count % 10 ==
+1` where some student already has a `block_progress` entry under the key
+that is the *old* last block index (`ceil(item_count / 10) - 1`, 0-based) —
+the singleton block that no longer exists on its own after this change.
+
+```sql
+-- READ-ONLY.
+with singleton_tasks as (
+  select
+    t.id as task_id,
+    t.type,
+    jsonb_array_length(coalesce(t.config -> (case when t.type = 'table_fill' then 'rows' else 'words' end), '[]'::jsonb)) as item_count,
+    (ceil(jsonb_array_length(coalesce(t.config -> (case when t.type = 'table_fill' then 'rows' else 'words' end), '[]'::jsonb))::numeric / 10) - 1)::text as old_last_block_key
+  from public.tasks t
+  where t.type in ('letter_gaps', 'letter_rearrangement', 'table_fill')
+    and jsonb_array_length(coalesce(t.config -> (case when t.type = 'table_fill' then 'rows' else 'words' end), '[]'::jsonb)) % 10 = 1
+)
+select
+  p.user_id,
+  st.task_id,
+  st.type,
+  st.item_count,
+  st.old_last_block_key,
+  p.block_progress -> st.old_last_block_key as old_block_entry,
+  p.score,
+  p.best_score
+from singleton_tasks st
+join public.progress p on p.task_id = st.task_id
+where p.block_progress ? st.old_last_block_key
+order by st.item_count desc;
+```
+
+Same conclusion as matching: a non-empty Query 4 result is the precise list
+of students who *could* see a slightly inflated score on resubmission of the
+newly-merged block, bounded to one item's worth of points, on tasks where
+`item_count % 10 === 1`. No further action proposed here beyond flagging it.

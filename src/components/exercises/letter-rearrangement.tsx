@@ -25,7 +25,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { TaskResult } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
-import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { usePracticeCheck } from "./use-practice-check";
@@ -111,7 +111,7 @@ export function LetterRearrangementExercise({
   // letter-gaps.tsx: одна гілка, окрема від блоків, вигляд/поведінка
   // наявних коротких вправ не залежать від логіки блоків узагалі.
   const wordBlocks = useMemo(
-    () => chunk(config.words.map((_, wi) => wi), EXERCISE_BLOCK_SIZE),
+    () => chunkWithoutSingleton(config.words.map((_, wi) => wi), EXERCISE_BLOCK_SIZE),
     [config.words]
   );
   const blockCount = wordBlocks.length;
@@ -264,7 +264,7 @@ export function LetterRearrangementExercise({
   // BlockNavigation уже мають для звичайної вправи), плашка+заголовок
   // лишаються завжди.
   const isSceneMode = !!practice?.scene;
-  const practiceBlocks = isSceneMode ? chunk(practiceWordIndices, EXERCISE_BLOCK_SIZE) : [];
+  const practiceBlocks = isSceneMode ? chunkWithoutSingleton(practiceWordIndices, EXERCISE_BLOCK_SIZE) : [];
   const practiceBlockCount = practiceBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
   const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);

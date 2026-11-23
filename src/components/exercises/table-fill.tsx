@@ -17,7 +17,7 @@ import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
-import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -262,7 +262,7 @@ export function TableFillExercise({
 
   // ≤EXERCISE_BLOCK_SIZE рядків (≤10) — той самий принцип, що matching/
   // letter-gaps: одна гілка, окрема від блоків.
-  const rowBlocks = useMemo(() => chunk(config.rows, EXERCISE_BLOCK_SIZE), [config.rows]);
+  const rowBlocks = useMemo(() => chunkWithoutSingleton(config.rows, EXERCISE_BLOCK_SIZE), [config.rows]);
   const blockCount = rowBlocks.length;
   const useBlocks = blockCount > 1;
 
@@ -344,7 +344,7 @@ export function TableFillExercise({
   // нижче (той самий built-in захист, що BlockTabs/BlockNavigation уже
   // мають для звичайної вправи), плашка+заголовок лишаються завжди.
   const isSceneMode = !!practice?.scene;
-  const practiceRowBlocks = isSceneMode ? chunk(practiceRows, EXERCISE_BLOCK_SIZE) : [];
+  const practiceRowBlocks = isSceneMode ? chunkWithoutSingleton(practiceRows, EXERCISE_BLOCK_SIZE) : [];
   const practiceBlockCount = practiceRowBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
   const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);

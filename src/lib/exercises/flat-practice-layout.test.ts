@@ -51,7 +51,9 @@ const LINES_3 = 3;
   assert(out.every((i) => !i.full), "all-long even count has no full-width row");
 }
 
-// --- odd shorts, no longs at all: the lone short stands alone, full --------
+// --- odd shorts, no longs at all: the lone short stands alone, HALF-width --
+// Задача "a lone card in the last row must stay half-width" — full:true
+// тепер ТІЛЬКИ коли overflowsColumn:true (тут не передано -> false).
 
 {
   const out = pairPracticeItems([
@@ -61,8 +63,22 @@ const LINES_3 = 3;
   ]);
   assert(out.map((i) => i.id).join(",") === "a,b,c", "odd shorts with no longs keep original order");
   assert(
-    out[0]!.full === false && out[1]!.full === false && out[2]!.full === true,
-    "the first pair stays paired, the odd third short stands alone full-width"
+    out[0]!.full === false && out[1]!.full === false && out[2]!.full === false,
+    "the first pair stays paired, the odd third short stands alone but stays half-width (no overflow)"
+  );
+}
+
+// --- odd shorts, no longs, the lone short genuinely overflows the column --
+
+{
+  const out = pairPracticeItems([
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "c", lines: SHORT, overflowsColumn: true },
+  ]);
+  assert(
+    out[2]!.full === true,
+    "an odd lone card that genuinely cannot fit one column (overflowsColumn:true) still spans full-width"
   );
 }
 
@@ -85,7 +101,7 @@ const LINES_3 = 3;
   );
 }
 
-// --- odd shorts, first long differs by 2+ lines: no pairing, both stand alone --
+// --- odd shorts, first long differs by 2+ lines: no pairing, both stand alone, HALF-width --
 
 {
   const out = pairPracticeItems([
@@ -99,13 +115,13 @@ const LINES_3 = 3;
     "order is still short-group-first, long-group-last"
   );
   assert(
-    out[2]!.full === true,
-    "the odd short does not pair with a long that differs by 2+ lines — it stands alone"
+    out[2]!.full === false,
+    "the odd short does not pair with a long that differs by 2+ lines — it stands alone, but stays half-width (no overflow)"
   );
-  assert(out[3]!.full === true, "the single remaining long (now unpaired) also stands alone");
+  assert(out[3]!.full === false, "the single remaining long (now unpaired) also stands alone, half-width");
 }
 
-// --- odd longs: the lone long stands alone, full, at the end ---------------
+// --- odd longs: the lone long stands alone, HALF-width, at the end ---------
 
 {
   const out = pairPracticeItems([
@@ -118,7 +134,21 @@ const LINES_3 = 3;
   assert(out.map((i) => i.id).join(",") === "a,b,p,q,r", "shorts first (paired), then longs (paired + odd one last)");
   assert(out[0]!.full === false && out[1]!.full === false, "the two shorts pair up");
   assert(out[2]!.full === false && out[3]!.full === false, "the first two longs pair up");
-  assert(out[4]!.full === true, "the odd third long stands alone, full-width, at the end");
+  assert(out[4]!.full === false, "the odd third long stands alone, half-width (no overflow), at the end");
+}
+
+// --- odd long leftover that genuinely overflows the column keeps full-width --
+
+{
+  const out = pairPracticeItems([
+    { id: "p", lines: LINES_2 },
+    { id: "q", lines: LINES_2 },
+    { id: "r", lines: LINES_2, overflowsColumn: true },
+  ]);
+  assert(
+    out[2]!.full === true,
+    "an odd long leftover with overflowsColumn:true still spans full-width, as today"
+  );
 }
 
 // --- mix: even shorts and even longs — no full rows at all ------------------
@@ -141,14 +171,17 @@ const LINES_3 = 3;
   assert(out.length === 0, "an empty list produces an empty list, not a crash");
 }
 
-// --- single card: always stands alone, full-width --------------------------
+// --- single card: stands alone, HALF-width unless it overflows the column --
 
 {
   const outShort = pairPracticeItems([{ id: "only", lines: SHORT }]);
-  assert(outShort.length === 1 && outShort[0]!.full === true, "a single short card stands alone, full-width");
+  assert(outShort.length === 1 && outShort[0]!.full === false, "a single short card stands alone, half-width (no overflow)");
 
   const outLong = pairPracticeItems([{ id: "only", lines: LINES_2 }]);
-  assert(outLong.length === 1 && outLong[0]!.full === true, "a single long card stands alone, full-width");
+  assert(outLong.length === 1 && outLong[0]!.full === false, "a single long card stands alone, half-width (no overflow)");
+
+  const outOverflow = pairPracticeItems([{ id: "only", lines: LINES_2, overflowsColumn: true }]);
+  assert(outOverflow.length === 1 && outOverflow[0]!.full === true, "a single card that genuinely overflows the column still spans full-width");
 }
 
 // --- 3+ lines never pairs with anything shorter than itself-1 --------------

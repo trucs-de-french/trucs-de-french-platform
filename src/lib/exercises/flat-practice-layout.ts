@@ -19,7 +19,15 @@
 // letter_rearrangement (однакові плитки-літери без семантичних груп),
 // систематично помилявся для letter_gaps, тож пара короткий/довгий
 // вибиралась неправильно попри коректний алгоритм парування нижче.
-export type FlatPracticeItemInput<Id> = { id: Id; lines: number };
+// overflowsColumn (задача "a lone card must stay half-width, not stretch") —
+// опційний, дефолт false: true лише коли сам контент картки НЕ влазить у
+// одну колонку навіть розбитий на рядки (дуже довге нерозривне слово,
+// letterGapsOverflowsColumn, estimate-card-rows.ts) — letter_rearrangement
+// (плитки-літери, завжди переносяться усередині половинної картки) ніколи
+// не передає true. lines сам по собі більше НЕ визначає full — картка з
+// багатьма рядками, але контентом, що влазить у колонку, лишається
+// half-width, просто вища за сусідню.
+export type FlatPracticeItemInput<Id> = { id: Id; lines: number; overflowsColumn?: boolean };
 export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number; full: boolean };
 
 // Задача "card pairing in the 2-column grid" — раніше (layoutFlatPracticeItems,
@@ -33,8 +41,11 @@ export type FlatPracticeLayoutItem<Id> = { id: Id; displayNumber: number; full: 
 // 2. довгі з довгими;
 // 3. непарна коротка в кінці групи коротких ПАРУЄТЬСЯ з першим довгим
 //    ЛИШЕ якщо різниця рядків <= 1 (1 рядок проти 2) — інакше йде сама,
-//    на весь рядок (full:true), а довгі парується між собою як завжди;
-// 4. непарна довга в кінці групи довгих — сама, на весь рядок.
+//    half-width (full:false, задача "a lone card must stay half-width" —
+//    full:true ТІЛЬКИ коли сама картка overflowsColumn), а довгі
+//    парується між собою як завжди;
+// 4. непарна довга в кінці групи довгих — сама, half-width (той самий
+//    виняток для overflowsColumn).
 // displayNumber — наскрізна нумерація В ЦЬОМУ новому порядку рядків,
 // 1-based; id (перевірка/збереження/API) лишається незмінним — порядок
 // рендеру й видимі номери міняються, нічого більше.
@@ -61,7 +72,7 @@ export function pairPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatP
       rows.push({ items: [oddShort, firstLong], full: false });
       remainingLongs = remainingLongs.slice(1);
     } else {
-      rows.push({ items: [oddShort], full: true });
+      rows.push({ items: [oddShort], full: oddShort.overflowsColumn === true });
     }
   }
 
@@ -69,7 +80,8 @@ export function pairPracticeItems<Id>(items: FlatPracticeItemInput<Id>[]): FlatP
     rows.push({ items: [remainingLongs[i], remainingLongs[i + 1]], full: false });
   }
   if (remainingLongs.length % 2 === 1) {
-    rows.push({ items: [remainingLongs[remainingLongs.length - 1]], full: true });
+    const oddLong = remainingLongs[remainingLongs.length - 1];
+    rows.push({ items: [oddLong], full: oddLong.overflowsColumn === true });
   }
 
   const ordered: FlatPracticeLayoutItem<Id>[] = [];
