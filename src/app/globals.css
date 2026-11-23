@@ -9363,10 +9363,21 @@ button.scene-bar:active .scene-bar-toggle {
 .word-pool-fb-open-hint {
   display: none;
 }
+/* justify-content: space-between лишалось тут раніше — коректно штовхало
+   групу пілюль праворуч, ЛИШЕ коли в рядку рівно 2 дитини (label + одна
+   група/пілюля, drag_drop/image_match/sort_columns). fill_blank додає
+   ТРЕТЮ дитину (.word-pool-fb-chevron після .word-pool-count-group) —
+   space-between розподіляв 3 елементи РІВНОМІРНО по рядку (пілюлі
+   опинялись по центру, шеврон сам-один у кінці) — звідси й був баг.
+   margin-right:auto на .word-pool-label (нижче) штовхає все, що після
+   нього, праворуч, незалежно від кількості дітей — той самий результат
+   для 2 дітей (drag_drop/image_match/sort_columns, пікселево не
+   змінюється), і правильний для 3 (fill_blank: пілюлі+шеврон разом
+   праворуч, у порядку рендеру — лічильник, "N intrus", шеврон). */
 .word-pool-label-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   flex-shrink: 0;
 }
@@ -9396,6 +9407,7 @@ button.scene-bar:active .scene-bar-toggle {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #8a7a52;
+  margin-right: auto;
 }
 .dark .word-pool-label {
   color: #dcdbf3;
@@ -9832,12 +9844,12 @@ button.scene-bar:active .scene-bar-toggle {
     margin: 0 -16px;
     padding: 12px 12px 12px;
   }
-  /* drag_drop (drag-drop.tsx): заголовок пулу має ТРИ пілюлі (лічильник +
-     "N intrus"), не дві, як image_match/fill_blank — .word-pool-label-row
-     лишається nowrap/space-between на десктопі (пікселево незмінно), але
-     на мобільному переносить групу пілюль ЦІЛИМ рядком під підпис, якщо
-     вона не влазить поряд (а не стискає/виштовхує лічильник-діапазон
-     "A–B з N"); якщо навіть сама група (лічильник+"N intrus") не влазить
+  /* drag_drop/fill_blank: заголовок пулу має кілька пілюль (лічильник +
+     "N intrus", fill_blank ще й шеврон після них) — .word-pool-label-row
+     лишається nowrap (margin-right:auto на .word-pool-label, десктоп,
+     пікселево незмінно), але на мобільному переносить групу пілюль/шеврон
+     ЦІЛИМ рядком під підпис, якщо вона не влазить поряд (а не стискає/
+     виштовхує лічильник-діапазон "A–B з N"); якщо й сама група не влазить
      в один рядок — переноситься вже всередині себе (.word-pool-count-group
      нижче), той самий gap 8px. */
   .word-pool-label-row {
