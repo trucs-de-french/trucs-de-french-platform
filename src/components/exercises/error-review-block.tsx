@@ -800,6 +800,18 @@ export function ErrorReviewBlock({
             <GlassBlock>
               <div className={EXERCISE_STACK}>
                 <ErrorReviewOpenedTask
+                  // Задача "chronological_order picture task shows raw image URL
+                  // as text after switching mistakes chips" — без key тут React
+                  // лишає ОДИН і той самий instance дерева вправи між різними
+                  // задачами (та сама позиція/тип компонента на кожному рендері),
+                  // тож useState(()=>config.items)-подібний "заморожений на
+                  // монтуванні" стан (initialItems, chronological-order.tsx;
+                  // initialOrders, reorder.tsx) лишався від ПОПЕРЕДНЬОЇ відкритої
+                  // задачі, поки config.mode (живий пропс) уже показував нову.
+                  // key={taskId} примушує чистий remount при кожній зміні чипа —
+                  // та сама поведінка, що й флет-картки сторінки сцени, де кожна
+                  // задача вже має власний key (ErrorReviewCard вище, key={entry.taskId}).
+                  key={openEntry.taskId}
                   entry={openEntry}
                   snapshotIds={snapshot?.taskId === openEntry.taskId ? snapshot.ids : openEntry.remainingItemIds}
                 />

@@ -1,7 +1,7 @@
 // Немає тестового фреймворку в проєкті (package.json) — простий assert-
 // скрипт, той самий принцип, що error-review.test.ts.
 // Запуск вручну: npx tsx src/lib/exercises/sanitize.test.ts
-import { filterWordBank } from "./sanitize";
+import { filterWordBank, sanitizeChronologicalOrder } from "./sanitize";
 
 let failures = 0;
 function assert(condition: boolean, label: string) {
@@ -85,6 +85,49 @@ function assert(condition: boolean, label: string) {
 {
   const out = filterWordBank([], [["chien"]]);
   assert(out.length === 0, "an empty bank stays empty");
+}
+
+// --- sanitizeChronologicalOrder (задача "chronological_order picture task
+// shows raw image URL as text after switching mistakes chips" — сам баг був
+// у error-review-block.tsx, не в санітайзері, але регресія-перевірка, що
+// санітайзер і далі не плутає image/text/mixed, лишається доречною) --------
+
+{
+  // mode:"image" — content лишається URL-ом, text (якщо раптом заданий)
+  // теж копіюється незмінно (саме поле не читається компонентом у цьому
+  // режимі, але санітайзер не має його відкидати/перезаписувати).
+  const out = sanitizeChronologicalOrder({
+    mode: "image",
+    items: [{ id: "a", content: "https://images.trucsdefrench.com/pic.jpeg", points: 2 }],
+  });
+  const item = out.items[0];
+  assert(out.mode === "image", "mode:image sanitizer output keeps mode as image");
+  assert(item.content === "https://images.trucsdefrench.com/pic.jpeg", "mode:image item keeps its URL in content, not replaced by text");
+}
+
+{
+  // mode:"text" — content лишається реченням, не плутається з URL-подібним
+  // кейсом вище (той самий тип поля content для обох режимів, розрізнення
+  // лише через config.mode).
+  const out = sanitizeChronologicalOrder({
+    mode: "text",
+    items: [{ id: "a", content: "Le cochon : « Groin groin… »", points: 1 }],
+  });
+  assert(out.mode === "text", "mode:text sanitizer output keeps mode as text");
+  assert(out.items[0].content === "Le cochon : « Groin groin… »", "mode:text item keeps its sentence in content");
+}
+
+{
+  // mode:"mixed" — content (URL) і text (підпис) обидва зберігаються
+  // окремо, жодне не перезаписує інше.
+  const out = sanitizeChronologicalOrder({
+    mode: "mixed",
+    items: [{ id: "a", content: "https://images.trucsdefrench.com/pic.jpeg", text: "Le chat", points: 1 }],
+  });
+  const item = out.items[0];
+  assert(out.mode === "mixed", "mode:mixed sanitizer output keeps mode as mixed");
+  assert(item.content === "https://images.trucsdefrench.com/pic.jpeg", "mode:mixed item keeps its image URL in content");
+  assert(item.text === "Le chat", "mode:mixed item keeps its caption in text, separate from content");
 }
 
 if (failures > 0) {
