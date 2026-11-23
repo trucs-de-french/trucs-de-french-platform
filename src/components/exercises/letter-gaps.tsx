@@ -30,6 +30,7 @@ import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from 
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
 import {
   estimateLetterGapsCardRows,
+  letterGapsIsOrphan,
   letterGapsOverflowsColumn,
   orderByEstimatedRows,
 } from "@/lib/exercises/estimate-card-rows";
@@ -838,6 +839,7 @@ export function LetterGapsExercise({
         id: wi,
         lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
         overflowsColumn: letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters),
+        orphan: letterGapsIsOrphan(config.words[wi].chars, config.words[wi].hiddenLetters),
       }))
     );
     const activeGapOrder = gapOrderFor(pairedActiveIndices.map((item) => item.id));
@@ -989,6 +991,7 @@ export function LetterGapsExercise({
         id: wi,
         lines: estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters),
         overflowsColumn: letterGapsOverflowsColumn(config.words[wi].chars, config.words[wi].hiddenLetters),
+        orphan: letterGapsIsOrphan(config.words[wi].chars, config.words[wi].hiddenLetters),
       }))
     );
     // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,

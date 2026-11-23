@@ -197,6 +197,134 @@ const LINES_3 = 3;
   assert(out.every((i) => !i.full), "two long items always pair with each other regardless of their own line gap");
 }
 
+// --- orphan card: never paired, always full-width, moved to the end --------
+// Задача "orphan card in the last tile line" — orphan:true картки виймаються
+// з пулу парування ПЕРШИМИ (ще до short/long-класифікації), ніколи не
+// паруються з сусідом, і йдуть ОКРЕМИМИ full-width рядками У КІНЦІ, у
+// вихідному порядку.
+
+{
+  // 4 звичайні короткі (паруються як завжди) + 1 orphan (довга картка з
+  // позначкою orphan) — orphan НЕ бере участі в парі з жодною короткою чи
+  // довгою, виходить окремим full-width рядком останнім.
+  const out = pairPracticeItems([
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "c", lines: SHORT },
+    { id: "d", lines: SHORT },
+    { id: "orphan1", lines: LINES_2, orphan: true },
+  ]);
+  assert(
+    out.map((i) => i.id).join(",") === "a,b,c,d,orphan1",
+    "orphan card moves to the end, after all paired shorts, in original relative order"
+  );
+  assert(
+    out[0]!.full === false && out[1]!.full === false && out[2]!.full === false && out[3]!.full === false,
+    "the four shorts pair up normally, unaffected by the orphan"
+  );
+  assert(out[4]!.full === true, "the orphan card renders full-width");
+  assert(out.map((i) => i.displayNumber).join(",") === "1,2,3,4,5", "numbering stays sequential across the orphan row");
+}
+
+// --- orphan is detected independently of being the odd leftover ------------
+
+{
+  // Odd short count (3) WITHOUT any orphan: the third short is simply a
+  // normal half-width lone leftover (not full) — orphan:true is a SEPARATE
+  // signal, never implied just by being unpaired.
+  const out = pairPracticeItems([
+    { id: "a", lines: SHORT },
+    { id: "b", lines: SHORT },
+    { id: "c", lines: SHORT },
+  ]);
+  assert(out[2]!.full === false, "an odd leftover short with no orphan flag stays half-width, not full");
+}
+
+// --- orphan NOT detected: estimate-card-rows only sets orphan:true when ---
+// --- the half-width last line holds exactly 1 tile — callers passing ------
+// --- orphan:false (2+ tiles on the last half-width line) must pair normally
+
+{
+  const out = pairPracticeItems([
+    { id: "p", lines: LINES_2, orphan: false },
+    { id: "q", lines: LINES_2, orphan: false },
+  ]);
+  assert(out.every((i) => !i.full), "orphan:false long cards pair normally, like before this task");
+}
+
+// --- odd counts WITH an orphan present: the orphan still never pairs -------
+
+{
+  // 3 longs, the last one flagged orphan: the first two longs pair up as
+  // usual; the orphan is pulled OUT before the "odd longs" leftover logic
+  // ever runs, so it never ends up accidentally paired or treated as the
+  // ordinary half-width leftover.
+  const out = pairPracticeItems([
+    { id: "p", lines: LINES_2 },
+    { id: "q", lines: LINES_2 },
+    { id: "r", lines: LINES_2, orphan: true },
+  ]);
+  assert(out.map((i) => i.id).join(",") === "p,q,r", "the two normal longs pair, the orphan stands alone at the end");
+  assert(out[0]!.full === false && out[1]!.full === false, "the two non-orphan longs pair up");
+  assert(out[2]!.full === true, "the orphan long renders full-width, not as a half-width leftover");
+}
+
+// --- orphan that still would not fit even at full width (overflowsColumn) --
+// --- behaves the same as a plain overflow (both pulled out, both full) ----
+
+{
+  const out = pairPracticeItems([
+    { id: "only", lines: LINES_3, orphan: true, overflowsColumn: true },
+  ]);
+  assert(out.length === 1 && out[0]!.full === true, "a card flagged both orphan and overflowsColumn is still full-width (no double-counting bug)");
+}
+
+// --- all orphans: every card stands alone, full-width, in original order ---
+
+{
+  const out = pairPracticeItems([
+    { id: "x", lines: LINES_2, orphan: true },
+    { id: "y", lines: LINES_3, orphan: true },
+    { id: "z", lines: LINES_2, orphan: true },
+  ]);
+  assert(out.map((i) => i.id).join(",") === "x,y,z", "all-orphan input keeps original order");
+  assert(out.every((i) => i.full), "every orphan card renders full-width, none paired");
+}
+
+// --- mix: shorts + longs + orphans, each bucket ordered independently -----
+
+{
+  const out = pairPracticeItems([
+    { id: "s1", lines: SHORT },
+    { id: "orphanA", lines: LINES_2, orphan: true },
+    { id: "s2", lines: SHORT },
+    { id: "l1", lines: LINES_2 },
+    { id: "l2", lines: LINES_3 },
+    { id: "orphanB", lines: LINES_2, orphan: true },
+  ]);
+  assert(
+    out.map((i) => i.id).join(",") === "s1,s2,l1,l2,orphanA,orphanB",
+    "shorts pair first, then longs pair, then orphans stand alone at the end in their original relative order"
+  );
+  assert(out[0]!.full === false && out[1]!.full === false, "the two shorts pair");
+  assert(out[2]!.full === false && out[3]!.full === false, "the two longs pair");
+  assert(out[4]!.full === true && out[5]!.full === true, "both orphans render full-width, at the end");
+}
+
+// --- orphan: empty list still produces an empty list, not a crash ---------
+
+{
+  const out = pairPracticeItems([] as { id: string; lines: number; orphan?: boolean }[]);
+  assert(out.length === 0, "an empty list with the orphan field still produces an empty list");
+}
+
+// --- orphan: a single orphan card stands alone, full-width -----------------
+
+{
+  const out = pairPracticeItems([{ id: "only", lines: LINES_2, orphan: true }]);
+  assert(out.length === 1 && out[0]!.full === true, "a single orphan card still renders full-width");
+}
+
 // --- ids are passed through untouched, only order/numbering/full change ---
 
 {

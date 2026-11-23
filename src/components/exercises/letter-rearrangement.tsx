@@ -31,7 +31,11 @@ import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { usePracticeCheck } from "./use-practice-check";
 import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
-import { estimateLetterRearrangementCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
+import {
+  estimateLetterRearrangementCardRows,
+  letterRearrangementIsOrphan,
+  orderByEstimatedRows,
+} from "@/lib/exercises/estimate-card-rows";
 import { buildRevealedWordDetail, type RevealedWordDetail } from "@/lib/exercises/format-reveal-answer";
 import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
 
@@ -636,6 +640,7 @@ export function LetterRearrangementExercise({
       activeIndices.map((wi) => ({
         id: wi,
         lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
+        orphan: letterRearrangementIsOrphan(config.words[wi].shuffledLetters.length),
       }))
     );
     const sceneCheckButtonEl = (
@@ -715,6 +720,7 @@ export function LetterRearrangementExercise({
       practiceWordIndices.map((wi) => ({
         id: wi,
         lines: estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length),
+        orphan: letterRearrangementIsOrphan(config.words[wi].shuffledLetters.length),
       }))
     );
     return (
