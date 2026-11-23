@@ -13,7 +13,7 @@
 // потрібен окремий знімок, а не live remainingItemIds напряму), і (3) що
 // елемент лишається у СВОЄМУ блоці незалежно від того, виправлені чи ні
 // інші елементи того самого блоку.
-import { EXERCISE_BLOCK_SIZE, chunk } from "./exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunk, chunkMatchingPairs } from "./exercise-blocks";
 
 let failures = 0;
 function assert(condition: boolean, label: string) {
@@ -29,55 +29,67 @@ function sizes(blocks: unknown[][]): number[] {
 
 // --- Порогові приклади із задачі ---------------------------------------
 
-// matching — ПАРА (2 елементи), звідси EXERCISE_BLOCK_SIZE/2 = 5 пар/блок
-// (той самий поділ, що sanitizeMatching/matching.tsx).
+// matching — ПАРА (2 елементи): chunkMatchingPairs (не голий chunk() з
+// EXERCISE_BLOCK_SIZE/2) — задача "unify matching group splitting, no
+// singleton rule": групи по 5 пар, а якщо залишок РІВНО 1 — остання пара
+// приєднується до ПОПЕРЕДНЬОЇ групи, а не лишається сама. 13 пар: залишок
+// 3 (13 = 5+5+3) — без злиття, як і раніше.
 {
   const pairs = Array.from({ length: 13 }, (_, i) => `pair-${i}`);
-  const blocks = chunk(pairs, EXERCISE_BLOCK_SIZE / 2);
+  const blocks = chunkMatchingPairs(pairs);
   assert(
     JSON.stringify(sizes(blocks)) === JSON.stringify([5, 5, 3]),
-    "matching: 13 pairs chunk into 5,5,3 (EXERCISE_BLOCK_SIZE/2)"
+    "matching: 13 pairs chunk into 5,5,3 (remainder 3, no merge needed)"
   );
 }
 
 // matching, флет/інлайн-картка сцени (error-review-block.tsx БЕЗ
-// openMode, matching.tsx isPractice) — ті самі порогові приклади, що
-// задача наводить явно: той самий chunk(pairs, EXERCISE_BLOCK_SIZE/2),
-// що й сцена-вигляд блоків вище, лише тут немає extracted-helper'а, що
-// потребував би ОКРЕМОГО тесту — пряме викликання chunk(), тож покриття
-// тут і там одне й те саме, лише ці конкретні межі (12/5/0) раніше не
-// були явно перевірені.
+// openMode, matching.tsx isPractice) — той самий chunkMatchingPairs, що
+// сцена-вигляд блоків вище (ОДИН спільний helper, не дублюючі виклики
+// chunk() у кожному місці). 12 пар: залишок 2 — без злиття.
 {
   const pairs = Array.from({ length: 12 }, (_, i) => `pair-${i}`);
-  const blocks = chunk(pairs, EXERCISE_BLOCK_SIZE / 2);
+  const blocks = chunkMatchingPairs(pairs);
   assert(JSON.stringify(sizes(blocks)) === JSON.stringify([5, 5, 2]), "matching flat groups: 12 pairs chunk into 5,5,2");
 }
 
 // Сцена-вигляд, фікс "pre-corrected pairs напіввирішені" — 14 wrong pairs
 // minus 2 already-corrected leaves 11 remaining (buildErrorReviewEntry.
 // remainingItemIds, see error-review.test.ts for the 12-remaining case).
-// chunk() is a PLAIN sequential slice, no "merge the small trailing block
-// into the previous one" rule anywhere in this file (only splitEvenly()
-// below balances block sizes, and that's for the CARD_BLOCK_MAX=5 card
-// types, not matching) — so 11 pairs give 5,5,1, not 5,6.
+// Задача "unify matching group splitting, no singleton rule" — 11 пар:
+// залишок РІВНО 1 (11 = 5+5+1) -> остання одинока пара приєднується до
+// ПОПЕРЕДНЬОЇ групи (5,6), а не лишається сама (5,5,1, старе правило).
 {
   const pairs = Array.from({ length: 11 }, (_, i) => `pair-${i}`);
-  const blocks = chunk(pairs, EXERCISE_BLOCK_SIZE / 2);
+  const blocks = chunkMatchingPairs(pairs);
   assert(
-    JSON.stringify(sizes(blocks)) === JSON.stringify([5, 5, 1]),
-    "matching: 14 wrong minus 2 corrected -> 11 remaining pairs chunk into 5,5,1 (chunk() has no merge rule; see test file comment)"
+    JSON.stringify(sizes(blocks)) === JSON.stringify([5, 6]),
+    "matching: 14 wrong minus 2 corrected -> 11 remaining pairs chunk into 5,6 (singleton merges into the previous group)"
   );
 }
 
 {
   const pairs = Array.from({ length: 5 }, (_, i) => `pair-${i}`);
-  const blocks = chunk(pairs, EXERCISE_BLOCK_SIZE / 2);
+  const blocks = chunkMatchingPairs(pairs);
   assert(JSON.stringify(sizes(blocks)) === JSON.stringify([5]), "matching flat groups: 5 pairs stay a single group");
 }
 
 {
-  const blocks = chunk([] as string[], EXERCISE_BLOCK_SIZE / 2);
+  const blocks = chunkMatchingPairs([] as string[]);
   assert(blocks.length === 0, "matching flat groups: 0 pairs produce no groups, not a crash");
+}
+
+// --- chunkMatchingPairs: every example from the task, explicitly --------
+
+{
+  assert(sizes(chunkMatchingPairs(range(1))).join(",") === "1", "1 pair gives one group of 1");
+  assert(sizes(chunkMatchingPairs(range(6))).join(",") === "6", "6 pairs gives one group of 6, not 5,1");
+  assert(sizes(chunkMatchingPairs(range(10))).join(",") === "5,5", "10 pairs gives 5,5 (remainder 0, no merge)");
+  assert(sizes(chunkMatchingPairs(range(16))).join(",") === "5,5,6", "16 pairs gives 5,5,6, not 5,5,5,1");
+}
+
+function range(n: number): string[] {
+  return Array.from({ length: n }, (_, i) => `pair-${i}`);
 }
 
 // letter_gaps/letter_rearrangement/table_fill — ЕЛЕМЕНТ = слово/рядок,
@@ -134,7 +146,7 @@ function sizes(blocks: unknown[][]): number[] {
 
 {
   const snapshot = Array.from({ length: 13 }, (_, i) => `pair-${i}`);
-  const blocks = chunk(snapshot, EXERCISE_BLOCK_SIZE / 2); // 5,5,3
+  const blocks = chunkMatchingPairs(snapshot); // 5,5,3
   const blockIndexOf = (blocksArr: string[][], id: string) => blocksArr.findIndex((b) => b.includes(id));
 
   const targetId = "pair-7"; // у другому блоці (індекси 5..9)
@@ -144,7 +156,7 @@ function sizes(blocks: unknown[][]): number[] {
   // Інші пари ТОГО Ж блоку "виправлені" (видалені з живого списку) —
   // чанкуємо ЗНОВУ З ТОГО Ж ЗНІМКУ (не live) — targetId лишається у
   // блоці 1, та сама позиція, незалежно від того, що сталось із рештою.
-  const blocksAgain = chunk(snapshot, EXERCISE_BLOCK_SIZE / 2);
+  const blocksAgain = chunkMatchingPairs(snapshot);
   assert(
     blockIndexOf(blocksAgain, targetId) === originalBlockIndex,
     "pair-7 stays in the same block across re-chunks of the same snapshot, regardless of other items' correction state"

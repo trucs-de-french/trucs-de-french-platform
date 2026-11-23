@@ -220,8 +220,8 @@ export async function loadSceneErrorReviewEntries(
                 // — клієнт не може сам дофільтрувати config.right за
                 // id-списком. perBlockShuffle=true — right перемішується в
                 // межах кожного блоку (sanitize.ts), щоб matching.tsx міг
-                // позиційно нарізати config.right тим самим chunk(), що
-                // config.left.
+                // позиційно нарізати config.right тим самим chunkMatchingPairs,
+                // що config.left.
                 sanitizeMatchingForPractice(config as unknown as MatchingConfig, review.remainingItemIds, true)
               : taskType === "drag_drop"
                 ? sanitizeDragDropForPractice(config as unknown as DragDropConfig, review.remainingItemIds)

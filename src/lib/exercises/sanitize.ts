@@ -54,7 +54,7 @@ import { type GradableTaskType, assertNeverGradableType } from "./gradable-types
 import { buildCrosswordOpenCells, buildCrosswordCellNumbers, buildCrosswordSolution } from "./crossword-grid";
 import { normalizePartOfSpeech } from "@/lib/vocab-categories";
 import { sanitizeWordForGrid } from "./grid-word";
-import { EXERCISE_BLOCK_SIZE, chunk } from "./exercise-blocks";
+import { chunkMatchingPairs } from "./exercise-blocks";
 import { normalizeWordSearchConfig, normalizeCrosswordConfig, selectWordsForBlock } from "./grid-blocks";
 
 export const BLANK_RE = /\{\{([^}]*)\}\}/g;
@@ -558,16 +558,19 @@ export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
   // студенту в жодному з трьох полів, той самий принцип, що вже нижче для
   // pairs.
   const pairs = getMatchingPairs(config);
-  // right — перемішано В МЕЖАХ кожного блоку по EXERCISE_BLOCK_SIZE/2 пар
-  // (exercise-blocks.ts — ПАРА це 2 елементи, звідси ділення навпіл), НЕ
-  // глобально по всій вправі: matching.tsx ділить >10-елементні вправи на
-  // незалежні блоки, і кожен блок мусить бачити серед своїх right ХОЧА Б
-  // усі власні правильні відповіді — глобальний шафл міг би закинути їх усі
-  // в ІНШИЙ блок, залишивши поточний нерозв'язним. Для ≤EXERCISE_BLOCK_SIZE/2
-  // пар це рівно ОДИН чанк = уся вправа — тобто той самий результат, що
-  // старий shuffle(pairs.map(...)) без чанкування, поведінка для наявних
-  // (≤10) вправ НЕ змінюється.
-  const right = chunk(pairs, EXERCISE_BLOCK_SIZE / 2).flatMap((group) => shuffle(group.map((p) => p.right)));
+  // right — перемішано В МЕЖАХ кожного блоку chunkMatchingPairs (задача
+  // "unify matching group splitting, no singleton rule" — ЄДИНИЙ спільний
+  // helper, той самий, що matching.tsx leftBlocks/rightBlocks: межі блоків
+  // МАЮТЬ лишатись узгодженими між санітайзером і компонентом, інакше
+  // right студента не збігся б позиційно з тим, як matching.tsx нарізає
+  // config.left), НЕ глобально по всій вправі: matching.tsx ділить
+  // велику вправу на незалежні блоки, і кожен блок мусить бачити серед
+  // своїх right ХОЧА Б усі власні правильні відповіді — глобальний шафл
+  // міг би закинути їх усі в ІНШИЙ блок, залишивши поточний нерозв'язним.
+  // Для ≤5 пар це рівно ОДИН чанк = уся вправа — тобто той самий
+  // результат, що старий shuffle(pairs.map(...)) без чанкування, поведінка
+  // для наявних коротких вправ НЕ змінюється.
+  const right = chunkMatchingPairs(pairs).flatMap((group) => shuffle(group.map((p) => p.right)));
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
@@ -590,11 +593,12 @@ export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
 // сторінка, "Робота над помилками", крок 4 — сцена-вигляд блоків).
 //
 // perBlockShuffle=true (лише мистейки-сторінка) — right перемішується В
-// МЕЖАХ кожного блоку по EXERCISE_BLOCK_SIZE/2 пар, той самий принцип, що
+// МЕЖАХ кожного блоку chunkMatchingPairs, той самий helper, що
 // sanitizeMatching для звичайної (не практичної) вправи: глобальний шафл
 // міг би закинути ВСІ правильні відповіді блоку в ІНШИЙ блок, лишивши
 // поточний нерозв'язним — без цього matching.tsx (сцена-вигляд) не зможе
-// позиційно нарізати config.right тим самим chunk(), що й config.left.
+// позиційно нарізати config.right тим самим chunkMatchingPairs, що й
+// config.left.
 export function sanitizeMatchingForPractice(
   config: MatchingConfig,
   pairIds: string[],
@@ -603,7 +607,7 @@ export function sanitizeMatchingForPractice(
   const idSet = new Set(pairIds);
   const pairs = getMatchingPairs(config).filter((p) => idSet.has(p.id));
   const right = perBlockShuffle
-    ? chunk(pairs, EXERCISE_BLOCK_SIZE / 2).flatMap((group) => stableShuffleBy(group, (p) => p.id).map((p) => p.right))
+    ? chunkMatchingPairs(pairs).flatMap((group) => stableShuffleBy(group, (p) => p.id).map((p) => p.right))
     : shuffle(pairs.map((p) => p.right));
   return {
     instructions: config.instructions,

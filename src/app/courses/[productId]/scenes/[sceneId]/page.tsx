@@ -663,11 +663,11 @@ export default async function ScenePage({
       // scene-error-review.ts для сцена-вигляду: без нього right
       // перемішувався б ОДНИМ суцільним shuffle на всю вправу (sanitize.ts:
       // sanitizeMatchingForPractice), і matching.tsx (isPractice, нижче),
-      // чанкуючи config.right тим самим chunk(), що й config.left, міг би
-      // дістати в групу i правий варіант пари, чий лівий елемент насправді
-      // в групі j — perBlockShuffle групує й перемішує right ВСЕРЕДИНІ
-      // кожного chunk() окремо, тож права колонка групи i лишається
-      // виключно з пар цієї самої групи.
+      // чанкуючи config.right тим самим chunkMatchingPairs, що й
+      // config.left, міг би дістати в групу i правий варіант пари, чий
+      // лівий елемент насправді в групі j — perBlockShuffle групує й
+      // перемішує right ВСЕРЕДИНІ кожної групи окремо, тож права колонка
+      // групи i лишається виключно з пар цієї самої групи.
       config:
         review.mode === "items"
           ? taskType === "matching"

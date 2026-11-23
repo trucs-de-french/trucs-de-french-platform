@@ -11,7 +11,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { MatchingBoard } from "./matching-board";
 import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { chunkMatchingPairs } from "@/lib/exercises/exercise-blocks";
 import { TaskResult, TaskResultPairRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -84,16 +84,17 @@ export function MatchingExercise({
   const [pairs, setPairs] = useState<Record<string, string>>({});
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
 
-  // ПАРА — 2 елементи, звідси EXERCISE_BLOCK_SIZE/2 (exercise-blocks.ts:
-  // спільний поріг "10 елементів", кожен тип сам вирішує, скільки його
-  // "елементів" у чанку). ≤EXERCISE_BLOCK_SIZE/2 пар (≤10 елементів) —
+  // ПАРА — 2 елементи, звідси chunkMatchingPairs (exercise-blocks.ts:
+  // групи по 5 пар, з правилом "залишок рівно 1 -> зливається в попередню
+  // групу", задача "unify matching group splitting, no singleton rule" —
+  // ЄДИНИЙ спільний helper, той самий скрізь у цьому файлі). ≤5 пар —
   // leftBlocks матиме РІВНО один чанк, useBlocks === false, і нижче
   // рендериться ТОЧНО той самий код, що був до розбиття на блоки (окрема
   // гілка, не перевикористання спільного рендера з блоками) — свідомо, щоб
   // вигляд/поведінка наявних коротких вправ не залежали від логіки блоків
   // узагалі.
-  const leftBlocks = useMemo(() => chunk(config.left, EXERCISE_BLOCK_SIZE / 2), [config.left]);
-  const rightBlocks = useMemo(() => chunk(config.right, EXERCISE_BLOCK_SIZE / 2), [config.right]);
+  const leftBlocks = useMemo(() => chunkMatchingPairs(config.left), [config.left]);
+  const rightBlocks = useMemo(() => chunkMatchingPairs(config.right), [config.right]);
   const blockCount = leftBlocks.length;
   const useBlocks = blockCount > 1;
 
@@ -178,14 +179,14 @@ export function MatchingExercise({
     setPracticeResultByLeft({});
   }
 
-  // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE/2 пар, той самий
-  // chunk(), що звичайна вправа (leftBlocks/rightBlocks вище), лише тут —
+  // Сцена-вигляд (крок 4) — блоки по чанках chunkMatchingPairs, той самий
+  // helper, що звичайна вправа (leftBlocks/rightBlocks вище), лише тут —
   // на замороженому зрізі (frozenSceneConfig вище), не на живому config.
   // blockCount<=1 — БЕЗ вкладок/футера нижче (той самий built-in захист,
   // що BlockTabs/BlockNavigation уже мають), плашка+заголовок лишаються
   // завжди.
-  const practiceLeftBlocks = frozenSceneConfig ? chunk(frozenSceneConfig.left, EXERCISE_BLOCK_SIZE / 2) : [];
-  const practiceRightBlocks = frozenSceneConfig ? chunk(frozenSceneConfig.right, EXERCISE_BLOCK_SIZE / 2) : [];
+  const practiceLeftBlocks = frozenSceneConfig ? chunkMatchingPairs(frozenSceneConfig.left) : [];
+  const practiceRightBlocks = frozenSceneConfig ? chunkMatchingPairs(frozenSceneConfig.right) : [];
   const practiceBlockCount = practiceLeftBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
   const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);
@@ -675,10 +676,10 @@ export function MatchingExercise({
 
   if (isPractice) {
     // Флет/інлайн-картка сцени (error-review-block.tsx БЕЗ openMode) —
-    // довгий список пар розбивається на групи по EXERCISE_BLOCK_SIZE/2
-    // (той самий chunk(), що й leftBlocks/rightBlocks звичайної вправи та
-    // practiceLeftBlocks/practiceRightBlocks сцена-вигляду вище, НЕ нова
-    // константа): кожна група — своя пара leftGroup/rightGroup, тож обидві
+    // довгий список пар розбивається на групи chunkMatchingPairs (той
+    // самий helper, що й leftBlocks/rightBlocks звичайної вправи та
+    // practiceLeftBlocks/practiceRightBlocks сцена-вигляду вище): кожна
+    // група — своя пара leftGroup/rightGroup, тож обидві
     // колонки лишаються узгодженими МІЖ групами (праві варіанти групи i —
     // лише ті, що й самі пари групи i, perBlockShuffle уже гарантує це на
     // сервері, sanitizeMatchingForPractice). На відміну від сцена-вигляду
@@ -691,8 +692,8 @@ export function MatchingExercise({
     // весь config.left/right — лише leftItems/rightItems тепер звужені до
     // групи, решта (pairs/selectedLeft/onClick*/statusForLeft/usedRights)
     // незмінні.
-    const leftGroups = chunk(config.left, EXERCISE_BLOCK_SIZE / 2);
-    const rightGroups = chunk(config.right, EXERCISE_BLOCK_SIZE / 2);
+    const leftGroups = chunkMatchingPairs(config.left);
+    const rightGroups = chunkMatchingPairs(config.right);
     return (
       <div className={EXERCISE_STACK}>
         <div className="flex flex-col">

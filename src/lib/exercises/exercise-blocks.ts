@@ -19,6 +19,29 @@ export function chunk<T>(items: T[], size: number): T[][] {
   return result;
 }
 
+// Задача "unify matching group splitting, no singleton rule" — ЄДИНЕ
+// місце, що ділить пари matching на групи/блоки по 5, скрізь (сцена-вигляд
+// блоків matching.tsx, флет/інлайн-групи з пунктирним розділювачем,
+// практика openMode="scene", perBlockShuffle у sanitize.ts) — раніше кожне
+// з цих місць окремо викликало chunk(pairs, EXERCISE_BLOCK_SIZE/2), що
+// лишало залишок РІВНО 1 пару самою в останній групі (11 пар -> 5,5,1):
+// картка з ОДНІЄЮ парою виглядала як помилка розмітки, той самий принцип,
+// що вже привів до splitEvenly() для карткових типів нижче, але тут —
+// простіше правило, не повний рівномірний розподіл: звичайний chunk(5), і
+// лише коли ОСТАННЯ група виявилась рівно 1 парою — зливаємо її в
+// ПОПЕРЕДНЮ (6 замість 5+1). Залишок 2/3/4 — без змін (5,5,2/5,5,3 і т.д.,
+// як і раніше), лише залишок 1 обробляється інакше. n<=5 — один блок
+// (навіть n=1), без злиття (нема з чим зливати) — той самий "один блок"
+// принцип, що chunk()/splitEvenly() вище.
+export function chunkMatchingPairs<T>(pairs: T[]): T[][] {
+  const groups = chunk(pairs, 5);
+  if (groups.length >= 2 && groups[groups.length - 1].length === 1) {
+    const last = groups.pop()!;
+    groups[groups.length - 1] = [...groups[groups.length - 1], ...last];
+  }
+  return groups;
+}
+
 // Друга хвиля поблочності — вправи-"картки" (word_choice, multiple_choice,
 // true_false, reorder, open_answer), де елемент = ОКРЕМА картка на всю
 // ширину (не слово/пара, як вище), тож поріг блоку нижчий (5, не 10) — інакше
