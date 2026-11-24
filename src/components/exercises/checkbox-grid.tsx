@@ -421,38 +421,38 @@ export function CheckboxGridExercise({
             <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{t("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
-            <>
-              <PracticeAttemptFooter state="failed" failedAttempts={practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0} />
-              <TaskResult
-                correct={false}
-                toggleTitle={t("panel.correctAnswers")}
-                onOpenChange={(open) => {
-                  if (open && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true);
-                }}
-              >
-                {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] ? (
-                  <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-                    {t("panel.loadingAnswers")}
-                  </p>
-                ) : (
-                  <ul className="flex flex-col gap-0.5 text-sm">
-                    {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => {
-                      const [rowId, columnIdsStr] = pair.split(":");
-                      const row = config.rows.find((r) => r.id === rowId);
-                      const columnIds = columnIdsStr ? columnIdsStr.split(",") : [];
-                      const labels = columnIds
-                        .map((id) => config.columns.find((c) => c.id === id)?.label ?? id)
-                        .join(", ");
-                      return (
-                        <li key={rowId}>
-                          {row?.label ?? rowId}: {labels || "—"}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </TaskResult>
-            </>
+            // Задача "answers panel must match the scene exercise" —
+            // checkbox-grid.tsx (нормальний режим, TaskResult нижче) НЕ
+            // має власної панелі "Правильні відповіді" взагалі (сітка й
+            // так кольором показує правильність після перевірки) — як
+            // reorder, без scene-еталону для панелі тут, тож практика
+            // теж лишається без окремої TaskResult-панелі: пілюля
+            // "Відповідь" на самому футері (onReveal), той самий
+            // принцип, що true_false/listening.
+            <PracticeAttemptFooter
+              state={practiceCheck.revealed[WHOLE_TASK_ITEM_ID] ? "revealed" : "failed"}
+              failedAttempts={practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0}
+              onReveal={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
+              revealDisabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
+            >
+              {practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
+                <ul className="flex flex-col gap-0.5 text-sm">
+                  {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => {
+                    const [rowId, columnIdsStr] = pair.split(":");
+                    const row = config.rows.find((r) => r.id === rowId);
+                    const columnIds = columnIdsStr ? columnIdsStr.split(",") : [];
+                    const labels = columnIds
+                      .map((id) => config.columns.find((c) => c.id === id)?.label ?? id)
+                      .join(", ");
+                    return (
+                      <li key={rowId}>
+                        {row?.label ?? rowId}: {labels || "—"}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </PracticeAttemptFooter>
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>

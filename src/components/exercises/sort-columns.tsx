@@ -19,6 +19,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult } from "./task-result";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
+import { buildSortColumnsAnswerColumns } from "@/lib/exercises/format-reveal-answer";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { dragPoolLabel, sortColumnsPoolCountLabel } from "@/lib/exercises/default-task-labels";
@@ -443,6 +444,7 @@ export function SortColumnsExercise({
               <TaskResult
                 correct={false}
                 toggleTitle={t("panel.correctAnswers")}
+                toggleCount={config.items.length}
                 onOpenChange={(open) => {
                   if (open && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true);
                 }}
@@ -452,18 +454,24 @@ export function SortColumnsExercise({
                     {t("panel.loadingAnswers")}
                   </p>
                 ) : (
-                  <ul className="flex flex-col gap-0.5 text-sm">
-                    {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => {
-                      const [itemId, columnId] = pair.split(":");
-                      const item = config.items.find((i) => i.id === itemId);
-                      const column = config.columns.find((c) => c.id === columnId);
-                      return (
-                        <li key={pair}>
-                          {item?.text ?? itemId} → {column?.label ?? columnId}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-4">
+                    {buildSortColumnsAnswerColumns(
+                      config.columns,
+                      config.items,
+                      Object.fromEntries(
+                        practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => pair.split(":") as [string, string])
+                      )
+                    ).map((col) => (
+                      <div key={col.columnId} className="flex flex-col gap-2">
+                        <span className="sort-columns-answer-title">{col.label}</span>
+                        {col.items.map((item) => (
+                          <span key={item.id} className="sort-columns-answer-card">
+                            {item.text}
+                          </span>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </TaskResult>
             </>

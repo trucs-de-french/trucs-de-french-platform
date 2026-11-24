@@ -6,6 +6,7 @@ import {
   buildTableFillAnswerRowsFromReveal,
   buildMatchingPairRowsFromReveal,
   buildRevealedWordDetail,
+  buildSortColumnsAnswerColumns,
 } from "./format-reveal-answer";
 
 let failures = 0;
@@ -102,6 +103,42 @@ function assert(condition: boolean, label: string) {
   // неправильна, не crash.
   const detail = buildRevealedWordDetail("chat", ["c", "h"]);
   assert(detail.letters[2].isCorrect === false && detail.letters[3].isCorrect === false, "missing tiles compare as incorrect, not a crash");
+}
+
+// --- buildSortColumnsAnswerColumns (sort_columns — задача "answers panel
+// must match the scene exercise": той самий груповий вигляд, що звичайна
+// вправа, лише columnIdByItemId приходить або з singleDetail
+// (correctColumnId напряму), або з reveal-пар "itemId:columnId",
+// розібраних викликачем до передачі сюди) -------------------------------
+
+{
+  const columns = [
+    { id: "c1", label: "Animaux domestiques" },
+    { id: "c2", label: "Animaux de la ferme" },
+  ];
+  const items = [
+    { id: "i1", text: "chien" },
+    { id: "i2", text: "vache" },
+    { id: "i3", text: "chat" },
+  ];
+  const out = buildSortColumnsAnswerColumns(columns, items, { i1: "c1", i2: "c2", i3: "c1" });
+  assert(out.length === 2, "one group per column, in column order");
+  assert(out[0].columnId === "c1" && out[0].label === "Animaux domestiques", "first group keeps the column's own id/label");
+  assert(
+    out[0].items.map((it) => it.id).join(",") === "i1,i3",
+    "items are grouped under their assigned column, in the original item order"
+  );
+  assert(out[1].items.map((it) => it.id).join(",") === "i2", "second column gets only its own item");
+}
+
+{
+  const columns = [{ id: "c1", label: "A" }];
+  const out = buildSortColumnsAnswerColumns(columns, [{ id: "i1", text: "x" }], {});
+  assert(out[0].items.length === 0, "an item with no (or not-yet-revealed) column assignment lands in no group, not a crash");
+}
+
+{
+  assert(buildSortColumnsAnswerColumns([], [], {}).length === 0, "no columns -> no groups, not a crash");
 }
 
 if (failures > 0) {

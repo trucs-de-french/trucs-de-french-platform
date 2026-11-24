@@ -14,7 +14,7 @@ import { COMPACT_IMAGE_FILL, ITEM_CARD_WRAP as CARD_WRAP } from "./answer-card-s
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
+import { TaskResult, RowPointsTab } from "./task-result";
 import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
@@ -240,15 +240,17 @@ export function MultipleChoiceExercise({
   // Задача "replace red per-pair lines with collapsible answers panel" —
   // поширено з matching.tsx: окремий червоний рядок + власна пілюля
   // "Відповідь" на кожне питання замінюються ОДНИМ спокійним футером
-  // (крапки спроб) + ОДНОЮ панеллю TaskResult/TaskResultGapRows (той
-  // самий компонент/стиль, що звичайна вправа, toggleTitle=
-  // "panel.correctAnswers") — лише для питань, що й досі неправильні
-  // (stillWrongIds). Рядки — РЕЧЕННЯ з вставленим правильним варіантом
-  // (той самий "{{}}"-формат, що item.sentence, і той самий принцип, що
-  // word_choice/drag_drop) замість багатшої mc-answer-card (✓/✕ по
-  // кожному варіанту) звичайної вправи — та картка потребує "що студент
-  // обрав", якого практика (лише revealed-рядки) не має, без зміни API.
-  // Зелений рядок "Правильно" лишається на кожній картці (вище).
+  // (крапки спроб) + ОДНОЮ панеллю TaskResult (той самий компонент/стиль,
+  // що звичайна вправа, toggleTitle="panel.correctAnswers") — лише для
+  // питань, що й досі неправильні (stillWrongIds).
+  //
+  // Задача "answers panel must match the scene exercise" — рядки тепер
+  // ТА САМА картка (glass-item-card mc-answer-card), що renderAnswersToggle
+  // звичайної вправи вище (question + ✓-рядок correctAnswerLabel), лише
+  // БЕЗ ✕-рядка (той рядок показує, що студент ОБРАВ — reveal повертає
+  // лише правильні варіанти, без "обраного", без зміни API це не
+  // відтворити). stripOptionLetterPrefix — та сама нормалізація, що
+  // й там (вчителька іноді вписує "A) " прямо в текст варіанту).
   function renderPracticeAnswersPanel() {
     const wrongIds = stillWrongIds(practiceItems.map((it) => it.id), practiceResults);
     if (wrongIds.length === 0) return null;
@@ -276,14 +278,34 @@ export function MultipleChoiceExercise({
               {t("panel.loadingAnswers")}
             </p>
           ) : (
-            <TaskResultGapRows
-              rows={wrongIds.map((id, i) => {
+            <div className="flex flex-col gap-2">
+              {wrongIds.map((id, i) => {
                 const item = itemById.get(id);
-                const [before, after] = (item?.sentence ?? "").split("{{}}");
-                const value = (practiceCheck.revealed[id] ?? []).join(" / ");
-                return { number: i + 1, parts: [before, { word: value }, after ?? ""].filter((p) => p !== "") };
+                const questionText = frenchNbsp(
+                  (item?.sentence ?? "").replace("{{}}", " ").replace(/\s{2,}/g, " ").trim()
+                );
+                const value = (practiceCheck.revealed[id] ?? []).map(stripOptionLetterPrefix).join(" / ");
+                return (
+                  <div key={id} className="glass-item-card mc-answer-card px-3 py-2.5">
+                    <div className="mc-answer-card-top flex items-start gap-2.5">
+                      <span className="item-number-badge shrink-0" aria-label={t("aria.question", { n: i + 1 })}>
+                        {i + 1}
+                      </span>
+                      <p className="min-w-0 flex-1 break-words leading-snug [overflow-wrap:anywhere]">{questionText}</p>
+                    </div>
+                    <p className="mc-answer-result-line mt-1 flex items-start gap-1 text-base font-semibold text-[#1f7a3d] dark:text-[#bff0d0]">
+                      <Check size={14} className="mt-0.5 shrink-0" aria-hidden />
+                      <span>
+                        <span className="exercise-answer-label mr-1 text-[13px] font-bold text-[#55546b] dark:text-white">
+                          {t("answer.correctAnswerLabel")}
+                        </span>
+                        {value}
+                      </span>
+                    </p>
+                  </div>
+                );
               })}
-            />
+            </div>
           )}
         </TaskResult>
       </>

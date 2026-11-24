@@ -105,3 +105,30 @@ export function buildMatchingPairRowsFromReveal(
     return { left, right };
   });
 }
+
+export type SortColumnsAnswerColumn = {
+  columnId: string;
+  label: string;
+  items: { id: string; text: string }[];
+};
+
+// sort_columns (whole-режим, один WHOLE_TASK_ITEM_ID на всю вправу) —
+// той самий груповий вигляд "колонка-заголовок + плитки слів", що
+// звичайна вправа (singleDetail.items[].correctColumnId, sort-columns.tsx)
+// і практика (reveal повертає ["itemId:columnId", ...] в answer, той
+// самий формат, що сервер уже writes/рендерить сам, тут лише парситься).
+// columnIdByItemId — спільний проміжний формат, щоб ОДНА функція
+// групувала і для singleDetail (correctColumnId напряму), і для
+// revealed-пар (розібраних на itemId→columnId викликачем до передачі
+// тут) — не знає, звідки прийшла мапа.
+export function buildSortColumnsAnswerColumns(
+  columns: { id: string; label: string }[],
+  items: { id: string; text: string }[],
+  columnIdByItemId: Record<string, string | undefined>
+): SortColumnsAnswerColumn[] {
+  return columns.map((col) => ({
+    columnId: col.id,
+    label: col.label,
+    items: items.filter((item) => columnIdByItemId[item.id] === col.id),
+  }));
+}

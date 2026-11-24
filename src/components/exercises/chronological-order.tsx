@@ -193,11 +193,6 @@ export function ChronologicalOrderExercise({
 
   const detail = isPractice ? practiceDetail : singleDetail;
   const locked = isPractice ? practiceCorrect : !!result;
-  // Мітки показу для reveal-відповіді практики (practiceCheck.revealed —
-  // масив id у правильному порядку, студенту зрозуміліше побачити
-  // "C → A → B", ніж сирі id) — те саме захоплене initialLabelById, щоб
-  // літера лишалась тією, що студент бачив на екрані.
-  const labelById = initialLabelById;
   useEffect(() => {
     if (!isPractice && result) onResult?.(result);
   }, [isPractice, result, onResult]);
@@ -672,6 +667,7 @@ export function ChronologicalOrderExercise({
               <TaskResult
                 correct={false}
                 toggleTitle={t("panel.correctAnswers")}
+                toggleCount={practiceCheck.revealed[WHOLE_TASK_ITEM_ID] ? 1 : undefined}
                 onOpenChange={(open) => {
                   if (open && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true);
                 }}
@@ -681,9 +677,52 @@ export function ChronologicalOrderExercise({
                     {t("panel.loadingAnswers")}
                   </p>
                 ) : (
-                  <p className="text-sm">
-                    {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((id) => labelById.get(id) ?? id).join(" → ")}
-                  </p>
+                  // Той самий вигляд, що панель звичайної вправи вище
+                  // (glass-item-card рядки для "text", COMPACT_IMAGE_GRID
+                  // для решти) — лише порядок береться НАПРЯМУ з
+                  // revealed (уже правильний порядок id, sortedByCorrectPosition
+                  // тут не потрібен: немає detail.correctPosition у практиці,
+                  // revealed і так послідовний).
+                  (() => {
+                    const revealedItems = practiceCheck.revealed[WHOLE_TASK_ITEM_ID]
+                      .map((id) => config.items.find((it) => it.id === id))
+                      .filter((it): it is (typeof config.items)[number] => !!it);
+                    return config.mode === "text" ? (
+                      <div className="flex flex-col gap-2">
+                        {revealedItems.map((it, i) => (
+                          <div key={it.id} className="chrono-phrase-row glass-item-card">
+                            <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+                              {i + 1}
+                            </span>
+                            <span className="min-w-0 flex-1 break-words text-left text-base leading-snug [overflow-wrap:anywhere]">
+                              {renderPhraseText(it.content)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className={COMPACT_IMAGE_GRID}>
+                        {revealedItems.map((it, i) => {
+                          const label = initialLabelById.get(it.id) ?? "";
+                          const caption = initialTextById.get(it.id);
+                          const alt = caption
+                            ? frenchNbsp(caption)
+                            : t("chrono.cardPositionAlt", { label, position: i + 1 });
+                          return (
+                            <div key={it.id} className={`${COMPACT_IMAGE_CARD} ${ANSWER_CHIP_DEFAULT}`}>
+                              <div className={COMPACT_IMAGE_FRAME}>
+                                <ImageOrPlaceholder src={it.content} alt={alt} className={COMPACT_IMAGE_FILL} useFocus />
+                                <span className={`absolute left-1 top-1 z-10 ${ITEM_NUMBER_BADGE}`} aria-hidden="true">
+                                  {i + 1}
+                                </span>
+                              </div>
+                              <span className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()
                 )}
               </TaskResult>
             </>

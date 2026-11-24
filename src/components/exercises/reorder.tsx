@@ -573,24 +573,26 @@ export function ReorderExercise({
             <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{tt("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
-            <>
-              <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
-              <TaskResult
-                correct={false}
-                toggleTitle={tt("panel.correctAnswers")}
-                onOpenChange={(open) => {
-                  if (open && !revealedAnswer) practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true);
-                }}
-              >
-                {!revealedAnswer ? (
-                  <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-                    {tt("panel.loadingAnswers")}
-                  </p>
-                ) : (
-                  <p className="break-words text-sm [overflow-wrap:anywhere]">{revealedAnswer.join("; ")}</p>
-                )}
-              </TaskResult>
-            </>
+            // Задача "answers panel must match the scene exercise" —
+            // reorder.tsx (нормальний режим, TaskResult вище, однаковий
+            // для whole/блочного режимів) НЕ має власної панелі "Правильні
+            // відповіді" взагалі (порядок і так видно кольором плиток,
+            // секрету розкривати нема) — на відміну від sort_columns/
+            // chronological_order, тут нема scene-еталону для панелі,
+            // тож практика теж НЕ отримує окрему TaskResult-панель: та
+            // сама пілюля "Відповідь" на самому футері (onReveal), той
+            // самий принцип, що true_false/listening (per-item, без
+            // панелі) — лише на весь WHOLE_TASK_ITEM_ID, не на елемент.
+            <PracticeAttemptFooter
+              state={revealedAnswer ? "revealed" : "failed"}
+              failedAttempts={attempts}
+              onReveal={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
+              revealDisabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
+            >
+              {revealedAnswer && (
+                <p className="break-words text-sm [overflow-wrap:anywhere]">{revealedAnswer.join("; ")}</p>
+              )}
+            </PracticeAttemptFooter>
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
