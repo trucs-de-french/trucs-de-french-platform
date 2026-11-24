@@ -254,6 +254,7 @@ export function ImageMatchExercise({
               <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
               <TaskResult
                 correct={false}
+                hideVerdictChip
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={wrongIds.length}
                 onOpenChange={(open) => {

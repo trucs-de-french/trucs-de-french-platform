@@ -443,6 +443,7 @@ export function SortColumnsExercise({
               <PracticeAttemptFooter state="failed" failedAttempts={practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0} />
               <TaskResult
                 correct={false}
+                hideVerdictChip
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={config.items.length}
                 onOpenChange={(open) => {

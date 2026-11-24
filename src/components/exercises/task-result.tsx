@@ -104,6 +104,7 @@ export function TaskResult({
   className,
   hintSummary,
   onOpenChange,
+  hideVerdictChip,
 }: {
   correct: boolean;
   pointsEarned?: number;
@@ -124,40 +125,53 @@ export function TaskResult({
   // викликачі TaskResult не передають цей проп — поведінка для них
   // незмінна (open лишається внутрішнім useState нижче).
   onOpenChange?: (open: boolean) => void;
+  // Задача "remove the verdict pill from practice" (owner report) —
+  // лише практика передає true (matching/multiple_choice/word_choice/
+  // drag_drop/image_match/sort_columns/chronological_order/table_fill/
+  // letter_gaps, answersPanel-викликачі): ховає сам чип "À revoir"/
+  // "Parfait" (task-result-chip), лишає все інше (панель-тогл, балову
+  // пілюлю, якщо вона колись з'явиться) незмінним. Звичайна вправа не
+  // передає цей проп узагалі — чип лишається як сьогодні.
+  hideVerdictChip?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const { t, lang } = useT();
   const { tone, label, title } = statusTone(correct, pointsEarned, pointsPossible);
   const showToggle = !!children && !correct;
+  const showRow = pointsPossible !== undefined || !hideVerdictChip;
 
   return (
     <div className={`flex w-full flex-col gap-3 ${className ?? ""}`.trim()}>
-      <div className="task-result-row">
-        {pointsPossible !== undefined && (
-          <span className="points-pill-gradient">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="#f6dc8e"
-              aria-hidden="true"
-              className="points-pill-star"
+      {showRow && (
+        <div className="task-result-row">
+          {pointsPossible !== undefined && (
+            <span className="points-pill-gradient">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="#f6dc8e"
+                aria-hidden="true"
+                className="points-pill-star"
+              >
+                <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
+              </svg>
+              {formatPointsLocalized(pointsEarned ?? 0, pointsPossible, lang)}
+            </span>
+          )}
+          {!hideVerdictChip && (
+            <span
+              className={`task-result-chip task-result-chip--${tone}`}
+              role="status"
+              title={title}
+              aria-label={title}
             >
-              <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
-            </svg>
-            {formatPointsLocalized(pointsEarned ?? 0, pointsPossible, lang)}
-          </span>
-        )}
-        <span
-          className={`task-result-chip task-result-chip--${tone}`}
-          role="status"
-          title={title}
-          aria-label={title}
-        >
-          {label}
-        </span>
-      </div>
+              {label}
+            </span>
+          )}
+        </div>
+      )}
 
       {hintSummary && <HintUsageSummary hintCount={hintSummary.hintCount} reducesPoints={hintSummary.reducesPoints} />}
 

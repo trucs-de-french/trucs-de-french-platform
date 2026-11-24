@@ -666,6 +666,7 @@ export function ChronologicalOrderExercise({
               <PracticeAttemptFooter state="failed" failedAttempts={practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0} />
               <TaskResult
                 correct={false}
+                hideVerdictChip
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={practiceCheck.revealed[WHOLE_TASK_ITEM_ID] ? 1 : undefined}
                 onOpenChange={(open) => {

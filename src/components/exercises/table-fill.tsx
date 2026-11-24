@@ -808,6 +808,7 @@ export function TableFillExercise({
       <TaskResult
         key={activeBlockIndex}
         correct={allCorrectInBlock}
+        hideVerdictChip
         toggleTitle={tt("panel.correctAnswers")}
         toggleCount={activeRows.length}
         onOpenChange={(open) => {

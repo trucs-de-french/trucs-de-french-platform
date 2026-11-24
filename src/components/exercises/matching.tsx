@@ -529,6 +529,7 @@ export function MatchingExercise({
         <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
         <TaskResult
           correct={false}
+          hideVerdictChip
           toggleTitle={t("panel.correctPairsTitle")}
           toggleCount={wrongLefts.length}
           onOpenChange={(open) => {
@@ -603,6 +604,7 @@ export function MatchingExercise({
       <TaskResult
         key={activeBlockIndex}
         correct={allCorrectInBlock}
+        hideVerdictChip
         toggleTitle={t("panel.correctPairsTitle")}
         toggleCount={activeLeft.length}
         onOpenChange={(open) => {

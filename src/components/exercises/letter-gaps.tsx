@@ -910,6 +910,7 @@ export function LetterGapsExercise({
       <TaskResult
         key={activeBlockIndex}
         correct={allCorrectInBlock}
+        hideVerdictChip
         toggleTitle={t("panel.correctAnswers")}
         toggleCount={activeIndices.length}
         onOpenChange={(open) => {
