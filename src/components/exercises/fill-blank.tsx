@@ -587,7 +587,7 @@ export function FillBlankExercise({
                 </span>
               )}
               {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceCheck.revealed[String(i)] && (
-                <span className="ml-1 text-xs italic text-amber-700 dark:text-amber-400">
+                <span className="ml-1 text-xs text-amber-700 dark:text-amber-400">
                   {t("answer.correctInlineParen", { value: practiceCheck.revealed[String(i)].join(" / ") })}
                 </span>
               )}

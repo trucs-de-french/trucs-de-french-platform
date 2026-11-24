@@ -49,7 +49,7 @@ export const en: Record<MessageKey, string> = {
   "status.correctExclaim": "Correct! ✓",
   "status.failedAttemptShort": "Attempt {n}",
   "status.failedAttemptParen": "(attempt {n})",
-  "answer.correctInlineParen": "(correct: {value})",
+  "answer.correctInlineParen": "({value})",
   "status.practiceMode": "Practice mode: points don't change.",
   "status.notChosen": "not selected",
   "status.chooseOption": "Choose",

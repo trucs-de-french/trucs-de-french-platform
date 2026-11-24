@@ -52,7 +52,7 @@ export const uk = {
   "status.correctExclaim": "Правильно! ✓",
   "status.failedAttemptShort": "Спроба {n}",
   "status.failedAttemptParen": "(спроба {n})",
-  "answer.correctInlineParen": "(правильно: {value})",
+  "answer.correctInlineParen": "({value})",
   "status.practiceMode": "Режим практики: бали не змінюються.",
   "status.notChosen": "не обрано",
   "status.chooseOption": "Оберіть",
