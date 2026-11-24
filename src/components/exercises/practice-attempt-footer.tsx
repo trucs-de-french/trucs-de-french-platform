@@ -6,8 +6,8 @@ import { useT } from "@/lib/i18n/context";
 import { dotsFilledCount, type PracticeAttemptFooterState } from "@/lib/exercises/error-review";
 
 // Задача "unify attempt/status footer" — ОДИН спільний компонент для
-// рядка-статусу практики (крапки спроб + "Не вдалося · спроба N" +
-// компактна пілюля "Відповідь"), раніше продубльований інлайн у кожному
+// рядка-статусу практики (крапки спроб + "Спроба N" + компактна пілюля
+// "Відповідь"), раніше продубльований інлайн у кожному
 // з 15 типів (деякі — з власним форматом "Спроб: N" червоним текстом,
 // власним розміром/місцем пілюлі). Той самий .practice-attempt-footer/
 // .practice-attempt-dots/.practice-attempt-dot/.practice-attempt-label/

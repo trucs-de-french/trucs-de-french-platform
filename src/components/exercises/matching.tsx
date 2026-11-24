@@ -502,8 +502,8 @@ export function MatchingExercise({
   // Задача "replace red per-pair lines with collapsible answers panel"
   // (флет-практика matching, owner report: червоні рядки "signer:
   // неправильно..." з окремою пілюлею "Відповідь" на кожну пару
-  // замінюються на спокійний футер (крапки спроб + "Не вдалося · спроба
-  // N", та сама розмітка/класи, що letter_gaps/letter_rearrangement/
+  // замінюються на спокійний футер (крапки спроб + "Спроба N", та сама
+  // розмітка/класи, що letter_gaps/letter_rearrangement/
   // table_fill) + ОДНА спільна панель TaskResult/TaskResultPairRows (той
   // самий компонент, що сцена-вигляд блоків вище, answersPanel) — лише
   // для пар, що й досі неправильні (stillWrongIds, error-review.ts).

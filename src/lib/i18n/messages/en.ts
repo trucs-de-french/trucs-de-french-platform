@@ -47,7 +47,8 @@ export const en: Record<MessageKey, string> = {
 
   "status.correct": "Correct ✓",
   "status.correctExclaim": "Correct! ✓",
-  "status.failedAttemptShort": "Not quite · attempt {n}",
+  "status.failedAttemptShort": "Attempt {n}",
+  "status.failedAttemptParen": "(attempt {n})",
   "answer.correctInlineParen": "(correct: {value})",
   "status.practiceMode": "Practice mode: points don't change.",
   "status.notChosen": "not selected",

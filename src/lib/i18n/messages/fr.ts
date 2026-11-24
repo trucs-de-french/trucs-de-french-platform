@@ -49,7 +49,8 @@ export const fr: Record<MessageKey, string> = {
 
   "status.correct": "Correct ✓",
   "status.correctExclaim": "Correct ! ✓",
-  "status.failedAttemptShort": "Raté · essai {n}",
+  "status.failedAttemptShort": "Tentative {n}",
+  "status.failedAttemptParen": "(tentative {n})",
   "answer.correctInlineParen": "(correct : {value})",
   "status.practiceMode": "Mode entraînement : les points ne changent pas.",
   "status.notChosen": "non choisi",
