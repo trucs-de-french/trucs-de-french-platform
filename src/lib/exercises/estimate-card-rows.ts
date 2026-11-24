@@ -111,11 +111,40 @@ export function packBalancedRowCounts(itemWidths: number[], rowWidthPx: number, 
 // елемента-розриву в точці n-3 (n - фіксована довжина останнього рядка(2) -
 // 1) — виведено й перевірено для n=10 (розрив після індексу 7 → 8+2) і
 // n=19 (розрив після індексу 16 → 9,8+2) у estimate-card-rows.test.ts.
+// Використовується ЛИШЕ letterRearrangementPracticeLayout (однакові
+// плитки-літери, FIXED_CELL_PX — ТОЧНИЙ CSS-розмір, не наближення, тож
+// природний перенос і наша оцінка вже узгоджені на КОЖНІЙ межі рядка
+// ОКРІМ тієї, що фікс явно перевизначає — на відміну від letter_gaps
+// нижче, де GIVEN_LETTER_WIDTH_PX лише наближення реальної ширини
+// шрифту, тож природний перенос МІГ БИ розійтися з оцінкою на БУДЬ-ЯКІЙ
+// межі, не лише останній — звідси там повний набір розривів
+// (breakIndicesForCounts), не лише один).
 export function forcedBreakIndexFor(itemWidths: number[], rowWidthPx: number, gapPx: number): number | null {
   const natural = packIntoRowsCounts(itemWidths, rowWidthPx, gapPx);
   const last = natural.length - 1;
   if (last < 1 || natural[last] !== 1 || natural[last - 1] < 2) return null;
   return itemWidths.length - 3;
+}
+
+// Задача "pack word groups greedily on a line" — усі межі рядків (0-based
+// індекс елемента, "вставити розрив ПІСЛЯ нього") з ГОТОВОГО масиву
+// підрахунків (packIntoRowsCounts чи packBalancedRowCounts) — ОКРІМ
+// останньої (після фінального рядка розрив не потрібен, далі просто нічого
+// нема). На відміну від forcedBreakIndexFor вище (ОДИН розрив, що фіксує
+// розбіжність з природним потоком), ця функція повертає ПОВНИЙ,
+// явний набір розривів для КОЖНОЇ межі — рендерер (letter-gaps.tsx)
+// вставляє DOM-елемент розриву в КОЖНІЙ з цих позицій, тож оцінка (де
+// розбивати) і рендер (де РЕАЛЬНО розбито) гарантовано збігаються на
+// КОЖНІЙ межі, не лише на тій, де природний перенос МІГ БИ (через
+// наближену ширину символу, GIVEN_LETTER_WIDTH_PX) розійтися з оцінкою.
+export function breakIndicesForCounts(counts: number[]): number[] {
+  const breaks: number[] = [];
+  let cumulative = 0;
+  for (let i = 0; i < counts.length - 1; i++) {
+    cumulative += counts[i];
+    breaks.push(cumulative - 1);
+  }
+  return breaks;
 }
 
 // letter_gaps: одиниці переносу (артикль/"se"/слово) — атомарні, пакуються
@@ -195,15 +224,19 @@ export type PracticeCardClass = "short" | "long";
 
 // letter_rearrangement: n однакових плиток-ширини FIXED_CELL_PX — forced-
 // break index (0-based, "вставити розрив ПІСЛЯ плитки з цим індексом")
-// подається напряму в SortableTileRow (sortable-tile-row.tsx).
+// подається напряму в SortableTileRow (sortable-tile-row.tsx). lines —
+// задача "pack word groups greedily on a line" (п.2, pairing): готова
+// кількість рядків ПІСЛЯ збалансованого переносу, потрібна
+// pairPracticeItems (flat-practice-layout.ts) для вибору "найкоротшої
+// довгої картки" при парному/непарному мішаному парuванні.
 export function letterRearrangementPracticeLayout(
   letterCount: number,
   rowWidthPx: number
-): { cardClass: PracticeCardClass; forcedBreakAfterIndex: number | null } {
+): { cardClass: PracticeCardClass; lines: number; forcedBreakAfterIndex: number | null } {
   const itemWidths = Array.from({ length: letterCount }, () => FIXED_CELL_PX);
   const rows = packBalancedRowCounts(itemWidths, rowWidthPx, FIXED_CELL_GAP_PX).length;
   const forcedBreakAfterIndex = forcedBreakIndexFor(itemWidths, rowWidthPx, FIXED_CELL_GAP_PX);
-  return { cardClass: rows <= 1 ? "short" : "long", forcedBreakAfterIndex };
+  return { cardClass: rows <= 1 ? "short" : "long", lines: rows, forcedBreakAfterIndex };
 }
 
 // Задача "the last line must not end with a single unit either, and a
@@ -220,24 +253,43 @@ export type LetterGapsForcedBreak =
   | { kind: "afterUnit"; unitIndex: number }
   | { kind: "afterChunk"; unitIndex: number; chunkIndex: number };
 
-// Задача "method: fill lines greedily... for letter_gaps the units are
-// the real unbreakable units... word groups break at word boundaries
-// first" — фраза проходиться як ПОСЛІДОВНІСТЬ сегментів: "пробіг" (run) із
-// суміжних ЗВИЧАЙНИХ (що влазять у рядок самі) одиниць пакується РАЗОМ
-// (слова течуть одним текстовим потоком, як і раніше); одиниця, що сама
-// ширша за рядок, закриває поточний пробіг і стає ОКРЕМИМ сегментом
-// власних силабічних фрагментів (той самий принцип, що
-// estimateLetterGapsCardLayoutRows вище, не змінюється тут природним
-// потоком — фікс/розрив застосовується ЛИШЕ до ОСТАННЬОГО сегмента, бо
-// лише ВІН визначає, як виглядає останній рядок картки; усі попередні межі
-// сегментів/рядків лишаються точно природним потоком, без жодного
-// форсованого розриву там — природний CSS-перенос і наша оцінка вже
-// узгоджені в усіх ЦИХ місцях).
+// Задача "pack word groups greedily on a line" — фраза проходиться як
+// ПОСЛІДОВНІСТЬ сегментів: "пробіг" (run) із суміжних ЗВИЧАЙНИХ (що
+// влазять у рядок самі) одиниць пакується РАЗОМ (слова течуть одним
+// текстовим потоком, жадібно — "une" йде на той самий рядок, що "vider",
+// щойно воно влазить разом із WORD_GAP_PX, НЕЗАЛЕЖНО від того, скільки
+// слів перед ним уже на цьому рядку); одиниця, що сама ширша за рядок,
+// закриває поточний пробіг і стає ОКРЕМИМ сегментом власних силабічних
+// фрагментів (той самий принцип, що estimateLetterGapsCardLayoutRows
+// вище, тут не змінюється).
+//
+// ВАЖЛИВО (задача явно це вимагає): "only a single word group that does
+// not fit a whole line is broken inside by the balanced-wrapping rule" —
+// правило "останній рядок не має лишатись ОДНИМ елементом"
+// (packBalancedRowCounts) застосовується ЛИШЕ до "chunk"-сегментів
+// (ОДНЕ завелике слово, що само розбивається на фрагменти) — НЕ до
+// "units"-сегментів (кілька окремих слів у фразі): слово-одинак на
+// останньому рядку фрази (наприклад "assiette" саме після "vider une") —
+// це звичайний, коректний перенос тексту, не помилка розмітки (на
+// відміну від ОДНОГО силабічного фрагмента довгого слова, що й справді
+// виглядає "відірваним"). chunkWithoutSingleton-подібний фікс тут НЕ
+// застосовується НАВІТЬ до останнього units-сегмента.
+//
+// ПОВНИЙ набір розривів (breakIndicesForCounts), НЕ лише один (на
+// відміну від попередньої версії) — для КОЖНОГО сегмента (і units, і
+// chunk), на КОЖНІЙ його внутрішній межі рядка: природний CSS inline-
+// block перенос спирається на GIVEN_LETTER_WIDTH_PX — НАБЛИЖЕННЯ
+// справжньої ширини шрифту (не точний CSS-розмір, як FIXED_CELL_PX
+// плиток-літер) — тож природний перенос браузера МІГ БИ розійтися з
+// нашою оцінкою на БУДЬ-ЯКІЙ межі рядка, не лише останній; явний розрив
+// на КОЖНІЙ межі гарантує, що РЕНДЕР (де реально розбито) і ОЦІНКА (де
+// має бути розбито) завжди узгоджені, незалежно від точності наближення
+// ширини символу.
 export function letterGapsPracticeLayout(
   chars: (string | null)[],
   hiddenLetters: string[],
   rowWidthPx: number
-): { cardClass: PracticeCardClass; forcedBreak: LetterGapsForcedBreak | null } {
+): { cardClass: PracticeCardClass; lines: number; forcedBreaks: LetterGapsForcedBreak[] } {
   const units = splitPhraseUnits(chars);
   type Segment =
     | { kind: "units"; startUnitIndex: number; widths: number[] }
@@ -265,27 +317,35 @@ export function letterGapsPracticeLayout(
   }
   if (runWidths.length > 0) segments.push({ kind: "units", startUnitIndex: runStartUnitIndex, widths: runWidths });
 
-  if (segments.length === 0) return { cardClass: "short", forcedBreak: null };
+  if (segments.length === 0) return { cardClass: "short", lines: 1, forcedBreaks: [] };
 
   let rows = 0;
-  for (let i = 0; i < segments.length - 1; i++) {
-    const seg = segments[i];
-    const gapPx = seg.kind === "units" ? WORD_GAP_PX : 0;
-    rows += packIntoRowsCounts(seg.widths, rowWidthPx, gapPx).length;
+  const forcedBreaks: LetterGapsForcedBreak[] = [];
+  for (const seg of segments) {
+    if (seg.kind === "units") {
+      // Жадібне пакування СЛОВО-ГРУП — БЕЗ фіксу "останній рядок не 1
+      // елемент" (задача: самотнє слово в кінці фрази — не помилка).
+      const counts = packIntoRowsCounts(seg.widths, rowWidthPx, WORD_GAP_PX);
+      rows += counts.length;
+      for (const idx of breakIndicesForCounts(counts)) {
+        forcedBreaks.push({ kind: "afterUnit", unitIndex: seg.startUnitIndex + idx });
+      }
+    } else {
+      // ОДНЕ завелике слово, власні силабічні фрагменти — НЕЗМІННО, той
+      // самий єдиний фікс/розрив, що й до цієї задачі (forcedBreakIndexFor,
+      // ОДИН break): задача "pack word groups greedily on a line"
+      // стосується ЛИШЕ пакування СЛОВО-ГРУП (units-сегмент вище), не
+      // внутрішнього розбиття ОДНОГО завеликого слова на силабічні
+      // фрагменти — той механізм лишається без змін.
+      rows += packBalancedRowCounts(seg.widths, rowWidthPx, 0).length;
+      const breakIdx = forcedBreakIndexFor(seg.widths, rowWidthPx, 0);
+      if (breakIdx !== null) {
+        forcedBreaks.push({ kind: "afterChunk", unitIndex: seg.unitIndex, chunkIndex: breakIdx });
+      }
+    }
   }
-  const lastSeg = segments[segments.length - 1];
-  const lastGapPx = lastSeg.kind === "units" ? WORD_GAP_PX : 0;
-  rows += packBalancedRowCounts(lastSeg.widths, rowWidthPx, lastGapPx).length;
 
-  const breakIdx = forcedBreakIndexFor(lastSeg.widths, rowWidthPx, lastGapPx);
-  const forcedBreak: LetterGapsForcedBreak | null =
-    breakIdx === null
-      ? null
-      : lastSeg.kind === "units"
-        ? { kind: "afterUnit", unitIndex: lastSeg.startUnitIndex + breakIdx }
-        : { kind: "afterChunk", unitIndex: lastSeg.unitIndex, chunkIndex: breakIdx };
-
-  return { cardClass: rows <= 1 ? "short" : "long", forcedBreak };
+  return { cardClass: rows <= 1 ? "short" : "long", lines: rows, forcedBreaks };
 }
 
 // Мішає картки за оціненою кількістю рядків — сортування за зростанням,

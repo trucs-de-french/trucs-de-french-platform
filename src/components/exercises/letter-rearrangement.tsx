@@ -590,18 +590,18 @@ export function LetterRearrangementExercise({
   // відмінність між режимами лишається лише в нумерації картки
   // (flatLayout, "довгі слова в кінці списку", крок 5 флет-режиму, не
   // стосується футера/розкриття).
-  // Задача "simplification of the card layout for letter practice" —
-  // layout тепер завжди приходить від pairPracticeItems
-  // (flat-practice-layout.ts), в ОБОХ режимах (sceneStyle і флет):
-  // displayNumber — наскрізна нумерація в новому парному порядку;
-  // fillerAfter — лише для непарного КОРОТКОГО залишку перед групою
-  // довгих (renderMaybeFiller нижче вставляє невидиму "filler"-клітинку
-  // сітки). forcedBreakAfterIndex — куди вставити форсований розрив
-  // усередині SortableTileRow, рахується ОКРЕМО (letterRearrangementPracticeLayout
-  // виклик, що дав cardClass для пари, лише інше поле результату).
+  // Задача "no holes in the middle of the grid" — layout тепер завжди
+  // приходить від pairPracticeItems (flat-practice-layout.ts), в ОБОХ
+  // режимах (sceneStyle і флет): displayNumber — наскрізна нумерація в
+  // новому порядку (короткі пари → мішана пара, якщо S і L обидва
+  // непарні → довгі пари → одинока картка, якщо лишилась — ЖОДНОЇ дірки
+  // в середині блоку, filler більше не потрібен). forcedBreakAfterIndex —
+  // куди вставити форсований розрив усередині SortableTileRow, рахується
+  // ОКРЕМО (letterRearrangementPracticeLayout виклик, що дав
+  // cardClass/lines для пари, лише інше поле результату).
   function renderPracticeItem(
     wi: number,
-    layout: { displayNumber: number; fillerAfter?: boolean },
+    layout: { displayNumber: number },
     forcedBreakAfterIndex: number | null
   ) {
     const key = String(wi);
@@ -650,15 +650,6 @@ export function LetterRearrangementExercise({
     });
   }
 
-  // Задача "an odd last card sits alone in a half-width column" —
-  // невидима "filler"-клітинка сітки (.practice-grid-filler, globals.css:
-  // display:none нижче md, щоб мобільний одноколонковий список лишався
-  // БЕЗ жодного зайвого елемента в потоці), що займає ДРУГУ клітинку рядка
-  // непарної короткої картки, коли за нею йдуть довгі (layout.fillerAfter,
-  // pairPracticeItems).
-  function renderMaybeFiller(layout: { fillerAfter?: boolean }, key: string) {
-    return layout.fillerAfter ? <div key={key} aria-hidden="true" className="practice-grid-filler" /> : null;
-  }
 
   if (isPractice && isSceneMode) {
     const activeIndices = practiceUseBlocks ? (practiceBlocks[practiceActiveBlock] ?? []) : practiceWordIndices;
@@ -675,7 +666,7 @@ export function LetterRearrangementExercise({
     );
     const forcedBreakByWi = new Map(activeIndices.map((wi, i) => [wi, activeLayouts[i].forcedBreakAfterIndex]));
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi, i) => ({ id: wi, cardClass: activeLayouts[i].cardClass }))
+      activeIndices.map((wi, i) => ({ id: wi, cardClass: activeLayouts[i].cardClass, lines: activeLayouts[i].lines }))
     );
     const sceneCheckButtonEl = (
       <button
@@ -721,19 +712,13 @@ export function LetterRearrangementExercise({
             checkButton={sceneCheckButtonEl}
           >
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {pairedActiveIndices.flatMap((item) => [
-                renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null),
-                renderMaybeFiller(item, `filler-${item.id}`),
-              ])}
+              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null))}
             </div>
           </BlockNavigation>
         ) : (
           <>
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {pairedActiveIndices.flatMap((item) => [
-                renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null),
-                renderMaybeFiller(item, `filler-${item.id}`),
-              ])}
+              {pairedActiveIndices.map((item) => renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null))}
             </div>
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
@@ -761,7 +746,7 @@ export function LetterRearrangementExercise({
     );
     const flatForcedBreakByWi = new Map(practiceWordIndices.map((wi, i) => [wi, flatLayouts[i].forcedBreakAfterIndex]));
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi, i) => ({ id: wi, cardClass: flatLayouts[i].cardClass }))
+      practiceWordIndices.map((wi, i) => ({ id: wi, cardClass: flatLayouts[i].cardClass, lines: flatLayouts[i].lines }))
     );
     return (
       <div className={EXERCISE_STACK}>
@@ -782,10 +767,7 @@ export function LetterRearrangementExercise({
           {t("letterrearr.swapHintDesktop")}
         </p>
         <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-          {flatPracticeLayout.flatMap((item) => [
-            renderPracticeItem(item.id, item, flatForcedBreakByWi.get(item.id) ?? null),
-            renderMaybeFiller(item, `filler-${item.id}`),
-          ])}
+          {flatPracticeLayout.map((item) => renderPracticeItem(item.id, item, flatForcedBreakByWi.get(item.id) ?? null))}
         </div>
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}

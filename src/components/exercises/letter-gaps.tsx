@@ -524,13 +524,13 @@ export function LetterGapsExercise({
       // картки, під полями. undefined (флет-практика/реальна вправа) —
       // нічого не рендериться.
       practiceFooter?: ReactNode;
-      // Задача "simplification of the card layout for letter practice" —
-      // ЛИШЕ практика (pairPracticeItems/letterGapsPracticeLayout):
-      // куди саме (після якої одиниці/фрагмента) вставити форсований
-      // розрив рядка всередині .word-units-row нижче — null/undefined
-      // (реальна вправа, чи практика без потреби в розриві) — нічого не
+      // Задача "pack word groups greedily on a line" — ЛИШЕ практика
+      // (pairPracticeItems/letterGapsPracticeLayout): ПОВНИЙ набір —
+      // куди саме (після якої одиниці/фрагмента) вставити форсовані
+      // розриви рядка всередині .word-units-row нижче — [] (реальна
+      // вправа, чи практика без потреби в розриві) — нічого не
       // вставляється, природний CSS-перенос лишається НЕЗМІННИМ.
-      forcedBreak?: LetterGapsForcedBreak | null;
+      forcedBreaks?: LetterGapsForcedBreak[];
     }
   ) {
     const word = config.words[wi];
@@ -665,13 +665,15 @@ export function LetterGapsExercise({
                       // Задача "a lone visible letter attached to nothing
                       // must not be alone on a line" — форсований розрив
                       // УСЕРЕДИНІ ОДНІЄЇ (завеликої) одиниці, між її
-                      // власними силабічними фрагментами (opts.forcedBreak.
-                      // kind==="afterChunk", letterGapsPracticeLayout,
-                      // estimate-card-rows.ts).
+                      // власними силабічними фрагментами (будь-який
+                      // елемент opts.forcedBreaks з kind==="afterChunk",
+                      // letterGapsPracticeLayout, estimate-card-rows.ts —
+                      // ПОВНИЙ набір, не один, задача "pack word groups
+                      // greedily on a line").
                       if (
-                        opts.forcedBreak?.kind === "afterChunk" &&
-                        opts.forcedBreak.unitIndex === ui &&
-                        opts.forcedBreak.chunkIndex === ci
+                        (opts.forcedBreaks ?? []).some(
+                          (b) => b.kind === "afterChunk" && b.unitIndex === ui && b.chunkIndex === ci
+                        )
                       ) {
                         return [chunkEl, <span key={`cbreak-${ci}`} aria-hidden="true" className="practice-forced-line-break" />];
                       }
@@ -679,11 +681,14 @@ export function LetterGapsExercise({
                     })}
                   </span>
                 );
-                // Задача "the last line must not end with a single unit
-                // either" — форсований розрив МІЖ двома ЦІЛИМИ одиницями
-                // переносу (opts.forcedBreak.kind==="afterUnit") —
-                // найтиповіший випадок (фраза з кількох слів).
-                if (opts.forcedBreak?.kind === "afterUnit" && opts.forcedBreak.unitIndex === ui) {
+                // Задача "pack word groups greedily on a line" — форсований
+                // розрив МІЖ двома ЦІЛИМИ одиницями переносу (будь-який
+                // елемент opts.forcedBreaks з kind==="afterUnit") — на
+                // КОЖНІЙ межі рядка жадібного пакування слово-груп, не
+                // лише там, де природний перенос МІГ БИ розійтися з
+                // оцінкою (GIVEN_LETTER_WIDTH_PX — наближення, не точний
+                // CSS-розмір).
+                if ((opts.forcedBreaks ?? []).some((b) => b.kind === "afterUnit" && b.unitIndex === ui)) {
                   return [unitEl, <span key={`ubreak-${ui}`} aria-hidden="true" className="practice-forced-line-break" />];
                 }
                 return [unitEl];
@@ -759,21 +764,20 @@ export function LetterGapsExercise({
   // (showToggle-картка TaskResult, той самий компонент, що звичайна
   // вправа), щоб не дублювати відповідь у двох місцях; лічильник спроб
   // лишається — у звичайної вправи нема свого еквівалента цього рядка.
-  // Задача "simplification of the card layout for letter practice" —
-  // layout тепер завжди приходить від pairPracticeItems
-  // (flat-practice-layout.ts), в ОБОХ режимах (сцена-вигляд блоків і
-  // флет): displayNumber — наскрізна нумерація в новому парному порядку
-  // (1..N у межах активного блоку/флет-списку); fillerAfter — лише для
-  // непарного КОРОТКОГО залишку перед групою довгих (renderMaybeFiller
-  // нижче вставляє невидиму "filler"-клітинку сітки, щоб сусідня довга
-  // картка не стала парою). forcedBreak — куди вставити форсований розрив
-  // усередині .word-units-row (renderWordCard), рахується ОКРЕМО (не
-  // частина layout — той самий letterGapsPracticeLayout виклик, що дав
-  // cardClass для пари, лише інше поле результату).
+  // Задача "no holes in the middle of the grid" — layout тепер завжди
+  // приходить від pairPracticeItems (flat-practice-layout.ts), в ОБОХ
+  // режимах (сцена-вигляд блоків і флет): displayNumber — наскрізна
+  // нумерація в новому порядку (короткі пари → мішана пара, якщо S і L
+  // обидва непарні → довгі пари → одинока картка, якщо лишилась —
+  // ЖОДНОЇ дірки в середині блоку, filler більше не потрібен). forcedBreaks
+  // — куди вставити форсовані розриви усередині .word-units-row
+  // (renderWordCard), рахується ОКРЕМО (не частина layout — той самий
+  // letterGapsPracticeLayout виклик, що дав cardClass/lines для пари,
+  // лише інше поле результату).
   function renderPracticeItem(
     wi: number,
-    layout: { displayNumber: number; fillerAfter?: boolean },
-    forcedBreak: LetterGapsForcedBreak | null,
+    layout: { displayNumber: number },
+    forcedBreaks: LetterGapsForcedBreak[],
     gapOrder: GapKey[],
     hideReveal = false
   ) {
@@ -809,7 +813,7 @@ export function LetterGapsExercise({
         hintDisabled: true,
         cardNumber: layout.displayNumber,
         practiceFooter: footer,
-        forcedBreak,
+        forcedBreaks,
       });
     }
 
@@ -858,7 +862,7 @@ export function LetterGapsExercise({
           hintDisabled: true,
           cardNumber: layout.displayNumber,
           practiceFooter: footer,
-          forcedBreak,
+          forcedBreaks,
         })}
         {isCorrect === true && (
           <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
@@ -867,36 +871,27 @@ export function LetterGapsExercise({
     );
   }
 
-  // Задача "an odd last card sits alone in a half-width column" —
-  // невидима "filler"-клітинка сітки (.practice-grid-filler, globals.css:
-  // display:none нижче md, щоб мобільний одноколонковий список лишався
-  // БЕЗ жодного зайвого елемента в потоці), що займає ДРУГУ клітинку рядка
-  // непарної короткої картки, коли за нею йдуть довгі (layout.fillerAfter,
-  // pairPracticeItems).
-  function renderMaybeFiller(layout: { fillerAfter?: boolean }, key: string) {
-    return layout.fillerAfter ? <div key={key} aria-hidden="true" className="practice-grid-filler" /> : null;
-  }
-
   if (isPractice && isSceneMode) {
     const activeIndices = practiceUseBlocks ? (practiceBlocks[practiceActiveBlock] ?? []) : practiceWordIndices;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
-    // Задача "simplification of the card layout for letter practice" —
-    // той самий pairPracticeItems, що флет-режим нижче, рахований на
-    // активний блок; activeGapOrder далі будується з ЦЬОГО відображуваного
-    // порядку (не сирого activeIndices), інакше Tab/Enter-навігація між
-    // пропусками стрибала б за позиційним порядком, не за тим, що студент
-    // бачить на екрані (той самий принцип, що flatGapOrder нижче вже
-    // застосовує). letterGapsPracticeLayout рахується ОДИН раз на слово —
-    // forcedBreakByWi зберігає ДРУГЕ поле результату (forcedBreak) для
-    // рендеру нижче, practiceRowWidthPx — РЕАЛЬНА виміряна half-колонкова
-    // ширина (чи фолбек, доки не готова), той самий принцип, що
-    // estimateLetterGapsCardRows вище.
+    // Задача "no holes in the middle of the grid" — той самий
+    // pairPracticeItems, що флет-режим нижче, рахований на активний блок;
+    // activeGapOrder далі будується з ЦЬОГО відображуваного порядку (не
+    // сирого activeIndices), інакше Tab/Enter-навігація між пропусками
+    // стрибала б за позиційним порядком, не за тим, що студент бачить на
+    // екрані (той самий принцип, що flatGapOrder нижче вже застосовує).
+    // letterGapsPracticeLayout рахується ОДИН раз на слово —
+    // forcedBreaksByWi зберігає ПОВНИЙ набір розривів (forcedBreaks) для
+    // рендеру нижче, lines — для мішаного парuвання ("найкоротша довга"),
+    // practiceRowWidthPx — РЕАЛЬНА виміряна half-колонкова ширина (чи
+    // фолбек, доки не готова), той самий принцип, що estimateLetterGapsCardRows
+    // вище.
     const activeLayouts = activeIndices.map((wi) =>
       letterGapsPracticeLayout(config.words[wi].chars, config.words[wi].hiddenLetters, practiceRowWidthPx)
     );
-    const forcedBreakByWi = new Map(activeIndices.map((wi, i) => [wi, activeLayouts[i].forcedBreak]));
+    const forcedBreaksByWi = new Map(activeIndices.map((wi, i) => [wi, activeLayouts[i].forcedBreaks]));
     const pairedActiveIndices = pairPracticeItems(
-      activeIndices.map((wi, i) => ({ id: wi, cardClass: activeLayouts[i].cardClass }))
+      activeIndices.map((wi, i) => ({ id: wi, cardClass: activeLayouts[i].cardClass, lines: activeLayouts[i].lines }))
     );
     const activeGapOrder = gapOrderFor(pairedActiveIndices.map((item) => item.id));
     // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
@@ -996,10 +991,9 @@ export function LetterGapsExercise({
                 одного. */}
             <div className={RESULT_ROW_GAP_CLASS}>
               <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-                {pairedActiveIndices.flatMap((item) => [
-                  renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null, activeGapOrder, true),
-                  renderMaybeFiller(item, `filler-${item.id}`),
-                ])}
+                {pairedActiveIndices.map((item) =>
+                  renderPracticeItem(item.id, item, forcedBreaksByWi.get(item.id) ?? [], activeGapOrder, true)
+                )}
               </div>
               {answersPanel}
             </div>
@@ -1008,10 +1002,9 @@ export function LetterGapsExercise({
           <>
             <div className={RESULT_ROW_GAP_CLASS}>
               <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-                {pairedActiveIndices.flatMap((item) => [
-                  renderPracticeItem(item.id, item, forcedBreakByWi.get(item.id) ?? null, activeGapOrder, true),
-                  renderMaybeFiller(item, `filler-${item.id}`),
-                ])}
+                {pairedActiveIndices.map((item) =>
+                  renderPracticeItem(item.id, item, forcedBreaksByWi.get(item.id) ?? [], activeGapOrder, true)
+                )}
               </div>
               {answersPanel}
             </div>
@@ -1051,9 +1044,9 @@ export function LetterGapsExercise({
     const flatLayouts = practiceWordIndices.map((wi) =>
       letterGapsPracticeLayout(config.words[wi].chars, config.words[wi].hiddenLetters, practiceRowWidthPx)
     );
-    const flatForcedBreakByWi = new Map(practiceWordIndices.map((wi, i) => [wi, flatLayouts[i].forcedBreak]));
+    const flatForcedBreaksByWi = new Map(practiceWordIndices.map((wi, i) => [wi, flatLayouts[i].forcedBreaks]));
     const flatPracticeLayout = pairPracticeItems(
-      practiceWordIndices.map((wi, i) => ({ id: wi, cardClass: flatLayouts[i].cardClass }))
+      practiceWordIndices.map((wi, i) => ({ id: wi, cardClass: flatLayouts[i].cardClass, lines: flatLayouts[i].lines }))
     );
     // gapOrder — ТОЙ САМИЙ принцип, що activeGapOrder (сцена-вигляд блоків,
     // вище): перераховується на ВІДОБРАЖУВАНИЙ порядок слів (flatPracticeLayout
@@ -1065,10 +1058,9 @@ export function LetterGapsExercise({
     return (
       <div className={EXERCISE_STACK}>
         <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-          {flatPracticeLayout.flatMap((item) => [
-            renderPracticeItem(item.id, item, flatForcedBreakByWi.get(item.id) ?? null, flatGapOrder, false),
-            renderMaybeFiller(item, `filler-${item.id}`),
-          ])}
+          {flatPracticeLayout.map((item) =>
+            renderPracticeItem(item.id, item, flatForcedBreaksByWi.get(item.id) ?? [], flatGapOrder, false)
+          )}
         </div>
 
         {diacritics.rect && diacritics.activeKey && (

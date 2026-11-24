@@ -16,7 +16,7 @@
 import {
   packBalancedRowCounts,
   forcedBreakIndexFor,
-  estimateLetterGapsCardRows,
+  breakIndicesForCounts,
   estimateLetterRearrangementCardRows,
   letterGapsPracticeLayout,
   letterRearrangementPracticeLayout,
@@ -104,6 +104,7 @@ function uniform(n: number, w = 10): number[] {
   assert(estimateLetterRearrangementCardRows(9) === 1, "letter_rearrangement: 9 tiles ('взуття') fit one line");
   const r = letterRearrangementPracticeLayout(9, REFERENCE_ROW_WIDTH_PX);
   assert(r.cardClass === "short" && r.forcedBreakAfterIndex === null, "letter_rearrangement: 9 tiles -> short, no break");
+  assert(r.lines === 1, "letter_rearrangement: 9 tiles -> lines=1 (exposed for pairPracticeItems' mixed-pair tie-break)");
 }
 
 // 10 тайлів ("часто"/"якийсь"/"дозвіл, шкільний бланк"/"прихистити") —
@@ -155,7 +156,26 @@ function uniform(n: number, w = 10): number[] {
   assert(r.cardClass === "short" && r.forcedBreakAfterIndex === null, "letter_rearrangement: 1 tile -> short");
 }
 
-// --- letter_gaps: фраза з кількох одиниць переносу (word-boundary break) --
+// --- breakIndicesForCounts: чиста функція, числові приклади (п.6 задачі) --
+
+{
+  assert(JSON.stringify(breakIndicesForCounts([3])) === "[]", "exact fit (one line): no break needed");
+  assert(JSON.stringify(breakIndicesForCounts([])) === "[]", "empty counts: no break, not a crash");
+  assert(JSON.stringify(breakIndicesForCounts([2, 1])) === "[1]", "two lines [2,1]: one break, after index 1 (end of line 1)");
+  assert(
+    JSON.stringify(breakIndicesForCounts([2, 2, 2, 1])) === "[1,3,5]",
+    "four lines [2,2,2,1] (three or more word groups): a break after EVERY line boundary except the last"
+  );
+}
+
+// --- letter_gaps: пакування слово-груп (задача "pack word groups greedily
+// on a line") — ЖАДІБНЕ, БЕЗ фіксу "останній рядок не 1 елемент" (самотнє
+// слово в кінці фрази — нормальний перенос тексту, не помилка розмітки,
+// на відміну від ОДНОГО силабічного фрагмента довгого слова нижче).
+// Розриви — на КОЖНІЙ межі рядка (breakIndicesForCounts), не лише
+// останній: природний inline-block перенос спирається на
+// GIVEN_LETTER_WIDTH_PX (наближення, не точний CSS-розмір), тож явний
+// розрив потрібен на будь-якій межі для гарантії "оцінка == рендер".
 
 function visibleUnit(n: number): string[] {
   return Array.from({ length: n }, () => "a");
@@ -168,56 +188,122 @@ function phraseOfUnits(unitLengths: number[]): string[] {
   });
   return chars;
 }
+// Фраза з ПРИХОВАНИХ одиниць (кожна літера — gap-клітинка 32px, а не
+// 11px видима) — ЄДИНИЙ спосіб отримати реалістичну ширину слова при
+// РЕАЛЬНІЙ half-колонковій ширині (~560px, задача): видимі літери (11px)
+// дають мізерну суму навіть для довгих фраз, не демонструють перенос
+// взагалі.
+function hiddenUnit(n: number): (string | null)[] {
+  return Array.from({ length: n }, () => null);
+}
+function phraseOfHiddenUnits(unitLens: number[]): { chars: (string | null)[]; hiddenLetters: string[] } {
+  const chars: (string | null)[] = [];
+  const hiddenLetters: string[] = [];
+  unitLens.forEach((n, i) => {
+    if (i > 0) chars.push(" ");
+    chars.push(...hiddenUnit(n));
+    for (let k = 0; k < n; k++) hiddenLetters.push(String.fromCharCode(97 + ((hiddenLetters.length + k) % 26)));
+  });
+  return { chars, hiddenLetters };
+}
 
-// 3 одиниці по 121px (11 видимих літер кожна) — природно 2 рядки ([2,1] за
-// одиницями), останній рядок РІВНО 1 одиниця -> фікс -> розрив після
-// одиниці 0 (той самий принцип, що "опустошити тарілку, з'їсти все" —
-// фраза з кількох слів, де б інакше друге слово лишилось самотнім на
-// другому рядку).
+// "vider une assiette" (задача, скріншот) — РЕКОНСТРУЙОВАНО прихованими
+// одиницями довжини 5/3/8 (vider/une/assiette), ширина half-колонки
+// ~560px (задача: "about ... far below the half-column inner width of
+// about 560px"): vider=5*32+4*3.4=173.6px; une=3*32+2*3.4=102.8px;
+// assiette=8*32+7*3.4=279.8px. vider+8(gap)+une=284.4<=560 -> та сама
+// лінія; +8+assiette=572.2>560 -> переноситься. Результат: 2 рядки
+// ("vider une" / "assiette"), розрив ПІСЛЯ одиниці 1 (une) — точно "vider
+// une" на одному рядку, "assiette" саме, БЕЗ фіксу (звичайний перенос
+// тексту, не помилка).
 {
-  const chars = phraseOfUnits([11, 11, 11]);
-  assert(estimateLetterGapsCardRows(chars, []) === 2, "letter_gaps phrase: 3 units of 121px need 2 half-width lines");
-  const r = letterGapsPracticeLayout(chars, [], REFERENCE_ROW_WIDTH_PX);
-  assert(r.cardClass === "long", "letter_gaps phrase (3 units): long");
+  const { chars, hiddenLetters } = phraseOfHiddenUnits([5, 3, 8]);
+  const r = letterGapsPracticeLayout(chars, hiddenLetters, 560);
+  assert(r.cardClass === "long" && r.lines === 2, "'vider une assiette': 2 lines (vider une / assiette)");
   assert(
-    JSON.stringify(r.forcedBreak) === JSON.stringify({ kind: "afterUnit", unitIndex: 0 }),
-    "letter_gaps phrase (3 units): forced break after unit 0 (word boundary, not mid-word)"
+    JSON.stringify(r.forcedBreaks) === JSON.stringify([{ kind: "afterUnit", unitIndex: 1 }]),
+    "'vider une assiette': forced break after unit 1 ('une'), keeping 'vider une' together on line 1"
   );
 }
 
-// 4 одиниці по 121px — природно [2,2] за одиницями, останній рядок УЖЕ 2
-// -> жодного розриву.
+// "une ingratitude"/"un orphelin"-style — артикль (4 приховані літери,
+// 138.2px) + іменник (12 прихованих літер, 421.4px): 138.2+8+421.4=
+// 567.6px > 560px — НЕ влазять РАЗОМ на одній лінії (article does not
+// fit after the word) -> 2 рядки, кожен з 1 одиницею — БЕЗ фіксу
+// (звичайний перенос, не "сирота"), з ЯВНИМ розривом (на відміну від
+// попередньої версії, що поклалась би на природний перенос тут).
+{
+  const { chars, hiddenLetters } = phraseOfHiddenUnits([4, 12]);
+  const r = letterGapsPracticeLayout(chars, hiddenLetters, 560);
+  assert(r.cardClass === "long" && r.lines === 2, "article+noun that don't fit together: 2 lines, one word each");
+  assert(
+    JSON.stringify(r.forcedBreaks) === JSON.stringify([{ kind: "afterUnit", unitIndex: 0 }]),
+    "article+noun: forced break after unit 0 (the article), since combined width (567.6px) exceeds the 560px row"
+  );
+}
+
+// "faire un bisou"-style (картка 10, задача: "must be consistent with its
+// real width") — три короткі одиниці (5/2/5 прихованих літер кожна,
+// 173.6/67.4/173.6px): усе разом 173.6+8+67.4+8+173.6=430.6px <= 560px ->
+// влазить в ОДИН рядок -> short, жодного розриву — той самий алгоритм,
+// просто інша фраза, демонструючи консистентність незалежно від
+// конкретних слів.
+{
+  const { chars, hiddenLetters } = phraseOfHiddenUnits([5, 2, 5]);
+  const r = letterGapsPracticeLayout(chars, hiddenLetters, 560);
+  assert(r.cardClass === "short" && r.lines === 1, "'faire un bisou'-style: all three word groups fit on one line -> short");
+  assert(JSON.stringify(r.forcedBreaks) === "[]", "'faire un bisou'-style: no forced break needed (fits one line)");
+}
+
+// Три й більше слово-групи, що ВЖЕ природно діляться рівномірно (4 одиниці
+// по 121px видимих літер -> [2,2]) — задача вимагає ЯВНИЙ розрив НАВІТЬ
+// тут (не лише коли природний перенос дав би "сироту"): природний перенос
+// спирається на наближену ширину символу, явний розрив на КОЖНІЙ межі
+// гарантує оцінку===рендер завжди, не лише у "проблемних" випадках.
 {
   const chars = phraseOfUnits([11, 11, 11, 11]);
   const r = letterGapsPracticeLayout(chars, [], REFERENCE_ROW_WIDTH_PX);
-  assert(r.cardClass === "long" && r.forcedBreak === null, "letter_gaps phrase (4 units): [2,2] already fine, no forced break");
+  assert(r.cardClass === "long" && r.lines === 2, "4 units already balanced [2,2]: still long, 2 lines");
+  assert(
+    JSON.stringify(r.forcedBreaks) === JSON.stringify([{ kind: "afterUnit", unitIndex: 1 }]),
+    "4 units [2,2]: an EXPLICIT break is still inserted at the (already-natural) boundary, for estimate/render consistency"
+  );
 }
 
-// 7 одиниць по 121px — природно [2,2,2,1] -> фікс -> розрив після
-// одиниці 4 (3-рядковий випадок для фраз, той самий принцип, що
-// letter_rearrangement n=19).
+// Сім одиниць по 121px видимих літер — природно [2,2,2,1] (4 рядки) —
+// задача: "three or more word groups" — розрив на КОЖНІЙ з трьох меж, не
+// лише одна (на відміну від letter_rearrangement/one-oversized-word,
+// де лишається рівно ОДИН розрив — там природний перенос і оцінка вже
+// узгоджені на всіх межах окрім потенційно останньої).
 {
   const chars = phraseOfUnits([11, 11, 11, 11, 11, 11, 11]);
   const r = letterGapsPracticeLayout(chars, [], REFERENCE_ROW_WIDTH_PX);
-  assert(r.cardClass === "long", "letter_gaps phrase (7 units): long");
+  assert(r.cardClass === "long" && r.lines === 4, "7 units -> 4 lines [2,2,2,1], no balance fix applied to a lone last word");
   assert(
-    JSON.stringify(r.forcedBreak) === JSON.stringify({ kind: "afterUnit", unitIndex: 4 }),
-    "letter_gaps phrase (7 units): forced break after unit 4, not leaving the 7th unit alone"
+    JSON.stringify(r.forcedBreaks) ===
+      JSON.stringify([
+        { kind: "afterUnit", unitIndex: 1 },
+        { kind: "afterUnit", unitIndex: 3 },
+        { kind: "afterUnit", unitIndex: 5 },
+      ]),
+    "7 units: three explicit breaks, one at every line boundary (1, 3, 5), none merging the lone 7th unit into line 3"
   );
 }
 
 // Одна коротка одиниця — вже влазить в один рядок -> short, жодного
-// розриву (rows<2, немає чого "осиротити").
+// розриву (rows<2, немає меж узагалі).
 {
   const chars = phraseOfUnits([11]);
   const r = letterGapsPracticeLayout(chars, [], REFERENCE_ROW_WIDTH_PX);
-  assert(r.cardClass === "short" && r.forcedBreak === null, "letter_gaps: a single short unit -> short, no break");
+  assert(r.cardClass === "short" && r.lines === 1 && JSON.stringify(r.forcedBreaks) === "[]", "letter_gaps: a single short unit -> short, no break");
 }
 
 // --- letter_gaps: ОДНЕ завелике слово (без пробілів), власний розрив між --
 // --- силабічними фрагментами (той самий splitIntoSyllableChunks, що ------
-// --- syllable-split.test.ts) — задача "a lone visible letter attached to --
-// --- nothing must not be alone on a line" ----------------------------------
+// --- syllable-split.test.ts) — НЕЗМІННО з попередньої задачі (задача
+// --- "pack word groups greedily on a line" стосується ЛИШЕ слово-груп
+// --- вище, не внутрішнього розбиття ОДНОГО завеликого слова): ОДИН
+// --- фікс/розрив, forcedBreakIndexFor, той самий, що раніше. -------------
 
 function allHiddenWord(word: string): { chars: (string | null)[]; hiddenLetters: string[] } {
   return { chars: Array.from({ length: word.length }, () => null), hiddenLetters: word.split("") };
@@ -235,7 +321,7 @@ function allHiddenWord(word: string): { chars: (string | null)[]; hiddenLetters:
   const r = letterGapsPracticeLayout(chars, hiddenLetters, REFERENCE_ROW_WIDTH_PX);
   assert(r.cardClass === "long", "letter_gaps: 'developpement' (all hidden) -> long");
   assert(
-    JSON.stringify(r.forcedBreak) === JSON.stringify({ kind: "afterChunk", unitIndex: 0, chunkIndex: 2 }),
+    JSON.stringify(r.forcedBreaks) === JSON.stringify([{ kind: "afterChunk", unitIndex: 0, chunkIndex: 2 }]),
     "letter_gaps: 'developpement' -> forced break inside the word, after its 3rd syllable chunk ('lop'), not leaving 'ment' alone"
   );
 }
@@ -249,14 +335,14 @@ function allHiddenWord(word: string): { chars: (string | null)[]; hiddenLetters:
   const { chars, hiddenLetters } = allHiddenWord("anticonstitutionnellement");
   const r = letterGapsPracticeLayout(chars, hiddenLetters, REFERENCE_ROW_WIDTH_PX);
   assert(r.cardClass === "long", "letter_gaps: 'anticonstitutionnellement' (all hidden) -> long");
-  assert(r.forcedBreak === null, "letter_gaps: 'anticonstitutionnellement' -> natural packing already avoids a lone last chunk");
+  assert(JSON.stringify(r.forcedBreaks) === "[]", "letter_gaps: 'anticonstitutionnellement' -> natural packing already avoids a lone last chunk");
 }
 
 // Порожня фраза (оборонний випадок, не очікується в реальних даних) — не
 // крашиться.
 {
   const r = letterGapsPracticeLayout([], [], REFERENCE_ROW_WIDTH_PX);
-  assert(r.cardClass === "short" && r.forcedBreak === null, "letter_gaps: empty phrase is treated as short, no crash");
+  assert(r.cardClass === "short" && JSON.stringify(r.forcedBreaks) === "[]", "letter_gaps: empty phrase is treated as short, no crash");
 }
 
 if (failures > 0) {

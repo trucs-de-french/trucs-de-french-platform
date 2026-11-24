@@ -8386,48 +8386,42 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 13px;
   font-weight: 800;
 }
-/* Задача "simplification of the card layout for letter practice" —
-   замінила попередню практику "одинока картка = full/content-width"
-   (.practice-standalone-card, wide-card-width.ts, видалено) на: усі
-   картки завжди half-width/однакового розміру, а замість JS-ширини —
-   два маленькі допоміжні DOM-елементи, присутні в розмітці ЗАВЖДИ
-   (letter-gaps.tsx/letter-rearrangement.tsx), але видимі ЛИШЕ в
-   2-колонковому режимі (той самий TWO_COLUMN_BREAKPOINT_PX, що й сама
-   сітка, use-working-tile-layout.ts) — на мобільному (<768px) ОБИДВА
-   display:none, тож одноколонковий список лишається природним НАТУРАЛЬНИМ
-   переносом/порядком, байтово тим самим, що й раніше.
+/* Задача "simplification of the card layout for letter practice", пізніше
+   "no holes in the middle of the grid" — усі картки завжди half-width/
+   однакового розміру (попередня практика "одинока картка = full/content-
+   width", .practice-standalone-card, wide-card-width.ts, видалена; і
+   .practice-grid-filler, що запобігала одній конкретній "дірці" в
+   середині сітки, також видалена — pairPracticeItems, flat-practice-
+   layout.ts, тепер взагалі не дає непарній картці лишатись В СЕРЕДИНІ
+   блоку: мішана пара short+SHORTEST long, якщо обидва непарні, інакше
+   одинока картка завжди ОСТАННЯ в блоці, де порожня друга клітинка і так
+   нічим не зайнята без жодної допомоги CSS).
 
-   .practice-grid-filler — порожня, невидима "заповнювана" грід-клітинка:
-   коли непарна коротка картка (pairPracticeItems, flat-practice-layout.ts)
-   лишається сама в кінці групи коротких, а за нею йдуть довгі картки,
-   цей елемент займає ДРУГУ клітинку ТОГО Ж рядка сітки, щоб звичайний
-   grid auto-flow не поставив туди ПЕРШУ довгу картку — інакше коротка й
-   довга картки опинились би в одному рядку (помилка розмітки, яку
-   `fillerAfter` явно запобігає).
-
-   .practice-forced-line-break — ЄДИНИЙ клас для ДВОХ трохи різних
-   контейнерів (letter_rearrangement: flex flex-wrap плиток,
-   sortable-tile-row.tsx; letter_gaps: звичайний inline-block текстовий
-   потік .word-units-row, letter-gaps.tsx) — у ФЛЕКС-контейнері
-   width:100% на флекс-дитині з flex-basis:auto (дефолт) читає ширину з
-   property width, тож стає "100% рядка" і форсує перенос того самого
-   принципу, що в normal/inline-block потоці (блоковий елемент на всю
-   ширину завжди починає свій рядок, зсуваючи наступний inline-контент
-   нижче) — та сама CSS-поведінка працює в ОБОХ типах контейнера без
-   жодної додаткової властивості. height:0 — сам розрив не додає жодної
-   візуальної висоти/проміжку. Вставляється рендерером (letterGapsPracticeLayout/
-   letterRearrangementPracticeLayout, estimate-card-rows.ts обчислюють
-   ЧИ і ДЕ) лише коли природний перенос дав би останній рядок РІВНО з 1
-   тайлом/одиницею — задача явно вимагає розриву, НЕ природного перенесення
-   там. */
-.practice-grid-filler,
+   .practice-forced-line-break — ОДИН допоміжний DOM-елемент, присутній у
+   розмітці ЗАВЖДИ (letter-gaps.tsx/letter-rearrangement.tsx), але
+   видимий ЛИШЕ в 2-колонковому режимі (той самий TWO_COLUMN_BREAKPOINT_PX,
+   що й сама сітка, use-working-tile-layout.ts) — на мобільному (<768px)
+   display:none, тож одноколонковий список лишається природним
+   НАТУРАЛЬНИМ переносом/порядком, байтово тим самим, що й раніше.
+   ЄДИНИЙ клас для ДВОХ трохи різних контейнерів (letter_rearrangement:
+   flex flex-wrap плиток, sortable-tile-row.tsx; letter_gaps: звичайний
+   inline-block текстовий потік .word-units-row, letter-gaps.tsx) — у
+   ФЛЕКС-контейнері width:100% на флекс-дитині з flex-basis:auto (дефолт)
+   читає ширину з property width, тож стає "100% рядка" і форсує перенос
+   того самого принципу, що в normal/inline-block потоці (блоковий
+   елемент на всю ширину завжди починає свій рядок, зсуваючи наступний
+   inline-контент нижче) — та сама CSS-поведінка працює в ОБОХ типах
+   контейнера без жодної додаткової властивості. height:0 — сам розрив не
+   додає жодної візуальної висоти/проміжку. Вставляється рендерером
+   (letterGapsPracticeLayout/letterRearrangementPracticeLayout,
+   estimate-card-rows.ts обчислюють ЧИ і ДЕ) на КОЖНІЙ межі рядка
+   жадібного пакування слово-груп (задача "pack word groups greedily on
+   a line") — не лише там, де природний перенос МІГ БИ розійтися з
+   оцінкою, щоб гарантувати "оцінка == рендер" на БУДЬ-ЯКІЙ межі. */
 .practice-forced-line-break {
   display: none;
 }
 @media (min-width: 768px) {
-  .practice-grid-filler {
-    display: block;
-  }
   .practice-forced-line-break {
     display: block;
     width: 100%;
