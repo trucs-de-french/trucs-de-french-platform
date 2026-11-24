@@ -467,7 +467,7 @@ export function TableFillExercise({
               aria-label={tt("button.showAnswer")}
               className="practice-reveal-pill"
             >
-              <Eye size={14} aria-hidden="true" />
+              <Eye size={16} aria-hidden="true" />
               {tt("button.answerShort")}
             </button>
           </div>

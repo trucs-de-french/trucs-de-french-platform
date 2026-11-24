@@ -8754,17 +8754,20 @@ button.scene-bar:active .scene-bar-toggle {
   flex-shrink: 0;
 }
 .practice-reveal-pill {
+  /* position:relative — опорна точка для ::before нижче (розширена зона
+     дотику на мобільному, БЕЗ зміни видимого розміру самої пілюлі). */
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
   margin-left: auto;
   flex-shrink: 0;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   background: #fffdf6;
   border: 1px solid #d9b765;
   color: #3b36c4;
@@ -8809,9 +8812,18 @@ button.scene-bar:active .scene-bar-toggle {
     outline: 2px solid var(--cabinet-focus-ring);
   }
 }
-@media (max-width: 640px) {
-  .practice-reveal-pill {
-    min-height: 40px;
+/* Задача "compact reveal pill fits attempt-dots row" — пілюля зменшена
+   (36px→32px/14px→12px padding/13px→14px шрифт), тож на мобільному їй
+   потрібна розширена зона дотику БЕЗ росту видимого розміру (замість
+   старого min-height:40px, що робило пілюлю фізично більшою) — invisible
+   ::before на inset:-6px: 32px видимої висоти + 6px зверху/знизу = 44px
+   ефективного тап-таргету, той самий порядок, що .reveal-answer-pill
+   (max-width:767px) нижче. */
+@media (max-width: 767px) {
+  .practice-reveal-pill::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
   }
 }
 

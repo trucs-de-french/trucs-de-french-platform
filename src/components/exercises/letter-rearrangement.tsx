@@ -634,7 +634,7 @@ export function LetterRearrangementExercise({
           aria-label={t("button.showAnswer")}
           className="practice-reveal-pill"
         >
-          <Eye size={14} aria-hidden="true" />
+          <Eye size={16} aria-hidden="true" />
           {t("button.answerShort")}
         </button>
       </div>
