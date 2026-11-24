@@ -12,8 +12,8 @@ import { hintExplanationText } from "./hint-explanation";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
-import { Eye } from "lucide-react";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
+import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
@@ -296,8 +296,6 @@ export function DragDropExercise({
             const blankCount = blankCounts[si];
             const offset = offsets[si];
             const isCorrect = practiceSentenceResults[s.id];
-            const attempts = practiceFailedAttempts[s.id] ?? 0;
-            const itemRevealed = practiceCheck.revealed[s.id];
 
             return (
               <div
@@ -358,35 +356,79 @@ export function DragDropExercise({
                 {isCorrect === true && (
                   <p className="text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
-                {isCorrect === false && (
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="text-red-600 dark:text-red-400">
-                      {t("status.incorrectRetryCount", { n: attempts })}
-                    </span>
-                    {!itemRevealed && (
-                      <button
-                        type="button"
-                        onClick={() => practiceCheck.reveal(s.id, true)}
-                        disabled={!!practiceCheck.revealPending[s.id]}
-                        aria-label={t("button.showAnswer")}
-                        title={t("button.showAnswer")}
-                        className={BUTTON_REVEAL_ANSWER}
-                      >
-                        <Eye size={14} aria-hidden="true" />
-                        {t("button.answerShort")}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {itemRevealed && (
-                  <p className="text-xs italic text-amber-700 dark:text-amber-400">
-                    <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
-                  </p>
-                )}
               </div>
             );
           })}
         </div>
+
+        {(() => {
+          // Задача "replace red per-pair lines with collapsible answers
+          // panel" — поширено з matching.tsx: окремий червоний рядок +
+          // власна пілюля "Відповідь" на кожне речення замінюються ОДНИМ
+          // спокійним футером (крапки спроб) + ОДНОЮ панеллю TaskResult/
+          // TaskResultGapRows (той самий компонент/стиль, що звичайна
+          // вправа, toggleTitle="panel.correctAnswers") під усім списком —
+          // лише для речень, що й досі неправильні (stillWrongIds). Рядки
+          // будуються з sentenceSegments (публічний шаблон, уже видимий
+          // студенту) + practiceCheck.revealed[id] (по пропуску в порядку
+          // шаблону, той самий порядок, що reveal API повертає для
+          // drag_drop) — той самий принцип, що buildDragDropGapRows вище,
+          // лише джерело значення пропуску — revealed, не detail (практика
+          // detail не має). Зелений рядок "Правильно" лишається на кожній
+          // картці (вище) — картка сама кольором не показує правильність.
+          const wrongIds = stillWrongIds(config.sentences.map((s) => s.id), practiceSentenceResults);
+          if (wrongIds.length === 0) return null;
+          const attempts = maxFailedAttempts(wrongIds, practiceFailedAttempts);
+          function revealWrongSentences() {
+            for (const id of wrongIds) {
+              if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
+            }
+          }
+          const answersLoading = wrongIds.some((id) => practiceCheck.revealPending[id]);
+          return (
+            <>
+              <div className="practice-attempt-footer">
+                <span className="practice-attempt-dots" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+                    />
+                  ))}
+                </span>
+                <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
+              </div>
+              <TaskResult
+                correct={false}
+                toggleTitle={t("panel.correctAnswers")}
+                toggleCount={wrongIds.length}
+                onOpenChange={(open) => {
+                  if (open) revealWrongSentences();
+                }}
+              >
+                {answersLoading ? (
+                  <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+                    {t("panel.loadingAnswers")}
+                  </p>
+                ) : (
+                  <TaskResultGapRows
+                    rows={wrongIds.map((id, i) => {
+                      const si = config.sentences.findIndex((s) => s.id === id);
+                      const segs = sentenceSegments[si] ?? [];
+                      const revealedWords = practiceCheck.revealed[id] ?? [];
+                      const parts: (string | { word: string })[] = [];
+                      segs.forEach((seg, bi) => {
+                        if (seg) parts.push(seg);
+                        if (bi < segs.length - 1) parts.push({ word: revealedWords[bi] ?? "" });
+                      });
+                      return { number: i + 1, parts };
+                    })}
+                  />
+                )}
+              </TaskResult>
+            </>
+          );
+        })()}
 
         <div className="flex flex-col gap-2">
           <button

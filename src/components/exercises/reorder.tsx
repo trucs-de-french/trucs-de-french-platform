@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Eye } from "lucide-react";
 import type { ReorderPublic, ReorderDetail, ReorderAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
@@ -13,7 +12,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { TaskPanelHeader } from "./task-panel-header";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab } from "./task-result";
@@ -573,39 +572,34 @@ export function ReorderExercise({
             <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{tt("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-red-600 dark:text-red-400">
-                {tt("status.incorrectRetryCount", { n: attempts })}
-              </span>
-              {!revealedAnswer && (
-                <button
-                  type="button"
-                  onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
-                  disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-                  aria-label={tt("button.showAnswer")}
-                  title={tt("button.showAnswer")}
-                  className={BUTTON_REVEAL_ANSWER}
-                >
-                  <Eye size={14} aria-hidden="true" />
-                  {tt("button.answerShort")}
-                </button>
-              )}
-            </div>
-          )}
-          {revealedAnswer && (
-            // Задача "Правильне слово: look exactly like on the scene page" —
-            // та сама розмітка/класи, що вже є у renderCard вище
-            // (exercise-answer-label text-neutral-600/correct-answer-word
-            // #3b36c4), замість старого italic/amber тексту — тут немає
-            // sceneStyle-розгалуження (reorder — whole-режим, один рендер
-            // для флет і сцена-вигляду мистейк-сторінки), тож це єдине
-            // місце, що потребувало вирівнювання.
-            <p className="break-words text-sm [overflow-wrap:anywhere]">
-              <span className="exercise-answer-label text-neutral-600 dark:text-[var(--text-muted-caption)]">
-                {tt("answer.correctOrderLabel")}{" "}
-              </span>
-              <span className="correct-answer-word text-[#3b36c4]">{revealedAnswer.join("; ")}</span>
-            </p>
+            <>
+              <div className="practice-attempt-footer">
+                <span className="practice-attempt-dots" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+                    />
+                  ))}
+                </span>
+                <span className="practice-attempt-label">{tt("status.failedAttemptShort", { n: attempts })}</span>
+              </div>
+              <TaskResult
+                correct={false}
+                toggleTitle={tt("panel.correctAnswers")}
+                onOpenChange={(open) => {
+                  if (open && !revealedAnswer) practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true);
+                }}
+              >
+                {!revealedAnswer ? (
+                  <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+                    {tt("panel.loadingAnswers")}
+                  </p>
+                ) : (
+                  <p className="break-words text-sm [overflow-wrap:anywhere]">{revealedAnswer.join("; ")}</p>
+                )}
+              </TaskResult>
+            </>
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>

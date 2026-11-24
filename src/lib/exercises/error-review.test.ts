@@ -13,6 +13,8 @@ import {
   shouldAutoReveal,
   shouldShowAttemptFooter,
   aggregateWrongItems,
+  stillWrongIds,
+  maxFailedAttempts,
 } from "./error-review";
 
 let failures = 0;
@@ -282,6 +284,50 @@ function assert(condition: boolean, label: string) {
 
 {
   assert(shouldShowAttemptFooter(undefined, undefined) === false, "footer never shows before any attempt");
+}
+
+// --- stillWrongIds / maxFailedAttempts (задача "replace red per-pair
+// lines with collapsible answers panel" — спільні для matching/
+// multiple_choice/word_choice/drag_drop/image_match/reorder/
+// chronological_order/sort_columns/checkbox_grid: панель і лічильник
+// показують лише елементи, що й досі неправильні, а крапки спроб
+// рахують НАЙГІРШИЙ attempts серед саме цих елементів) ---------------------
+
+{
+  const out = stillWrongIds(
+    ["a", "b", "c"],
+    { a: false, b: true } // c: не перевірена взагалі (undefined)
+  );
+  assert(out.length === 1 && out[0] === "a", "only strictly-false lefts count as still wrong — correct (true) and never-checked (undefined) are excluded");
+}
+
+{
+  assert(stillWrongIds([], {}).length === 0, "an empty leftItems list produces no wrong lefts, not a crash");
+}
+
+{
+  // Виправлена пара (a: true тепер) зникає зі списку й лічильника — те
+  // саме, що й вимога "When the student later fixes a pair, it is
+  // removed from the panel list and from the counter".
+  const before = stillWrongIds(["a", "b"], { a: false, b: false });
+  const after = stillWrongIds(["a", "b"], { a: true, b: false });
+  assert(before.length === 2, "both still wrong before the fix");
+  assert(after.length === 1 && after[0] === "b", "the fixed pair drops out, the other stays");
+}
+
+{
+  assert(
+    maxFailedAttempts(["p1", "p2"], { p1: 1, p2: 3 }) === 3,
+    "the footer dots/label use the WORST (max) attempts among the given ids, not the first or the sum"
+  );
+}
+
+{
+  assert(maxFailedAttempts([], { p1: 5 }) === 0, "no ids -> 0, never a crash or a stray value from an unrelated id");
+}
+
+{
+  assert(maxFailedAttempts(["p1"], {}) === 0, "a missing attempts entry defaults to 0, not undefined/NaN");
 }
 
 // --- aggregateWrongItems: "unanswered items from unattempted blocks never

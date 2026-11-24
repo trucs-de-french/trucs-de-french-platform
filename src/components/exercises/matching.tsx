@@ -2,14 +2,13 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye } from "lucide-react";
 import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { MatchingBoard } from "./matching-board";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, RESULT_ROW_GAP_CLASS } from "@/lib/spacing";
 import { chunkMatchingPairs } from "@/lib/exercises/exercise-blocks";
 import { TaskResult, TaskResultPairRows } from "./task-result";
@@ -18,6 +17,7 @@ import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 import { buildMatchingPairRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
+import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 
@@ -493,67 +493,61 @@ export function MatchingExercise({
     );
   }
 
-  // Рядки статусу під дошкою — спільне для плаского режиму (інлайн-картка
-  // сцени, НЕЗМІННО) і сцена-вигляду блоків (крок 4): та сама розмітка,
-  // лише інший leftItems (config.left проти активного блоку, нижче).
-  // hideReveal — лише сцена-вигляд (крок 3b): інлайн-кнопка "Показати
-  // відповідь"+розкритий текст замінюються на спільну панель "Правильні
-  // пари" під блоком (showToggle-картка TaskResult, той самий компонент,
-  // що звичайна вправа); лічильник спроб лишається — у звичайної вправи
-  // нема свого еквівалента цього рядка.
-  function renderPracticeStatusList(leftItems: string[], hideReveal = false) {
+  // Задача "replace red per-pair lines with collapsible answers panel"
+  // (флет-практика matching, owner report: червоні рядки "signer:
+  // неправильно..." з окремою пілюлею "Відповідь" на кожну пару
+  // замінюються на спокійний футер (крапки спроб + "Не вдалося · спроба
+  // N", та сама розмітка/класи, що letter_gaps/letter_rearrangement/
+  // table_fill) + ОДНА спільна панель TaskResult/TaskResultPairRows (той
+  // самий компонент, що сцена-вигляд блоків вище, answersPanel) — лише
+  // для пар, що й досі неправильні (stillWrongIds, error-review.ts).
+  // N на крапках — НАЙГІРШИЙ (максимальний) attempts серед цих пар
+  // (maxFailedAttempts), не на кожну пару окремо. Відкриття панелі —
+  // той самий пакетний reveal(id, true) по кожному ще нерозкритому id
+  // (fromButton=true, 403-правило не застосовується до явного запиту
+  // кнопкою), що revealBlockAnswers вище (сцена-вигляд); закриття —
+  // лише локальний стан TaskResult, без нового запиту.
+  function renderPracticeFooter(leftItems: string[]) {
+    const wrongLefts = stillWrongIds(leftItems, practiceResultByLeft);
+    if (wrongLefts.length === 0) return null;
+    const wrongIds = wrongLefts.map((left) => idByLeft.get(left)).filter((id): id is string => !!id);
+    const attempts = maxFailedAttempts(wrongIds, practiceFailedAttempts);
+    function revealWrongPairs() {
+      for (const id of wrongIds) {
+        if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
+      }
+    }
+    const answersLoading = wrongIds.some((id) => practiceCheck.revealPending[id]);
     return (
-      <div className="flex flex-col gap-1.5">
-        {leftItems.map((left) => {
-          const id = idByLeft.get(left);
-          if (!id) return null;
-          const isCorrect = practiceResultByLeft[left];
-          const attempts = practiceFailedAttempts[id] ?? 0;
-          const itemRevealed = practiceCheck.revealed[id];
-          // hideReveal (сцена-вигляд) — itemRevealed тут ігнорується
-          // (панель нижче й сама запускає reveal на ВЕСЬ блок, щойно
-          // відкрита, незалежно від того, перевірявся цей left чи ні) —
-          // лише isCorrect вирішує, чи рядок статусу взагалі потрібен,
-          // інакше ненадрукований left показав би порожній рядок одразу
-          // після відкриття панелі.
-          if (hideReveal ? isCorrect === undefined : isCorrect === undefined && !itemRevealed) return null;
-          return (
-            <div key={left} className="flex flex-wrap items-center gap-2 pl-1 text-xs">
-              {isCorrect === true && (
-                <span className="font-medium text-green-600 dark:text-green-400">
-                  {t("matching.leftCorrect", { left })}
-                </span>
-              )}
-              {isCorrect === false && (
-                <>
-                  <span className="text-red-600 dark:text-red-400">
-                    {t("matching.leftIncorrectRetry", { left, n: attempts })}
-                  </span>
-                  {!hideReveal && !itemRevealed && (
-                    <button
-                      type="button"
-                      onClick={() => practiceCheck.reveal(id, true)}
-                      disabled={!!practiceCheck.revealPending[id]}
-                      aria-label={t("button.showAnswer")}
-                      title={t("button.showAnswer")}
-                      className={BUTTON_REVEAL_ANSWER}
-                    >
-                      <Eye size={14} aria-hidden="true" />
-                      {t("button.answerShort")}
-                    </button>
-                  )}
-                </>
-              )}
-              {!hideReveal && itemRevealed && (
-                <span className="italic text-amber-700 dark:text-amber-400">
-                  <span className="exercise-answer-label">{t("answer.correctPairLabel")}</span> {left} →{" "}
-                  {itemRevealed.join(", ")}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <>
+        <div className="practice-attempt-footer">
+          <span className="practice-attempt-dots" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+              />
+            ))}
+          </span>
+          <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
+        </div>
+        <TaskResult
+          correct={false}
+          toggleTitle={t("panel.correctPairsTitle")}
+          toggleCount={wrongLefts.length}
+          onOpenChange={(open) => {
+            if (open) revealWrongPairs();
+          }}
+        >
+          {answersLoading ? (
+            <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+              {t("panel.loadingAnswers")}
+            </p>
+          ) : (
+            <TaskResultPairRows pairs={buildMatchingPairRowsFromReveal(wrongLefts, idByLeft, practiceCheck.revealed)} />
+          )}
+        </TaskResult>
+      </>
     );
   }
 
@@ -717,7 +711,7 @@ export function MatchingExercise({
           ))}
         </div>
 
-        {renderPracticeStatusList(config.left)}
+        {renderPracticeFooter(config.left)}
 
         <div className="flex flex-col gap-2">
           <button

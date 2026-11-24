@@ -198,10 +198,15 @@ export function TaskResult({
   );
 }
 
-// Рядок пар "Правильні пари" (matching.tsx) — єдиний тип, що сьогодні має
-// змістовний block-result reveal (correctPairs), тож єдиний, що отримує
-// плитки замість звичайного списку (решта типів — лише per-item practice-
-// reveal, окрема фіча, не чіпається цією задачею).
+// Рядок пар "Правильні пари" (matching.tsx) — пари left/right чипами
+// замість звичайного gap-рядка (TaskResultGapRows нижче), бо тут немає
+// єдиного "речення", куди вставити відповідь. Задача "replace red
+// per-pair lines with collapsible answers panel" поширила ЦЮ панель
+// (TaskResult, цей файл) на практику matching/multiple_choice/
+// word_choice/drag_drop/image_match/reorder/chronological_order/
+// sort_columns/checkbox_grid — раніше такий панель-reveal у практиці мав
+// лише matching (сцена-вигляд блоків), решта типів показували
+// per-item червоний рядок+пілюлю "Відповідь" на кожен елемент.
 function PairArrowIcon() {
   return (
     <svg

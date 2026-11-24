@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useId, useMemo } from "react";
-import { Check, X, Eye } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type {
   CheckboxGridPublic,
   CheckboxGridDetail,
@@ -17,7 +17,7 @@ import { useT } from "@/lib/i18n/context";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, rowPointsTabStatus } from "./task-result";
@@ -420,41 +420,52 @@ export function CheckboxGridExercise({
             <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{t("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-red-600 dark:text-red-400">
-                {t("status.incorrectRetryCount", { n: practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0 })}
-              </span>
-              {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
-                <button
-                  type="button"
-                  onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
-                  disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-                  aria-label={t("button.showAnswer")}
-                  title={t("button.showAnswer")}
-                  className={BUTTON_REVEAL_ANSWER}
-                >
-                  <Eye size={14} aria-hidden="true" />
-                  {t("button.answerShort")}
-                </button>
-              )}
-            </div>
-          )}
-          {practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
-            <ul className="flex flex-col gap-0.5 text-sm italic text-amber-700 dark:text-amber-400">
-              {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => {
-                const [rowId, columnIdsStr] = pair.split(":");
-                const row = config.rows.find((r) => r.id === rowId);
-                const columnIds = columnIdsStr ? columnIdsStr.split(",") : [];
-                const labels = columnIds
-                  .map((id) => config.columns.find((c) => c.id === id)?.label ?? id)
-                  .join(", ");
-                return (
-                  <li key={rowId}>
-                    {row?.label ?? rowId}: {labels || "—"}
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              <div className="practice-attempt-footer">
+                <span className="practice-attempt-dots" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className={`practice-attempt-dot ${
+                        i < Math.min(practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0, 3) ? "practice-attempt-dot--filled" : ""
+                      }`}
+                    />
+                  ))}
+                </span>
+                <span className="practice-attempt-label">
+                  {t("status.failedAttemptShort", { n: practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0 })}
+                </span>
+              </div>
+              <TaskResult
+                correct={false}
+                toggleTitle={t("panel.correctAnswers")}
+                onOpenChange={(open) => {
+                  if (open && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true);
+                }}
+              >
+                {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] ? (
+                  <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+                    {t("panel.loadingAnswers")}
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-0.5 text-sm">
+                    {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => {
+                      const [rowId, columnIdsStr] = pair.split(":");
+                      const row = config.rows.find((r) => r.id === rowId);
+                      const columnIds = columnIdsStr ? columnIdsStr.split(",") : [];
+                      const labels = columnIds
+                        .map((id) => config.columns.find((c) => c.id === id)?.label ?? id)
+                        .join(", ");
+                      return (
+                        <li key={rowId}>
+                          {row?.label ?? rowId}: {labels || "—"}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </TaskResult>
+            </>
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>

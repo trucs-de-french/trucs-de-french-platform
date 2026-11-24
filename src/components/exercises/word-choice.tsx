@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { X, Eye } from "lucide-react";
+import { X } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS, WORD_CHOICE_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -17,7 +17,7 @@ import { plural } from "@/lib/i18n/plural";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -533,49 +533,79 @@ export function WordChoiceExercise({
   }
 
   if (isPractice) {
+    // Задача "replace red per-pair lines with collapsible answers panel" —
+    // поширено з matching.tsx на word_choice: окремий червоний рядок +
+    // власна пілюля "Відповідь" на кожне речення замінюються ОДНИМ
+    // спокійним футером (крапки спроб) + ОДНОЮ панеллю TaskResult/
+    // TaskResultGapRows (той самий компонент/стиль, що звичайна вправа
+    // вище, toggleTitle="panel.correctAnswers") під усім списком — лише
+    // для речень, що й досі неправильні (stillWrongIds). Зелений рядок
+    // "Правильно" на кожну картку лишається — картка сама жодним кольором
+    // правильність не показує (sentenceDetail тут завжди undefined), це
+    // єдиний такий сигнал per-речення, не частина цієї задачі.
+    const wrongIds = stillWrongIds(practiceSentences.map((s) => s.id), practiceResults);
+    const attempts = maxFailedAttempts(wrongIds, practiceFailedAttempts);
+    function revealWrongSentences() {
+      for (const id of wrongIds) {
+        if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
+      }
+    }
+    const answersLoading = wrongIds.some((id) => practiceCheck.revealPending[id]);
+    const wrongSentenceById = new Map(practiceSentences.map((s) => [s.id, s]));
     return (
       <div className={EXERCISE_STACK}>
         <div className="flex flex-col gap-3 md:gap-4">
           {practiceSentences.map((s) => {
             const idx = originalIndexOf.get(s.id)!;
             const isCorrect = practiceResults[s.id];
-            const attempts = practiceFailedAttempts[s.id] ?? 0;
-            const itemRevealed = practiceCheck.revealed[s.id];
             return (
               <div key={s.id} className="flex flex-col gap-1.5">
                 {renderSentenceCard(s, idx, undefined, false)}
                 {isCorrect === true && (
                   <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
-                {isCorrect === false && (
-                  <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
-                    <span className="text-red-600 dark:text-red-400">
-                      {t("status.incorrectRetryCount", { n: attempts })}
-                    </span>
-                    {!itemRevealed && (
-                      <button
-                        type="button"
-                        onClick={() => practiceCheck.reveal(s.id, true)}
-                        disabled={!!practiceCheck.revealPending[s.id]}
-                        aria-label={t("button.showAnswer")}
-                        title={t("button.showAnswer")}
-                        className={BUTTON_REVEAL_ANSWER}
-                      >
-                        <Eye size={14} aria-hidden="true" />
-                        {t("button.answerShort")}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {itemRevealed && (
-                  <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
-                  </p>
-                )}
               </div>
             );
           })}
         </div>
+        {wrongIds.length > 0 && (
+          <>
+            <div className="practice-attempt-footer">
+              <span className="practice-attempt-dots" aria-hidden="true">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+                  />
+                ))}
+              </span>
+              <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
+            </div>
+            <TaskResult
+              correct={false}
+              toggleTitle={t("panel.correctAnswers")}
+              toggleCount={wrongIds.length}
+              onOpenChange={(open) => {
+                if (open) revealWrongSentences();
+              }}
+            >
+              {answersLoading ? (
+                <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+                  {t("panel.loadingAnswers")}
+                </p>
+              ) : (
+                <TaskResultGapRows
+                  rows={wrongIds.map((id, i) => {
+                    const s = wrongSentenceById.get(id);
+                    const [before, after] = (s?.sentence ?? "").split("{{}}");
+                    const value = (practiceCheck.revealed[id] ?? []).join(" / ");
+                    return { number: i + 1, parts: [before, { word: value }, after ?? ""].filter((p) => p !== "") };
+                  })}
+                />
+              )}
+            </TaskResult>
+          </>
+        )}
         <div className="flex flex-col gap-2">
           <button
             type="button"

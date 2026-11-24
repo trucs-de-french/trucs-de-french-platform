@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, Eye } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -12,9 +12,10 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { COMPACT_IMAGE_FILL, ITEM_CARD_WRAP as CARD_WRAP } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { TaskResult, RowPointsTab } from "./task-result";
+import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
+import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { useT } from "@/lib/i18n/context";
@@ -218,8 +219,6 @@ export function MultipleChoiceExercise({
         {practiceItems.map((item) => {
           const idx = originalIndexOf.get(item.id)!;
           const isCorrect = practiceResults[item.id];
-          const attempts = practiceFailedAttempts[item.id] ?? 0;
-          const itemRevealed = practiceCheck.revealed[item.id];
           return (
             <div key={item.id} className="flex flex-col gap-1.5">
               {config.display === "dropdown"
@@ -228,35 +227,74 @@ export function MultipleChoiceExercise({
               {isCorrect === true && (
                 <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
               )}
-              {isCorrect === false && (
-                <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
-                  <span className="text-red-600 dark:text-red-400">
-                    {t("status.incorrectRetryCount", { n: attempts })}
-                  </span>
-                  {!itemRevealed && (
-                    <button
-                      type="button"
-                      onClick={() => practiceCheck.reveal(item.id, true)}
-                      disabled={!!practiceCheck.revealPending[item.id]}
-                      aria-label={t("button.showAnswer")}
-                      title={t("button.showAnswer")}
-                      className={BUTTON_REVEAL_ANSWER}
-                    >
-                      <Eye size={14} aria-hidden="true" />
-                      {t("button.answerShort")}
-                    </button>
-                  )}
-                </div>
-              )}
-              {itemRevealed && (
-                <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                  <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
-                </p>
-              )}
             </div>
           );
         })}
+        {renderPracticeAnswersPanel()}
       </div>
+    );
+  }
+
+  // Задача "replace red per-pair lines with collapsible answers panel" —
+  // поширено з matching.tsx: окремий червоний рядок + власна пілюля
+  // "Відповідь" на кожне питання замінюються ОДНИМ спокійним футером
+  // (крапки спроб) + ОДНОЮ панеллю TaskResult/TaskResultGapRows (той
+  // самий компонент/стиль, що звичайна вправа, toggleTitle=
+  // "panel.correctAnswers") — лише для питань, що й досі неправильні
+  // (stillWrongIds). Рядки — РЕЧЕННЯ з вставленим правильним варіантом
+  // (той самий "{{}}"-формат, що item.sentence, і той самий принцип, що
+  // word_choice/drag_drop) замість багатшої mc-answer-card (✓/✕ по
+  // кожному варіанту) звичайної вправи — та картка потребує "що студент
+  // обрав", якого практика (лише revealed-рядки) не має, без зміни API.
+  // Зелений рядок "Правильно" лишається на кожній картці (вище).
+  function renderPracticeAnswersPanel() {
+    const wrongIds = stillWrongIds(practiceItems.map((it) => it.id), practiceResults);
+    if (wrongIds.length === 0) return null;
+    const attempts = maxFailedAttempts(wrongIds, practiceFailedAttempts);
+    function revealWrongItems() {
+      for (const id of wrongIds) {
+        if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
+      }
+    }
+    const answersLoading = wrongIds.some((id) => practiceCheck.revealPending[id]);
+    const itemById = new Map(practiceItems.map((it) => [it.id, it]));
+    return (
+      <>
+        <div className="practice-attempt-footer">
+          <span className="practice-attempt-dots" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+              />
+            ))}
+          </span>
+          <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
+        </div>
+        <TaskResult
+          correct={false}
+          toggleTitle={t("panel.correctAnswers")}
+          toggleCount={wrongIds.length}
+          onOpenChange={(open) => {
+            if (open) revealWrongItems();
+          }}
+        >
+          {answersLoading ? (
+            <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+              {t("panel.loadingAnswers")}
+            </p>
+          ) : (
+            <TaskResultGapRows
+              rows={wrongIds.map((id, i) => {
+                const item = itemById.get(id);
+                const [before, after] = (item?.sentence ?? "").split("{{}}");
+                const value = (practiceCheck.revealed[id] ?? []).join(" / ");
+                return { number: i + 1, parts: [before, { word: value }, after ?? ""].filter((p) => p !== "") };
+              })}
+            />
+          )}
+        </TaskResult>
+      </>
     );
   }
 

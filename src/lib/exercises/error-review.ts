@@ -760,3 +760,29 @@ export function shouldAutoReveal(): false {
 export function shouldShowAttemptFooter(isCorrect: boolean | undefined, itemRevealed: unknown): boolean {
   return isCorrect === false && !itemRevealed;
 }
+
+// Задача "replace red per-pair lines with collapsible answers panel"
+// (matching, флет-практика) — замінює старий рядок-на-кожну-пару
+// (matching.leftIncorrectRetry + окрема пілюля "Відповідь") одним
+// спільним футером (крапки спроб + ОДНА панель TaskResult, той самий
+// компонент, що сцена-вигляд блоків matching.tsx). Обидва нижче —
+// ЧИСТІ функції агрегації, без React/практики, щоб їх можна було
+// протестувати незалежно від компонента.
+//
+// stillWrongIds — підмножина ids, що й досі неправильні (ключ
+// resultById[id] === false СУВОРО, не undefined — непроставлене (ще не
+// перевірене) чи виправлене (true) не входить). Спільна для БУДЬ-ЯКОГО
+// items-типу з per-item practiceResults (matching — за left-рядком,
+// multiple_choice/word_choice/drag_drop/image_match — за item.id).
+export function stillWrongIds(ids: string[], resultById: Record<string, boolean | undefined>): string[] {
+  return ids.filter((id) => resultById[id] === false);
+}
+
+// maxFailedAttempts — найгірший (максимальний) attempts серед заданих
+// id (0, якщо список порожній чи жодного запису немає) — те саме
+// число, що й на крапках спроб кожного окремого елемента інших типів
+// (practiceFailedAttempts[id]), лише зведене до ОДНОГО числа на весь
+// футер.
+export function maxFailedAttempts(ids: string[], failedAttempts: Record<string, number | undefined>): number {
+  return ids.reduce((max, id) => Math.max(max, failedAttempts[id] ?? 0), 0);
+}

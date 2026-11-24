@@ -13,8 +13,8 @@ import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } fro
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
-import { Eye } from "lucide-react";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
+import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -192,8 +192,6 @@ export function ImageMatchExercise({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {config.items.map((item, i) => {
             const isCorrect = practiceItemResults[item.id];
-            const attempts = practiceFailedAttempts[item.id] ?? 0;
-            const itemRevealed = practiceCheck.revealed[item.id];
             return (
               <div
                 key={item.id}
@@ -223,31 +221,71 @@ export function ImageMatchExercise({
                 {isCorrect === true && (
                   <p className="text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
-                {isCorrect === false && (
-                  <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-                    <span className="text-red-600 dark:text-red-400">{t("status.attemptsCountLabel", { n: attempts })}</span>
-                    {!itemRevealed && (
-                      <button
-                        type="button"
-                        onClick={() => practiceCheck.reveal(item.id, true)}
-                        disabled={!!practiceCheck.revealPending[item.id]}
-                        aria-label={t("button.showAnswer")}
-                        title={t("button.showAnswer")}
-                        className={BUTTON_REVEAL_ANSWER}
-                      >
-                        <Eye size={14} aria-hidden="true" />
-                        {t("button.answerShort")}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {itemRevealed && (
-                  <p className="text-xs italic text-amber-700 dark:text-amber-400">{itemRevealed.join(", ")}</p>
-                )}
               </div>
             );
           })}
         </div>
+
+        {(() => {
+          // Задача "replace red per-pair lines with collapsible answers
+          // panel" — поширено з matching.tsx: окремий червоний рядок +
+          // власна пілюля "Відповідь" на кожну картинку замінюються ОДНИМ
+          // спокійним футером (крапки спроб) + ОДНОЮ панеллю TaskResult/
+          // TaskResultImageWordRows (той самий компонент/стиль, що звичайна
+          // вправа, toggleTitle="panel.correctAnswers") — лише для
+          // елементів, що й досі неправильні (stillWrongIds). imageUrl —
+          // публічний config.items (студент і так уже бачить картинку),
+          // лише назва береться з practiceCheck.revealed[id] (reveal API
+          // для image_match повертає [item.name]). Зелений рядок
+          // "Правильно" лишається на кожній картці (вище).
+          const wrongIds = stillWrongIds(config.items.map((it) => it.id), practiceItemResults);
+          if (wrongIds.length === 0) return null;
+          const attempts = maxFailedAttempts(wrongIds, practiceFailedAttempts);
+          function revealWrongItems() {
+            for (const id of wrongIds) {
+              if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
+            }
+          }
+          const answersLoading = wrongIds.some((id) => practiceCheck.revealPending[id]);
+          const itemById = new Map(config.items.map((it) => [it.id, it]));
+          return (
+            <>
+              <div className="practice-attempt-footer">
+                <span className="practice-attempt-dots" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
+                    />
+                  ))}
+                </span>
+                <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
+              </div>
+              <TaskResult
+                correct={false}
+                toggleTitle={t("panel.correctAnswers")}
+                toggleCount={wrongIds.length}
+                onOpenChange={(open) => {
+                  if (open) revealWrongItems();
+                }}
+              >
+                {answersLoading ? (
+                  <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+                    {t("panel.loadingAnswers")}
+                  </p>
+                ) : (
+                  <TaskResultImageWordRows
+                    rows={wrongIds.map((id, i) => ({
+                      number: i + 1,
+                      imageUrl: itemById.get(id)?.imageUrl ?? "",
+                      word: (practiceCheck.revealed[id] ?? [])[0] ?? "",
+                    }))}
+                  />
+                )}
+              </TaskResult>
+            </>
+          );
+        })()}
 
         <div className="flex flex-col gap-2">
           <button
