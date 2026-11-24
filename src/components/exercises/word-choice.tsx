@@ -17,7 +17,7 @@ import { plural } from "@/lib/i18n/plural";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
@@ -158,7 +158,7 @@ export function WordChoiceExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults({});
+    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
   }
 
   async function submitPractice() {

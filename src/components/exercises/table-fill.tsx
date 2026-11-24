@@ -20,7 +20,7 @@ import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton } from "@/lib/exercises/exer
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { practiceAttemptFooterState } from "@/lib/exercises/error-review";
+import { practiceAttemptFooterState, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { buildTableFillAnswerRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
@@ -335,7 +335,7 @@ export function TableFillExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults({});
+    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
   }
 
   // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE рядків, той самий

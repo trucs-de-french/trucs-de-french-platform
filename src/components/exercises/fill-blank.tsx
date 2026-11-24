@@ -35,6 +35,7 @@ import {
 import { useT } from "@/lib/i18n/context";
 import { normalize } from "@/lib/exercises/grade";
 import { useFitText } from "./use-fit-text";
+import { pruneStaleResults } from "@/lib/exercises/error-review";
 
 // Мобільний банк (<=640px, texte à trous) — довге слово в пілюлі не
 // обрізається: той самий механізм, що відповіді в task-result.tsx
@@ -181,7 +182,7 @@ export function FillBlankExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults({});
+    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
     // Задача "pool shows only what's needed" — щойно розв'язаний пропуск
     // прибирає своє слово з config.wordBank (sanitizeFillBlankForPractice),
     // тож сам масив коротшає й наступні слова зсуваються на інші індекси.

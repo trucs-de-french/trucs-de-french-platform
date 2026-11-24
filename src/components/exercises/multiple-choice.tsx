@@ -15,7 +15,7 @@ import { ChoiceQuestionCard } from "./choice-question-card";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
-import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -194,7 +194,8 @@ export function MultipleChoiceExercise({
   // router.refresh()) — скидаємо локальні результати попередньої спроби,
   // щоб застарілий "✓"/"✕" не лишався на екрані для вже інших елементів.
   useEffect(() => {
-    if (isPractice) setPracticeResults({});
+    if (isPractice) setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPractice, onlyItemIdsKey]);
 
   async function submitPractice() {

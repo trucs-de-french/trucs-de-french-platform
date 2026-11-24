@@ -21,7 +21,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
-import { practiceAttemptFooterState } from "@/lib/exercises/error-review";
+import { practiceAttemptFooterState, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -138,7 +138,7 @@ export function ListeningExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults({});
+    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
   }
   async function submitPractice() {
     const itemIds = practiceQuestions.map((q) => q.id);

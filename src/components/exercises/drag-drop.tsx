@@ -13,7 +13,7 @@ import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } fro
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { BUTTON_CHECK } from "@/lib/button-styles";
-import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -210,7 +210,7 @@ export function DragDropExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeSentenceResults({});
+    setPracticeSentenceResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
   }
 
   async function submitPractice() {

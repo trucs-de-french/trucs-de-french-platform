@@ -14,7 +14,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { BUTTON_CHECK } from "@/lib/button-styles";
-import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
@@ -122,7 +122,7 @@ export function ImageMatchExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeItemResults({});
+    setPracticeItemResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
   }
 
   async function submitPractice() {

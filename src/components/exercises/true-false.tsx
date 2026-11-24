@@ -16,7 +16,7 @@ import { EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { practiceAttemptFooterState } from "@/lib/exercises/error-review";
+import { practiceAttemptFooterState, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
@@ -120,7 +120,7 @@ export function TrueFalseExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults({});
+    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
   }
 
   async function submitPractice() {

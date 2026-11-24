@@ -28,7 +28,7 @@ import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton, chunkWithMinTail } from "@/
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { usePracticeCheck } from "./use-practice-check";
-import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
+import { shouldShowAttemptFooter, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import {
@@ -267,7 +267,7 @@ export function LetterRearrangementExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults({});
+    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
   }
 
   // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE слів, той самий

@@ -17,6 +17,7 @@ import {
   aggregateWrongItems,
   stillWrongIds,
   maxFailedAttempts,
+  pruneStaleResults,
 } from "./error-review";
 
 let failures = 0;
@@ -307,6 +308,41 @@ function assert(condition: boolean, label: string) {
   assert(dotsFilledCount(1) === 1, "one attempt -> one filled dot");
   assert(dotsFilledCount(3) === 3, "three attempts -> all three dots filled");
   assert(dotsFilledCount(7) === 3, "more than three attempts still caps at three dots, never overflows");
+}
+
+// --- pruneStaleResults (bug fix: "attempt footer disappears right after
+// a failed check" — the inline error block's onlyItemIds is the LIVE
+// entry.remainingItemIds, which gets a new array from every
+// router.refresh() after practiceCheck.check()/reveal() (fired even for
+// a WRONG answer) — not just when an item is fixed, but also whenever
+// the server recomputes wrongItemIds in a different ORDER (newest
+// mistake row first). The old code treated "the joined key string
+// changed" as "wipe every local result", losing isCorrect:false for an
+// item that is still wrong and still present, just reordered — this is
+// the fix: only drop entries for ids that actually left the set.) ------
+
+{
+  const prev = { a: false, b: true, c: false };
+  const out = pruneStaleResults(prev, ["c", "a", "b"]);
+  assert(
+    out.a === false && out.b === true && out.c === false,
+    "a pure reorder of the SAME ids keeps every result exactly as it was — this is the regression: the footer must not disappear just because the server returned the same items in a different order"
+  );
+}
+
+{
+  const prev = { a: false, b: true };
+  const out = pruneStaleResults(prev, ["a"]);
+  assert(out.a === false, "a still-present id's result survives");
+  assert(!("b" in out), "an id that dropped out of scope (fixed/no longer relevant) is removed, not kept stale");
+}
+
+{
+  assert(Object.keys(pruneStaleResults({}, ["a", "b"])).length === 0, "nothing to prune from an empty result map, not a crash");
+}
+
+{
+  assert(Object.keys(pruneStaleResults({ a: false }, [])).length === 0, "an empty current-ids list drops everything (the item is no longer in scope)");
 }
 
 // --- stillWrongIds / maxFailedAttempts (задача "replace red per-pair

@@ -17,7 +17,7 @@ import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 import { buildMatchingPairRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
-import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
@@ -177,7 +177,12 @@ export function MatchingExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResultByLeft({});
+    // practiceResultByLeft keys on LEFT TEXT, not pair id (onlyItemIds вище) —
+    // чистимо за frozenSceneConfig.left (сцена-вигляд, заморожений) чи
+    // config.left (флет, живий, уже скоуплений сервером) — той самий
+    // набір лівих, що й leftItems, рендерені зараз, лише правильний ключ
+    // для цього state.
+    setPracticeResultByLeft((prev) => pruneStaleResults(prev, frozenSceneConfig?.left ?? config.left));
   }
 
   // Сцена-вигляд (крок 4) — блоки по чанках chunkMatchingPairs, той самий

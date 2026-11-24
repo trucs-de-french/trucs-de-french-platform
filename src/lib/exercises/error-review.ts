@@ -790,6 +790,38 @@ export function dotsFilledCount(failedAttempts: number): number {
   return Math.min(failedAttempts, 3);
 }
 
+// Задача "attempt footer disappears right after a failed check" (owner
+// report, letter_gaps, інлайн-блок помилок сторінки сцени) — корінь:
+// кожен тип практики (11 items-типів) стежить за onlyItemIdsKey
+// (practice.onlyItemIds.join(",")) і, щойно вона змінюється між
+// рендерами, робив setPracticeResults({}) — ПОВНЕ скидання. Але
+// onlyItemIds (інлайн-потік — ЖИВИЙ entry.remainingItemIds, не знімок)
+// змінюється після КОЖНОГО router.refresh() (usePracticeCheck.check
+// викликає його завжди, навіть для неправильної відповіді) — не лише
+// членством (елемент виправлено й зник), а й ПОРЯДКОМ (сервер
+// перераховує wrongItemIds із mistakeRows, найновіший рядок іде
+// першим — aggregateWrongItems, сортування за createdAt — тож той
+// самий НАБІР id у новому порядку вже й сам змінює join(",")-рядок).
+// Повне скидання губило isCorrect:false (і тим самим ховало
+// PracticeAttemptFooter), хоча елемент і далі неправильний і далі в
+// onlyItemIds — просто на іншій позиції рядка/масиву.
+//
+// pruneStaleResults — те саме "почисти застарілі записи", але ТОЧКОВО:
+// лишає запис для кожного id, що й досі є в currentIds (незалежно від
+// позиції), видаляє лише записи для id, яких уже немає (виправлені й
+// зникли, чи взагалі вийшли зі скоупу) — саме ТАКА була продуктова
+// мета коментаря біля кожного виклику ("щоб застарілий ✓/✕ не лишався
+// для вже ІНШИХ елементів"), без побічного знищення стану елементів,
+// що й далі на екрані.
+export function pruneStaleResults<T>(prevResults: Record<string, T>, currentIds: string[]): Record<string, T> {
+  const idSet = new Set(currentIds);
+  const next: Record<string, T> = {};
+  for (const [id, value] of Object.entries(prevResults)) {
+    if (idSet.has(id)) next[id] = value;
+  }
+  return next;
+}
+
 // Задача "replace red per-pair lines with collapsible answers panel"
 // (matching, флет-практика) — замінює старий рядок-на-кожну-пару
 // (matching.leftIncorrectRetry + окрема пілюля "Відповідь") одним
