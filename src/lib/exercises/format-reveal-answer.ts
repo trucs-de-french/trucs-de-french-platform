@@ -171,3 +171,27 @@ export function practiceOptionDetail(
   }
   return undefined;
 }
+
+// Задача "checkbox_grid: in-place marking instead of panel/pill" —
+// checkbox-grid.tsx рендерить і сітку, і легенду з ОДНОГО спільного
+// `detail` (той самий компонент/розмітка для сцени й практики), яка
+// вже й сама розрізняє 4 стани клітинки: studentChecked+correctChecked
+// → correct (зелена), studentChecked+!correctChecked → wrong (червона),
+// !studentChecked+correctChecked → missed (пунктирна зелена — "правильна
+// відповідь, яку Ви пропустили"), інакше — нейтральна. Саме ОСТАННІЙ
+// стан (missed) є проблемою для практики: він показує, ЩО мало бути
+// позначено, навіть на клітинці, яку студент ніколи не торкався — тобто
+// розкриває відповідь одразу на будь-якій перевірці, без явного
+// розкриття кнопкою. Ця чиста функція маскує саме його (і лише його) —
+// поки відповідь не розкрита, missed-клітинка повертається як звичайна
+// незамаркована (studentChecked:false, correctChecked:false), той самий
+// вигляд, що порожня клітинка до першої перевірки; correct/wrong (власні
+// позначки студента) ніколи не маскуються — вони нічого не розкривають
+// про те, що мало бути ІНШЕ.
+export function maskMissedCheckboxCells<T extends { studentChecked: boolean; correctChecked: boolean }>(
+  cells: T[],
+  revealed: boolean
+): T[] {
+  if (revealed) return cells;
+  return cells.map((c) => (!c.studentChecked && c.correctChecked ? { ...c, correctChecked: false } : c));
+}

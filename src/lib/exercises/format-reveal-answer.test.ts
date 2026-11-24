@@ -8,6 +8,7 @@ import {
   buildRevealedWordDetail,
   buildSortColumnsAnswerColumns,
   practiceOptionDetail,
+  maskMissedCheckboxCells,
 } from "./format-reveal-answer";
 
 let failures = 0;
@@ -178,6 +179,38 @@ function assert(condition: boolean, label: string) {
   const options = [{ id: "o1", text: "chien" }];
   const out = practiceOptionDetail(options, [], false, ["chien"])!;
   assert(out[0].correct === true && out[0].selected === false, "revealed with no student selection at all: correct option still marked correct:true, not a crash");
+}
+
+// --- maskMissedCheckboxCells (checkbox_grid, owner report: "in-place
+// marking instead of panel/pill" — the dashed 'missed correct answer'
+// cell must never appear before the golden 'Відповідь' pill is pressed,
+// since it reveals the answer on a plain failed check otherwise; the
+// student's own correct/wrong ticks are never masked, they reveal
+// nothing about what else was correct) ------------------------------
+
+{
+  const cells = [
+    { rowId: "r1", columnId: "c1", studentChecked: true, correctChecked: true },
+    { rowId: "r1", columnId: "c2", studentChecked: true, correctChecked: false },
+    { rowId: "r2", columnId: "c1", studentChecked: false, correctChecked: true },
+  ];
+  const out = maskMissedCheckboxCells(cells, false);
+  assert(out[0].correctChecked === true, "not revealed: the student's own correct tick still shows correct (no leak, it's their own answer)");
+  assert(out[1].correctChecked === false, "not revealed: the student's own wrong tick stays wrong (no leak either)");
+  assert(
+    out[2].correctChecked === false,
+    "not revealed: a cell the student never touched but WAS correct is masked to false — must not leak which cell was missed"
+  );
+}
+
+{
+  const cells = [{ rowId: "r1", columnId: "c1", studentChecked: false, correctChecked: true }];
+  const out = maskMissedCheckboxCells(cells, true);
+  assert(out[0].correctChecked === true, "revealed: the missed-correct cell is no longer masked, shows the dashed state");
+}
+
+{
+  assert(maskMissedCheckboxCells([], false).length === 0, "no cells -> no crash");
 }
 
 if (failures > 0) {

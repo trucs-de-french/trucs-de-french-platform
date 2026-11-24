@@ -514,7 +514,6 @@ export function ReorderExercise({
   }
 
   if (isPractice) {
-    const revealedAnswer = practiceCheck.revealed[WHOLE_TASK_ITEM_ID];
     const attempts = practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0;
     return (
       <div className={EXERCISE_STACK}>
@@ -583,16 +582,21 @@ export function ReorderExercise({
             // сама пілюля "Відповідь" на самому футері (onReveal), той
             // самий принцип, що true_false/listening (per-item, без
             // панелі) — лише на весь WHOLE_TASK_ITEM_ID, не на елемент.
+            //
+            // Задача "remove redundant verdict pill/panel" — рядок
+            // "Правильний порядок: …" уже є в самій картці (ReorderSequenceTiles,
+            // detail=practiceDetail, вище) ПІСЛЯ будь-якої перевірки —
+            // окремий текст тут (revealedAnswer.join) лише повторював би
+            // ту саму інформацію вдруге. Футер лишається в стані "failed"
+            // (крапки+підпис+пілюля) незалежно від revealedAnswer — пілюля
+            // й далі викликає reveal() (той самий API), просто вже нема що
+            // показати в самому футері понад те, що й так видно в картці.
             <PracticeAttemptFooter
-              state={revealedAnswer ? "revealed" : "failed"}
+              state="failed"
               failedAttempts={attempts}
               onReveal={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
               revealDisabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-            >
-              {revealedAnswer && (
-                <p className="break-words text-sm [overflow-wrap:anywhere]">{revealedAnswer.join("; ")}</p>
-              )}
-            </PracticeAttemptFooter>
+            />
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>

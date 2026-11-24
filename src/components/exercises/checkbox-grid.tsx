@@ -22,6 +22,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, rowPointsTabStatus } from "./task-result";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
+import { maskMissedCheckboxCells } from "@/lib/exercises/format-reveal-answer";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -138,13 +139,21 @@ export function CheckboxGridExercise({
     practice?.failedAttempts ?? {}
   );
 
-  // У практиці грід НЕ показує по-клітинкові кольори (на відміну від
-  // звичайного проходження) — лише загальне правильно/неправильно і
-  // гейтована повна відповідь (reveal), той самий принцип, що придушення
-  // "правильна колонка" в sort-columns.tsx: інакше колір клітинки зраджував
-  // би правильність одразу на кожен "Перевірити", без очікування 2 невдач/
-  // кнопки.
-  const detail = isPractice ? undefined : singleDetail;
+  // Задача "checkbox_grid: in-place marking instead of panel/pill" —
+  // грід/легенда тепер СПІЛЬНІ для сцени й практики (renderGrid()/
+  // легенда нижче — той самий `detail`, без окремого practice-розгалуження):
+  // практика передає practiceDetail з missed-клітинками замаскованими
+  // (maskMissedCheckboxCells, format-reveal-answer.ts) до явного
+  // розкриття — correct/wrong (власні позначки студента) показуються
+  // одразу після будь-якої перевірки, "пропущену правильну" видно лише
+  // після кнопки "Відповідь" у футері (той самий принцип, що решта
+  // типів: не розкривати відповідь до reveal).
+  const practiceRevealed = !!practiceCheck.revealed[WHOLE_TASK_ITEM_ID];
+  const detail = isPractice
+    ? practiceDetail
+      ? { cells: maskMissedCheckboxCells(practiceDetail.cells, practiceRevealed) }
+      : undefined
+    : singleDetail;
   const locked = isPractice ? practiceCorrect : !!result;
 
   useEffect(() => {
@@ -396,12 +405,18 @@ export function CheckboxGridExercise({
             </span>
             {t("cbg.legendWrong")}
           </span>
-          <span className="flex items-center gap-1.5">
-            <span aria-hidden="true" className={`${LEGEND_SQUARE} ${GRID_MARK_MISSED}`}>
-              <Check strokeWidth={3} className={LEGEND_ICON_CORRECT} />
+          {/* missed (пунктирна зелена) — у практиці лише ПІСЛЯ розкриття
+              (той самий гейт, що maskMissedCheckboxCells вище): до того
+              жодна клітинка цей стан і не матиме, легенда не показує
+              запис, якого зараз нема в кого з'явитись. */}
+          {(!isPractice || practiceRevealed) && (
+            <span className="flex items-center gap-1.5">
+              <span aria-hidden="true" className={`${LEGEND_SQUARE} ${GRID_MARK_MISSED}`}>
+                <Check strokeWidth={3} className={LEGEND_ICON_CORRECT} />
+              </span>
+              {t("cbg.legendMissed")}
             </span>
-            {t("cbg.legendMissed")}
-          </span>
+          )}
         </div>
       )}
 
@@ -421,38 +436,20 @@ export function CheckboxGridExercise({
             <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{t("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
-            // Задача "answers panel must match the scene exercise" —
-            // checkbox-grid.tsx (нормальний режим, TaskResult нижче) НЕ
-            // має власної панелі "Правильні відповіді" взагалі (сітка й
-            // так кольором показує правильність після перевірки) — як
-            // reorder, без scene-еталону для панелі тут, тож практика
-            // теж лишається без окремої TaskResult-панелі: пілюля
-            // "Відповідь" на самому футері (onReveal), той самий
-            // принцип, що true_false/listening.
+            // Задача "checkbox_grid: in-place marking instead of panel/
+            // panel" — сітка (renderGrid()) і легенда вище ВЖЕ показують
+            // усе потрібне (correct/wrong одразу, dashed missed лише
+            // після reveal) — текстовий список/панель тут був би вдруге
+            // тим самим. Футер лишається в "failed" (крапки+підпис+
+            // пілюля) незалежно від revealed — пілюля й далі викликає
+            // reveal() (той самий API), просто вже нема окремого тексту
+            // понад те, що й так видно в сітці.
             <PracticeAttemptFooter
-              state={practiceCheck.revealed[WHOLE_TASK_ITEM_ID] ? "revealed" : "failed"}
+              state="failed"
               failedAttempts={practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0}
               onReveal={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
               revealDisabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-            >
-              {practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
-                <ul className="flex flex-col gap-0.5 text-sm">
-                  {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => {
-                    const [rowId, columnIdsStr] = pair.split(":");
-                    const row = config.rows.find((r) => r.id === rowId);
-                    const columnIds = columnIdsStr ? columnIdsStr.split(",") : [];
-                    const labels = columnIds
-                      .map((id) => config.columns.find((c) => c.id === id)?.label ?? id)
-                      .join(", ");
-                    return (
-                      <li key={rowId}>
-                        {row?.label ?? rowId}: {labels || "—"}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </PracticeAttemptFooter>
+            />
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
