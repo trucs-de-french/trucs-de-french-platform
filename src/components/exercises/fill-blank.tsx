@@ -636,7 +636,7 @@ export function FillBlankExercise({
           <button
             type="button"
             onClick={submitPractice}
-            disabled={practiceCheck.pending || [...practiceSet].some((id) => !answers[Number(id)])}
+            disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? t("button.checking") : t("button.check")}

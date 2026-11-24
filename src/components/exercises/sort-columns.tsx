@@ -203,7 +203,6 @@ export function SortColumnsExercise({
   }
 
   const pool = config.items.filter((i) => !assignment[i.id]);
-  const allPlaced = pool.length === 0;
   // Карусель (стрілки/лічильник "A–B з N"/progress-бар, <=640px) — той
   // самий WordPoolCarouselTrack/useWordPoolCarousel, що image-match.tsx/
   // drag-drop.tsx (word-pool-carousel.tsx, спільний файл).
@@ -429,7 +428,7 @@ export function SortColumnsExercise({
             <button
               type="button"
               onClick={submitPractice}
-              disabled={practiceCheck.pending || !allPlaced}
+              disabled={practiceCheck.pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
               {practiceCheck.pending ? t("button.checking") : t("button.check")}

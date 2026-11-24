@@ -138,8 +138,6 @@ export function ListeningExercise({
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
     setPracticeResults({});
   }
-  const practiceAllAnswered = practiceQuestions.every((q) => answers[q.id]);
-
   async function submitPractice() {
     const itemIds = practiceQuestions.map((q) => q.id);
     const answer: ListeningAnswer = practiceQuestions.map((q) => ({ questionId: q.id, optionId: answers[q.id] }));
@@ -226,7 +224,7 @@ export function ListeningExercise({
           <button
             type="button"
             onClick={submitPractice}
-            disabled={practiceCheck.pending || !practiceAllAnswered}
+            disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? t("button.checking") : t("button.check")}

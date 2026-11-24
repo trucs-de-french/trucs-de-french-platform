@@ -141,8 +141,6 @@ export function TrueFalseExercise({
     // кнопкою "Відповідь" (BUTTON_REVEAL_ANSWER, reveal(id, true)).
   }
 
-  const practiceAllAnswered = practiceStatements.every((s) => answers[s.id] !== undefined);
-
   // globalIndex — нумерація (.item-number-badge) наскрізна по всій вправі.
   function renderStatement(s: PublicStatement, globalIndex: number, d: TrueFalseDetail["statements"][number] | undefined, locked: boolean) {
     const showTab = !hidePoints && (isDelf || unevenById.get(s.id)) && (pointsVisible || !!d);
@@ -339,7 +337,7 @@ export function TrueFalseExercise({
           <button
             type="button"
             onClick={submitPractice}
-            disabled={practiceCheck.pending || !practiceAllAnswered}
+            disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? t("button.checking") : t("button.check")}

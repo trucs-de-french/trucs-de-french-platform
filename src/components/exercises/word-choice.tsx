@@ -178,12 +178,6 @@ export function WordChoiceExercise({
     // кнопкою "Відповідь" (BUTTON_REVEAL_ANSWER, reveal(id, true)).
   }
 
-  // sentenceIsAnswered — оголошена нижче (function-декларація, підняття
-  // JS, доступна тут) — той самий критерій "студент щось зробив", що й
-  // CheckConfirmBar нижче, замість окремого дубльованого (і для cross_out
-  // так само зламаного) предикату.
-  const practiceAllAnswered = practiceSentences.every(sentenceIsAnswered);
-
   function toggleSelection(sentenceId: string, optionId: string, multiple: boolean) {
     if (locked) return;
     setSelections((prev) => {
@@ -586,7 +580,7 @@ export function WordChoiceExercise({
           <button
             type="button"
             onClick={submitPractice}
-            disabled={practiceCheck.pending || !practiceAllAnswered}
+            disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? t("button.checking") : t("button.check")}

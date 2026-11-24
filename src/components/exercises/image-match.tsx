@@ -253,7 +253,7 @@ export function ImageMatchExercise({
           <button
             type="button"
             onClick={submitPractice}
-            disabled={practiceCheck.pending || placed.some((p) => p === null)}
+            disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? t("button.checking") : t("button.check")}

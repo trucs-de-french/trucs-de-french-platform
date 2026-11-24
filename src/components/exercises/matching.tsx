@@ -193,7 +193,6 @@ export function MatchingExercise({
   const [practiceBlockAttempted, setPracticeBlockAttempted] = useState<Record<number, boolean>>({});
 
   const usedRightsPractice = new Set(Object.values(practicePairs));
-  const practiceAllAnswered = config.left.every((left) => !!practicePairs[left]);
 
   function practiceClickLeft(left: string) {
     if (practicePairs[left]) {
@@ -724,7 +723,7 @@ export function MatchingExercise({
           <button
             type="button"
             onClick={() => submitPractice(config.left, config.pairs.map((p) => p.id))}
-            disabled={practiceCheck.pending || !practiceAllAnswered}
+            disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? t("button.checking") : t("button.check")}

@@ -211,7 +211,6 @@ export function MultipleChoiceExercise({
     // (BUTTON_REVEAL_ANSWER нижче, reveal(id, true)).
   }
 
-  const practiceAllAnswered = practiceItems.every((it) => (selections[it.id] ?? []).length > 0);
 
   function renderPracticeList() {
     return (
@@ -934,7 +933,7 @@ export function MultipleChoiceExercise({
           <button
             type="button"
             onClick={submitPractice}
-            disabled={practiceCheck.pending || !practiceAllAnswered}
+            disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? t("button.checking") : t("button.check")}
