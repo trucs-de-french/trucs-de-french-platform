@@ -6871,6 +6871,23 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 0 4px;
   white-space: nowrap;
 }
+/* Задача "chip touches preceding text" (TaskResultGapRows — fill_blank/
+   drag_drop/word_choice/multiple_choice/letter_gaps) — чип укладений
+   УСЕРЕДИНІ речення (.task-result-gap-text), одразу після тексту, без
+   жодного пробілу в розмітці (речення й так ріжеться рівно по "{{}}").
+   Скоуп саме на .task-result-gap-text .task-result-gap-word — НЕ на
+   голий клас: той самий .task-result-gap-word усередині
+   .task-result-image-row (image_match) і TaskResultCrosswordRows уже
+   розділений власним flex-gap, зайвий margin тут продублював би відступ. */
+.task-result-gap-text .task-result-gap-word {
+  display: inline-block;
+  margin: 4px 0 0 8px;
+}
+@media (max-width: 640px) {
+  .task-result-gap-text .task-result-gap-word {
+    margin-left: 6px;
+  }
+}
 .dark .task-result-gap-word {
   background: var(--dark-surface-fill);
   border-color: var(--correct-border-dark);
