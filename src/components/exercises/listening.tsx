@@ -10,18 +10,17 @@ import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
-import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ImageLightbox } from "./image-lightbox";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
-import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { practiceAttemptFooterState, pruneStaleResults } from "@/lib/exercises/error-review";
+import { practiceOptionDetail } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -172,38 +171,48 @@ export function ListeningExercise({
             const isCorrect = practiceResults[q.id];
             const attempts = practiceFailedAttempts[q.id] ?? 0;
             const itemRevealed = practiceCheck.revealed[q.id];
+            const questionId = `listening-q-${q.id}`;
+            // Задача "highlight instead of text line" — та сама
+            // ChoiceQuestionCard/tileClass/indicatorClass, що звичайна
+            // вправа вище, лише qDetail будується з практики
+            // (practiceOptionDetail, format-reveal-answer.ts) замість
+            // gradeAnswer-detail: кнопки Oui/Non стають зеленими/
+            // червоними напряму, без окремого тексту.
+            const practiceOptions = practiceOptionDetail(q.options, answers[q.id] ? [answers[q.id]] : [], isCorrect, itemRevealed);
+            const qDetail = practiceOptions
+              ? ({ options: practiceOptions } as ListeningDetail["questions"][number])
+              : undefined;
             return (
               <div key={q.id} className="min-w-0">
-                <p className="break-words font-medium [overflow-wrap:anywhere]">{frenchNbsp(q.question)}</p>
-                <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
-                  {q.options.map((o) => (
-                    <button
-                      key={o.id}
-                      type="button"
-                      onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
-                      className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
-                        answers[q.id] === o.id ? SELECTED_OPTION_CLASS : ANSWER_CHIP_DEFAULT
-                      }`}
-                    >
-                      {o.text}
-                    </button>
-                  ))}
-                </div>
-                {isCorrect === true && (
-                  <p className="mt-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
-                )}
+                <ChoiceQuestionCard
+                  header={
+                    <p id={questionId} className="break-words font-medium [overflow-wrap:anywhere]">
+                      {frenchNbsp(q.question)}
+                    </p>
+                  }
+                  role="radiogroup"
+                  ariaLabelledBy={questionId}
+                  options={q.options.map((o) => {
+                    const chosen = answers[q.id] === o.id;
+                    return {
+                      id: o.id,
+                      role: "radio" as const,
+                      selected: chosen,
+                      disabled: false,
+                      onClick: () => setAnswers((prev) => ({ ...prev, [q.id]: o.id })),
+                      tileClassName: tileClass(q.id, o.id, qDetail),
+                      indicatorClassName: indicatorClass(q.id, o.id, qDetail),
+                      indicatorContent: chosen ? <Check size={12} className="text-white" aria-hidden /> : null,
+                      label: o.text,
+                    };
+                  })}
+                />
                 <PracticeAttemptFooter
                   state={practiceAttemptFooterState(isCorrect, itemRevealed)}
                   failedAttempts={attempts}
                   onReveal={() => practiceCheck.reveal(q.id, true)}
                   revealDisabled={!!practiceCheck.revealPending[q.id]}
-                >
-                  {itemRevealed && (
-                    <p className="mt-1 text-xs italic text-amber-700 dark:text-amber-400">
-                      <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
-                    </p>
-                  )}
-                </PracticeAttemptFooter>
+                />
               </div>
             );
           })}

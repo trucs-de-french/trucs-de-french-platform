@@ -24,6 +24,32 @@ import { useT } from "@/lib/i18n/context";
 type TrueFalseResult = Extract<GradeResult, { detail: TrueFalseDetail }>;
 type PublicStatement = TrueFalsePublic["statements"][number];
 
+// Задача "highlight instead of text line" — той самий клас кнопки, що
+// звичайна вправа (renderStatement нижче), винесений як чистий helper,
+// щоб практика могла викликати ЙОГО напряму (без повного TrueFalseDetail,
+// якого в практиці нема) і щоб його можна було протестувати окремо.
+// correctAnswer undefined — відповідь ще НЕ розкрита (жодна з двох
+// кнопок не стає зеленою, лише власний невдалий вибір студента —
+// червоний): "не вдалося" видно, "яка правильна" — ні, той самий
+// принцип, що "не показувати відповідь до розкриття" в усіх 15 типів.
+export function trueFalseOptionClass(
+  val: boolean,
+  isSelected: boolean,
+  correctAnswer: boolean | undefined,
+  studentAnswer: boolean | null | undefined
+): string {
+  if (correctAnswer !== undefined) {
+    if (val === correctAnswer) return "border-green-500 bg-green-50 text-green-900 dark:bg-green-950/30 dark:text-green-100";
+    if (studentAnswer != null && val === studentAnswer)
+      return "border-red-500 bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-100";
+    return "glass-answer-btn glass-answer-btn--neutral";
+  }
+  if (studentAnswer != null && val === studentAnswer) {
+    return "border-red-500 bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-100";
+  }
+  return isSelected ? "glass-answer-btn--selected" : "glass-answer-btn";
+}
+
 // Режим практики "Робота над помилками" (пілот, частина 3) — лише
 // помилкові ще не виправлені твердження (onlyItemIds — statement.id).
 export type TrueFalsePracticeProps = {
@@ -142,7 +168,17 @@ export function TrueFalseExercise({
   }
 
   // globalIndex — нумерація (.item-number-badge) наскрізна по всій вправі.
-  function renderStatement(s: PublicStatement, globalIndex: number, d: TrueFalseDetail["statements"][number] | undefined, locked: boolean) {
+  // practiceCorrectAnswer — лише практика (d завжди undefined там, нема
+  // TrueFalseDetail): correctAnswer, щойно відомий без витоку — або явне
+  // розкриття (practiceCheck.reveal), або сам факт isCorrect:true (студент
+  // і так уже знає свій, правильний, вибір).
+  function renderStatement(
+    s: PublicStatement,
+    globalIndex: number,
+    d: TrueFalseDetail["statements"][number] | undefined,
+    locked: boolean,
+    practiceCorrectAnswer?: boolean
+  ) {
     const showTab = !hidePoints && (isDelf || unevenById.get(s.id)) && (pointsVisible || !!d);
     return (
       <div key={s.id} className="row-points-tab-wrap">
@@ -171,17 +207,12 @@ export function TrueFalseExercise({
               type="button"
               disabled={locked}
               onClick={() => setAnswers((prev) => ({ ...prev, [s.id]: val }))}
-              className={`flex min-h-12 w-full items-center justify-center rounded-lg border px-4 py-1.5 text-center text-base transition-colors md:min-h-0 md:w-auto md:min-w-[4.5rem] ${
-                d
-                  ? val === d.correctAnswer
-                    ? "border-green-500 bg-green-50 text-green-900 dark:bg-green-950/30 dark:text-green-100"
-                    : val === d.studentAnswer
-                      ? "border-red-500 bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-100"
-                      : "glass-answer-btn glass-answer-btn--neutral"
-                  : answers[s.id] === val
-                    ? "glass-answer-btn--selected"
-                    : "glass-answer-btn"
-              }`}
+              className={`flex min-h-12 w-full items-center justify-center rounded-lg border px-4 py-1.5 text-center text-base transition-colors md:min-h-0 md:w-auto md:min-w-[4.5rem] ${trueFalseOptionClass(
+                val,
+                answers[s.id] === val,
+                d ? d.correctAnswer : practiceCorrectAnswer,
+                d ? d.studentAnswer : answers[s.id]
+              )}`}
             >
               {val ? "Vrai" : "Faux"}
             </button>
@@ -298,24 +329,24 @@ export function TrueFalseExercise({
             const isCorrect = practiceResults[s.id];
             const attempts = practiceFailedAttempts[s.id] ?? 0;
             const itemRevealed = practiceCheck.revealed[s.id];
+            // practiceCorrectAnswer — той самий принцип, що
+            // renderStatement вище: ніколи до розкриття, ОКРІМ коли сам
+            // студент уже вгадав правильно (його ж вибір і є відповіддю,
+            // нічого зайвого не розкриває).
+            const practiceCorrectAnswer = itemRevealed
+              ? itemRevealed[0] === "Vrai"
+              : isCorrect === true
+                ? answers[s.id]
+                : undefined;
             return (
               <div key={s.id} className="flex flex-col gap-1.5">
-                {renderStatement(s, idx, undefined, false)}
-                {isCorrect === true && (
-                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
-                )}
+                {renderStatement(s, idx, undefined, false, practiceCorrectAnswer)}
                 <PracticeAttemptFooter
                   state={practiceAttemptFooterState(isCorrect, itemRevealed)}
                   failedAttempts={attempts}
                   onReveal={() => practiceCheck.reveal(s.id, true)}
                   revealDisabled={!!practiceCheck.revealPending[s.id]}
-                >
-                  {itemRevealed && (
-                    <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                      <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
-                    </p>
-                  )}
-                </PracticeAttemptFooter>
+                />
               </div>
             );
           })}

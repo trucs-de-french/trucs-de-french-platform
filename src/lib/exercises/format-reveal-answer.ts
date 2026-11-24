@@ -132,3 +132,42 @@ export function buildSortColumnsAnswerColumns(
     items: items.filter((item) => columnIdByItemId[item.id] === col.id),
   }));
 }
+
+export type PracticeOptionDetail = { id: string; text: string; correct: boolean; selected: boolean };
+
+// Задача "highlight instead of text line" — true_false/listening/
+// multiple_choice/word_choice усі мають ТУ САМУ форму детейла для
+// кольору варіантів (chipClass/tileClass/optionClass у кожному файлі:
+// {id, text, correct, selected}) — звичайна вправа будує її з повного
+// gradeAnswer-detail, практика НЕ має такого detail (лише isCorrect і,
+// по кнопці, revealed = масив ТЕКСТУ правильних варіантів, не id).
+// Цей чистий helper будує ТУ САМУ форму для практики за 4 станами, з
+// тим самим пріоритетом, що practiceAttemptFooterState (error-review.ts):
+// - revealed (явне розкриття) — єдиний момент, коли correct:true може
+//   з'явитись на варіанті, якого студент НЕ обирав (порівняння за
+//   ТЕКСТОМ варіанту — те, що повертає reveal API).
+// - isCorrect===true (без розкриття) — ніякого витоку: правильний варіант
+//   і так лише той, що студент сам обрав.
+// - isCorrect===false (без розкриття) — ЖОДЕН варіант не correct:true
+//   (не показуємо, яка правильна), лише студентський вибір отримує
+//   selected:true (колір "неправильно обрано" на відповідальності
+//   chipClass/tileClass/optionClass, не тут).
+// - undefined (ще не перевірялось) — немає чого підсвічувати взагалі.
+export function practiceOptionDetail(
+  options: { id: string; text: string }[],
+  selectedIds: string[],
+  isCorrect: boolean | undefined,
+  revealedTexts: string[] | undefined
+): PracticeOptionDetail[] | undefined {
+  if (revealedTexts) {
+    const correctTexts = new Set(revealedTexts);
+    return options.map((o) => ({ id: o.id, text: o.text, correct: correctTexts.has(o.text), selected: selectedIds.includes(o.id) }));
+  }
+  if (isCorrect === true) {
+    return options.map((o) => ({ id: o.id, text: o.text, correct: selectedIds.includes(o.id), selected: selectedIds.includes(o.id) }));
+  }
+  if (isCorrect === false) {
+    return options.map((o) => ({ id: o.id, text: o.text, correct: false, selected: selectedIds.includes(o.id) }));
+  }
+  return undefined;
+}

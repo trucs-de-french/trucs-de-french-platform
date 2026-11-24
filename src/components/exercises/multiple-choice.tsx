@@ -16,6 +16,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
+import { practiceOptionDetail } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -215,20 +216,31 @@ export function MultipleChoiceExercise({
   }
 
 
+  // Задача "highlight instead of text line" — той самий renderItem/
+  // renderDropdownRow (chipClass/tileIndicatorClass), що звичайна
+  // вправа, лише itemDetail будується з практики (practiceOptionDetail,
+  // format-reveal-answer.ts) замість gradeAnswer-detail: варіант стає
+  // зеленим/червоним напряму на плитці, без окремого тексту "Правильно".
   function renderPracticeList() {
     return (
       <div className="flex flex-col gap-3">
         {practiceItems.map((item) => {
           const idx = originalIndexOf.get(item.id)!;
           const isCorrect = practiceResults[item.id];
+          const practiceOptions = practiceOptionDetail(
+            item.options,
+            selections[item.id] ?? [],
+            isCorrect,
+            practiceCheck.revealed[item.id]
+          );
+          const itemDetail = practiceOptions
+            ? ({ id: item.id, options: practiceOptions, points: item.points, hintUsed: false } as ItemDetail)
+            : undefined;
           return (
             <div key={item.id} className="flex flex-col gap-1.5">
               {config.display === "dropdown"
-                ? renderDropdownRow(item, idx, undefined, false)
-                : renderItem(item, idx, undefined, false)}
-              {isCorrect === true && (
-                <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
-              )}
+                ? renderDropdownRow(item, idx, itemDetail, false, false)
+                : renderItem(item, idx, itemDetail, false, false)}
             </div>
           );
         })}
@@ -523,7 +535,12 @@ export function MultipleChoiceExercise({
     item: MultipleChoicePublicItem,
     index: number,
     itemDetail: ItemDetail | undefined,
-    showHintBulb = true
+    showHintBulb = true,
+    // locked — звичайна вправа лишає дефолт (!!itemDetail: раз перевірено,
+    // більше не можна змінити вибір); практика передає false явно —
+    // itemDetail там лише для кольору (practiceOptionDetail), студент
+    // має змогу спробувати ще раз після невдалої перевірки.
+    locked = !!itemDetail
   ) {
     const sel = selections[item.id] ?? [];
     const hasImages = item.options.some((o) => !!o.imageUrl);
@@ -547,7 +564,7 @@ export function MultipleChoiceExercise({
               id: o.id,
               role: item.multiple ? "checkbox" : "radio",
               selected: chosen,
-              disabled: !!itemDetail,
+              disabled: locked,
               onClick: () => toggle(item.id, o.id, item.multiple),
               tileClassName: chipClass(item.id, o.id, itemDetail),
               indicatorClassName: tileIndicatorClass(item.id, o.id, itemDetail),
@@ -700,7 +717,8 @@ export function MultipleChoiceExercise({
     item: MultipleChoicePublicItem,
     index: number,
     itemDetail: ItemDetail | undefined,
-    showHintBulb = true
+    showHintBulb = true,
+    locked = !!itemDetail
   ) {
     const sel = selections[item.id] ?? [];
     const hasHintBulb = showHintBulb && !!item.hint;
@@ -771,7 +789,7 @@ export function MultipleChoiceExercise({
               }));
             }}
             placeholder={t("status.chooseOption")}
-            disabled={!!itemDetail}
+            disabled={locked}
             multiple={item.multiple}
             state={selectState}
             aria-label={t("aria.answerToQuestion", { n: index + 1 })}

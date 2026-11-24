@@ -7,6 +7,7 @@ import {
   buildMatchingPairRowsFromReveal,
   buildRevealedWordDetail,
   buildSortColumnsAnswerColumns,
+  practiceOptionDetail,
 } from "./format-reveal-answer";
 
 let failures = 0;
@@ -139,6 +140,44 @@ function assert(condition: boolean, label: string) {
 
 {
   assert(buildSortColumnsAnswerColumns([], [], {}).length === 0, "no columns -> no groups, not a crash");
+}
+
+// --- practiceOptionDetail (задача "highlight instead of text line" —
+// listening/multiple_choice/word_choice: та сама форма детейла, що
+// звичайна вправа будує з gradeAnswer, лише з практики — головне
+// правило перевіряється тут: ніколи не позначай correct:true на
+// варіанті, якого студент НЕ обирав, доки відповідь не розкрита) ------
+
+{
+  const options = [{ id: "o1", text: "Oui" }, { id: "o2", text: "Non" }];
+  assert(practiceOptionDetail(options, [], undefined, undefined) === undefined, "idle (never checked) -> no detail at all, nothing to highlight");
+}
+
+{
+  const options = [{ id: "o1", text: "Oui" }, { id: "o2", text: "Non" }];
+  const out = practiceOptionDetail(options, ["o1"], false, undefined)!;
+  assert(out[0].selected === true && out[0].correct === false, "failed, not revealed: the student's own wrong pick is selected but NEVER correct:true");
+  assert(out[1].selected === false && out[1].correct === false, "failed, not revealed: the actually-correct option stays correct:false too — not leaked");
+}
+
+{
+  const options = [{ id: "o1", text: "Oui" }, { id: "o2", text: "Non" }];
+  const out = practiceOptionDetail(options, ["o2"], true, undefined)!;
+  assert(out[1].correct === true && out[1].selected === true, "correct guess, no reveal needed: the student's own (correct) pick shows correct:true");
+  assert(out[0].correct === false, "the other, unselected option never becomes correct:true just because the student happened to be right");
+}
+
+{
+  const options = [{ id: "o1", text: "Oui" }, { id: "o2", text: "Non" }];
+  const out = practiceOptionDetail(options, ["o1"], false, ["Non"])!;
+  assert(out[1].correct === true, "revealed: the actually-correct option (matched by text) is correct:true");
+  assert(out[0].correct === false && out[0].selected === true, "revealed: the student's earlier wrong pick stays selected:true, correct:false (still shows red)");
+}
+
+{
+  const options = [{ id: "o1", text: "chien" }];
+  const out = practiceOptionDetail(options, [], false, ["chien"])!;
+  assert(out[0].correct === true && out[0].selected === false, "revealed with no student selection at all: correct option still marked correct:true, not a crash");
 }
 
 if (failures > 0) {

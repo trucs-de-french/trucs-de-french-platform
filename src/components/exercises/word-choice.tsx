@@ -18,6 +18,7 @@ import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
+import { practiceOptionDetail } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
@@ -559,12 +560,25 @@ export function WordChoiceExercise({
           {practiceSentences.map((s) => {
             const idx = originalIndexOf.get(s.id)!;
             const isCorrect = practiceResults[s.id];
+            // Задача "highlight instead of text line" — той самий
+            // renderSentenceCard/optionClass, що звичайна вправа, лише
+            // sentenceDetail будується з практики (practiceOptionDetail):
+            // варіант стає зеленим/червоним на самому чипі, без окремого
+            // тексту "Правильно" (locked лишається false — single.result
+            // ніколи не встановлюється в практиці, той самий locked, що
+            // й у звичайній картці, студент і далі може спробувати ще раз).
+            const practiceOptions = practiceOptionDetail(
+              s.options,
+              sentenceAnswer(s).selected,
+              isCorrect,
+              practiceCheck.revealed[s.id]
+            );
+            const sentenceDetail = practiceOptions
+              ? ({ id: s.id, options: practiceOptions, isCorrect: isCorrect === true, hintUsed: false } as SentenceDetail)
+              : undefined;
             return (
               <div key={s.id} className="flex flex-col gap-1.5">
-                {renderSentenceCard(s, idx, undefined, false)}
-                {isCorrect === true && (
-                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
-                )}
+                {renderSentenceCard(s, idx, sentenceDetail, false)}
               </div>
             );
           })}
