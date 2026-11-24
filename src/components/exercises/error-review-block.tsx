@@ -8,7 +8,12 @@ import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import { pluralizeExercisesNominative } from "@/lib/pluralize-exercises";
-import { isWholePracticeTaskType, deriveMistakesChips, shouldRenderWrapperHeader } from "@/lib/exercises/error-review";
+import {
+  isWholePracticeTaskType,
+  deriveMistakesChips,
+  isAllChipActive,
+  shouldRenderWrapperHeader,
+} from "@/lib/exercises/error-review";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
 import { GlassBlock } from "@/components/glass-block";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -739,90 +744,104 @@ export function ErrorReviewBlock({
   if (openMode === "scene") {
     const openEntry = expandedTaskId ? entries.find((e) => e.taskId === expandedTaskId) ?? null : null;
 
-    if (openEntry) {
-      // Редизайн навігації (мистейки-сторінка) — чипи-перемикач замінюють
-      // старий круглий бек-лінк "До списку вправ". Перший чип ("Усі
-      // вправи") повертає до списку — та сама дія, що старий бек-лінк
-      // мав. Наступні чипи — по одному на capturedTaskOrder (стабільний
-      // порядок, захоплений на монтуванні), статус deriveMistakesChips
-      // зі свіжих entries. Клік на "unfixed" чип напряму перемикає
-      // expandedTaskId на ІНШИЙ taskId (не через null) — та сама умова
-      // "expandedTaskId !== prevExpandedTaskId" (нижче, вище в цьому
-      // файлі) вже бере НОВИЙ знімок remainingItemIds для щойно обраної
-      // задачі на цьому самому переході, без додаткового коду.
-      function scrollToExerciseTop() {
-        window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
-      }
-      function handleSelectChip(taskId: string) {
-        setExpandedTaskId(taskId);
-        scrollToExerciseTop();
-      }
-      function handleBackToList() {
-        setExpandedTaskId(null);
-        scrollToExerciseTop();
-      }
-      const chips = deriveMistakesChips(capturedTaskOrder, entries, openEntry.taskId);
-      const entryByTaskId = new Map(entries.map((e) => [e.taskId, e]));
-      const remainingCount = entries.filter((e) => e.status !== "done").length;
-      const remainingWord =
-        lang === "uk"
-          ? pluralizeExercisesNominative(remainingCount)
-          : plural(lang, remainingCount, lang === "fr" ? { one: "exercice", other: "exercices" } : { one: "exercise", other: "exercises" });
-      return (
-        <>
-          <p className="mistakes-chip-remaining">
-            {t("cabinet.mistakes.scene.remainingExercises", { n: remainingCount, word: remainingWord })}
-          </p>
-          <div className="mistakes-chip-row-wrap">
-            <div
-              className="mistakes-chip-row"
-              tabIndex={0}
-              aria-label={t("cabinet.mistakes.scene.exerciseChipsRowAria")}
+    // Редизайн навігації (мистейки-сторінка) — чипи-перемикач замінюють
+    // старий круглий бек-лінк "До списку вправ". Перший чип ("Усі
+    // вправи") повертає до списку — та сама дія, що старий бек-лінк
+    // мав. Наступні чипи — по одному на capturedTaskOrder (стабільний
+    // порядок, захоплений на монтуванні), статус deriveMistakesChips
+    // зі свіжих entries. Клік на "unfixed" чип напряму перемикає
+    // expandedTaskId на ІНШИЙ taskId (не через null) — та сама умова
+    // "expandedTaskId !== prevExpandedTaskId" (нижче, вище в цьому
+    // файлі) вже бере НОВИЙ знімок remainingItemIds для щойно обраної
+    // задачі на цьому самому переході, без додаткового коду.
+    //
+    // Задача "chip row always visible" — рядок чипів і лічильник "Залишилось
+    // N вправ" тепер рендеряться ОДНАКОВО в обох станах (список і відкрита
+    // задача), а не лише коли щось відкрито: openEntry.taskId замінено на
+    // openEntry?.taskId ?? null (null → жоден номерний чип не "current",
+    // уже перевірена гілка deriveMistakesChips), і сам чип "Усі вправи"
+    // отримує активний вигляд через isAllChipActive, symmetric до цього.
+    function scrollToExerciseTop() {
+      window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    }
+    function handleSelectChip(taskId: string) {
+      setExpandedTaskId(taskId);
+      scrollToExerciseTop();
+    }
+    function handleBackToList() {
+      setExpandedTaskId(null);
+      scrollToExerciseTop();
+    }
+    const chips = deriveMistakesChips(capturedTaskOrder, entries, openEntry?.taskId ?? null);
+    const entryByTaskId = new Map(entries.map((e) => [e.taskId, e]));
+    const remainingCount = entries.filter((e) => e.status !== "done").length;
+    const remainingWord =
+      lang === "uk"
+        ? pluralizeExercisesNominative(remainingCount)
+        : plural(lang, remainingCount, lang === "fr" ? { one: "exercice", other: "exercices" } : { one: "exercise", other: "exercises" });
+    const allChipActive = isAllChipActive(openEntry?.taskId ?? null);
+    return (
+      <>
+        <p className="mistakes-chip-remaining">
+          {t("cabinet.mistakes.scene.remainingExercises", { n: remainingCount, word: remainingWord })}
+        </p>
+        <div className="mistakes-chip-row-wrap">
+          <div
+            className="mistakes-chip-row"
+            tabIndex={0}
+            aria-label={t("cabinet.mistakes.scene.exerciseChipsRowAria")}
+          >
+            <button
+              type="button"
+              ref={allChipActive ? activeChipRef : undefined}
+              onClick={handleBackToList}
+              aria-current={allChipActive ? "true" : undefined}
+              className={`mistakes-chip mistakes-chip--all ${allChipActive ? "mistakes-chip--current" : ""}`}
             >
-              <button type="button" onClick={handleBackToList} className="mistakes-chip mistakes-chip--all">
-                <List size={14} aria-hidden="true" />
-                {t("cabinet.mistakes.scene.allExercises")}
-              </button>
-              {chips.map((chip) => {
-                const chipEntry = entryByTaskId.get(chip.taskId);
-                const fullName = chipEntry?.displayTitle ?? "";
-                const ariaLabel = t("cabinet.mistakes.scene.exerciseChipLabel", { n: chip.index, name: fullName });
-                if (chip.status === "fixed") {
-                  return (
-                    <button
-                      key={chip.taskId}
-                      type="button"
-                      aria-disabled="true"
-                      title={fullName}
-                      aria-label={ariaLabel}
-                      className="mistakes-chip mistakes-chip--fixed"
-                    >
-                      <Check size={12} aria-hidden="true" />
-                      {chip.index}
-                    </button>
-                  );
-                }
-                const isCurrent = chip.status === "current";
+              <List size={14} aria-hidden="true" />
+              {t("cabinet.mistakes.scene.allExercises")}
+            </button>
+            {chips.map((chip) => {
+              const chipEntry = entryByTaskId.get(chip.taskId);
+              const fullName = chipEntry?.displayTitle ?? "";
+              const ariaLabel = t("cabinet.mistakes.scene.exerciseChipLabel", { n: chip.index, name: fullName });
+              if (chip.status === "fixed") {
                 return (
                   <button
                     key={chip.taskId}
-                    ref={isCurrent ? activeChipRef : undefined}
                     type="button"
-                    onClick={() => handleSelectChip(chip.taskId)}
+                    aria-disabled="true"
                     title={fullName}
                     aria-label={ariaLabel}
-                    aria-current={isCurrent ? "true" : undefined}
-                    className={`mistakes-chip ${isCurrent ? "mistakes-chip--current" : "mistakes-chip--unfixed"}`}
+                    className="mistakes-chip mistakes-chip--fixed"
                   >
-                    {isCurrent ? `${chip.index} · ${truncateChipLabel(fullName)}` : chip.index}
+                    <Check size={12} aria-hidden="true" />
+                    {chip.index}
                   </button>
                 );
-              })}
-            </div>
+              }
+              const isCurrent = chip.status === "current";
+              return (
+                <button
+                  key={chip.taskId}
+                  ref={isCurrent ? activeChipRef : undefined}
+                  type="button"
+                  onClick={() => handleSelectChip(chip.taskId)}
+                  title={fullName}
+                  aria-label={ariaLabel}
+                  aria-current={isCurrent ? "true" : undefined}
+                  className={`mistakes-chip ${isCurrent ? "mistakes-chip--current" : "mistakes-chip--unfixed"}`}
+                >
+                  {isCurrent ? `${chip.index} · ${truncateChipLabel(fullName)}` : chip.index}
+                </button>
+              );
+            })}
           </div>
-          <div className="mistakes-scene-panel-gap">
-            <GlassBlock>
-              <div className={EXERCISE_STACK}>
+        </div>
+        <div className="mistakes-scene-panel-gap">
+          <GlassBlock>
+            <div className={EXERCISE_STACK}>
+              {openEntry ? (
                 <ErrorReviewOpenedTask
                   // Задача "chronological_order picture task shows raw image URL
                   // as text after switching mistakes chips" — без key тут React
@@ -839,17 +858,13 @@ export function ErrorReviewBlock({
                   entry={openEntry}
                   snapshotIds={snapshot?.taskId === openEntry.taskId ? snapshot.ids : openEntry.remainingItemIds}
                 />
-              </div>
-            </GlassBlock>
-          </div>
-        </>
-      );
-    }
-
-    return (
-      <GlassBlock>
-        <div className={EXERCISE_STACK}>{listContent}</div>
-      </GlassBlock>
+              ) : (
+                listContent
+              )}
+            </div>
+          </GlassBlock>
+        </div>
+      </>
     );
   }
 

@@ -649,6 +649,15 @@ export function deriveMistakesChips(
   });
 }
 
+// Чип "Усі вправи" (мистейки-сторінка, openMode="scene") — тепер завжди
+// видимий поряд із номерними чипами (задача "chip row always visible"),
+// тож йому теж треба власний "активний" стан: активний рівно тоді, коли
+// жодна вправа не відкрита (список), symmetric з deriveMistakesChips вище
+// (там null у activeTaskId означає "жоден номерний чип не current").
+export function isAllChipActive(openTaskId: string | null): boolean {
+  return openTaskId === null;
+}
+
 // Заголовок-інструкція практики ("Робота над помилками" — задача
 // "duplicate instruction header") — ErrorReviewPractice (error-review-
 // block.tsx) малює ОДИН спільний TaskPanelHeader для типів, чия ВЛАСНА

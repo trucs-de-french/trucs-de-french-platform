@@ -7,6 +7,7 @@ import {
   mistakeItemIds,
   buildErrorReviewEntry,
   deriveMistakesChips,
+  isAllChipActive,
   shouldRenderWrapperHeader,
   confirmedSolvedBlankIds,
   shouldAutoReveal,
@@ -152,6 +153,23 @@ function assert(condition: boolean, label: string) {
 {
   const out = deriveMistakesChips([], [], null);
   assert(out.length === 0, "an empty captured order produces no chips, not a crash");
+}
+
+{
+  // Задача "chip row always visible" — у режимі списку (нічого не
+  // відкрито) null activeTaskId вже й так означає "жоден номерний чип не
+  // current" (перевірено вище) — тут окремо: саме ЖОДЕН чип не current,
+  // щоб "Усі вправи" (isAllChipActive, рендериться поряд) лишався єдиним
+  // активним.
+  const out = deriveMistakesChips(["a", "b"], [{ taskId: "a", status: "partial" }], null);
+  assert(out.every((c) => c.status !== "current"), "list mode (activeTaskId null): no numbered chip is ever current");
+}
+
+// --- isAllChipActive (mistakes page "Усі вправи" chip, scene mode) --------
+
+{
+  assert(isAllChipActive(null) === true, "list mode (no task open): the all-exercises chip is active");
+  assert(isAllChipActive("a") === false, "single-exercise mode (task 'a' open): the all-exercises chip is not active");
 }
 
 // --- shouldRenderWrapperHeader (ErrorReviewPractice — "duplicate
