@@ -12,6 +12,8 @@ import {
   confirmedSolvedBlankIds,
   shouldAutoReveal,
   shouldShowAttemptFooter,
+  practiceAttemptFooterState,
+  dotsFilledCount,
   aggregateWrongItems,
   stillWrongIds,
   maxFailedAttempts,
@@ -284,6 +286,27 @@ function assert(condition: boolean, label: string) {
 
 {
   assert(shouldShowAttemptFooter(undefined, undefined) === false, "footer never shows before any attempt");
+}
+
+// --- practiceAttemptFooterState / dotsFilledCount (задача "unify
+// attempt/status footer" — PracticeAttemptFooter, practice-attempt-
+// footer.tsx, reads this one discriminator instead of 15 separate
+// ternaries) -----------------------------------------------------------
+
+{
+  assert(practiceAttemptFooterState(undefined, undefined) === "idle", "no attempt yet -> idle");
+  assert(practiceAttemptFooterState(false, undefined) === "failed", "wrong, not revealed -> failed");
+  assert(practiceAttemptFooterState(true, undefined) === "correct", "correct -> correct");
+  assert(practiceAttemptFooterState(false, ["chien"]) === "revealed", "revealed wins over a wrong last attempt");
+  assert(practiceAttemptFooterState(true, ["chien"]) === "revealed", "revealed wins even over a correct last attempt");
+  assert(practiceAttemptFooterState(undefined, ["chien"]) === "revealed", "revealed wins even with no attempt recorded");
+}
+
+{
+  assert(dotsFilledCount(0) === 0, "zero attempts -> zero filled dots");
+  assert(dotsFilledCount(1) === 1, "one attempt -> one filled dot");
+  assert(dotsFilledCount(3) === 3, "three attempts -> all three dots filled");
+  assert(dotsFilledCount(7) === 3, "more than three attempts still caps at three dots, never overflows");
 }
 
 // --- stillWrongIds / maxFailedAttempts (задача "replace red per-pair

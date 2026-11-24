@@ -18,6 +18,7 @@ import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 import { buildMatchingPairRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 
@@ -520,17 +521,7 @@ export function MatchingExercise({
     const answersLoading = wrongIds.some((id) => practiceCheck.revealPending[id]);
     return (
       <>
-        <div className="practice-attempt-footer">
-          <span className="practice-attempt-dots" aria-hidden="true">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-              />
-            ))}
-          </span>
-          <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
-        </div>
+        <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
         <TaskResult
           correct={false}
           toggleTitle={t("panel.correctPairsTitle")}

@@ -32,6 +32,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
@@ -667,21 +668,7 @@ export function ChronologicalOrderExercise({
           )}
           {practiceDetail && !practiceCorrect && (
             <>
-              <div className="practice-attempt-footer">
-                <span className="practice-attempt-dots" aria-hidden="true">
-                  {[0, 1, 2].map((i) => (
-                    <span
-                      key={i}
-                      className={`practice-attempt-dot ${
-                        i < Math.min(practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0, 3) ? "practice-attempt-dot--filled" : ""
-                      }`}
-                    />
-                  ))}
-                </span>
-                <span className="practice-attempt-label">
-                  {t("status.failedAttemptShort", { n: practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0 })}
-                </span>
-              </div>
+              <PracticeAttemptFooter state="failed" failedAttempts={practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0} />
               <TaskResult
                 correct={false}
                 toggleTitle={t("panel.correctAnswers")}

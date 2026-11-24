@@ -16,6 +16,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab } from "./task-result";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
@@ -573,17 +574,7 @@ export function ReorderExercise({
           )}
           {practiceDetail && !practiceCorrect && (
             <>
-              <div className="practice-attempt-footer">
-                <span className="practice-attempt-dots" aria-hidden="true">
-                  {[0, 1, 2].map((i) => (
-                    <span
-                      key={i}
-                      className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-                    />
-                  ))}
-                </span>
-                <span className="practice-attempt-label">{tt("status.failedAttemptShort", { n: attempts })}</span>
-              </div>
+              <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
               <TaskResult
                 correct={false}
                 toggleTitle={tt("panel.correctAnswers")}

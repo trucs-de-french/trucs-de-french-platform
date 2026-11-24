@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Check, Eye } from "lucide-react";
+import { Check } from "lucide-react";
 import type { ListeningPublic, ListeningDetail, ListeningAnswer, GradeResult } from "@/lib/exercises/types";
 import { isYouTubeUrl, isGdriveUrl, toEmbedUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
@@ -18,9 +18,11 @@ import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { BUTTON_CHECK, BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
+import { practiceAttemptFooterState } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { useT } from "@/lib/i18n/context";
@@ -190,31 +192,18 @@ export function ListeningExercise({
                 {isCorrect === true && (
                   <p className="mt-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
-                {isCorrect === false && (
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                    <span className="text-red-600 dark:text-red-400">
-                      {t("status.incorrectRetryCount", { n: attempts })}
-                    </span>
-                    {!itemRevealed && (
-                      <button
-                        type="button"
-                        onClick={() => practiceCheck.reveal(q.id, true)}
-                        disabled={!!practiceCheck.revealPending[q.id]}
-                        aria-label={t("button.showAnswer")}
-                        title={t("button.showAnswer")}
-                        className={BUTTON_REVEAL_ANSWER}
-                      >
-                        <Eye size={14} aria-hidden="true" />
-                        {t("button.answerShort")}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {itemRevealed && (
-                  <p className="mt-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
-                  </p>
-                )}
+                <PracticeAttemptFooter
+                  state={practiceAttemptFooterState(isCorrect, itemRevealed)}
+                  failedAttempts={attempts}
+                  onReveal={() => practiceCheck.reveal(q.id, true)}
+                  revealDisabled={!!practiceCheck.revealPending[q.id]}
+                >
+                  {itemRevealed && (
+                    <p className="mt-1 text-xs italic text-amber-700 dark:text-amber-400">
+                      <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
+                    </p>
+                  )}
+                </PracticeAttemptFooter>
               </div>
             );
           })}

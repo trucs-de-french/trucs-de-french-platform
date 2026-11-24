@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Eye } from "lucide-react";
 import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -21,7 +20,8 @@ import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton } from "@/lib/exercises/exer
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
+import { practiceAttemptFooterState } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { buildTableFillAnswerRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 function cellKey(rowId: string, side: "left" | "right") {
@@ -423,19 +423,7 @@ export function TableFillExercise({
     // відповіді", renderBlock() нижче, уже дає відповіді); коректний рядок —
     // без футера й без тексту "Правильно" (зелені поля й так це показують).
     const footer = hideReveal ? (
-      isCorrect === false && (
-        <div className="practice-attempt-footer">
-          <span className="practice-attempt-dots" aria-hidden="true">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-              />
-            ))}
-          </span>
-          <span className="practice-attempt-label">{tt("status.failedAttemptShort", { n: attempts })}</span>
-        </div>
-      )
+      isCorrect === false && <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
     ) : (
       // Задача "unify attempt/reveal behaviour" — флет-режим (на відміну
       // від сцена-вигляду вище) не має блочної панелі "Правильні
@@ -445,40 +433,20 @@ export function TableFillExercise({
       // що letter-rearrangement.tsx/letter-gaps.tsx. Розкрита відповідь —
       // рядок "Правильне слово" (correct-answer-label/correct-answer-word,
       // той самий вигляд, що Task A), замінює крапки після розкриття.
-      <>
-        {isCorrect === true && (
-          <p className="text-xs font-medium text-green-600 dark:text-green-400">{tt("status.correct")}</p>
-        )}
-        {shouldShowAttemptFooter(isCorrect, revealedAnswer) && (
-          <div className="practice-attempt-footer">
-            <span className="practice-attempt-dots" aria-hidden="true">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-                />
-              ))}
-            </span>
-            <span className="practice-attempt-label">{tt("status.failedAttemptShort", { n: attempts })}</span>
-            <button
-              type="button"
-              onClick={() => practiceCheck.reveal(row.id, true)}
-              disabled={!!practiceCheck.revealPending[row.id]}
-              aria-label={tt("button.showAnswer")}
-              className="practice-reveal-pill"
-            >
-              <Eye size={16} aria-hidden="true" />
-              {tt("button.answerShort")}
-            </button>
-          </div>
-        )}
+      <PracticeAttemptFooter
+        state={practiceAttemptFooterState(isCorrect, revealedAnswer)}
+        failedAttempts={attempts}
+        correctLabel={tt("status.correct")}
+        onReveal={() => practiceCheck.reveal(row.id, true)}
+        revealDisabled={!!practiceCheck.revealPending[row.id]}
+      >
         {revealedAnswer && (
           <p className="text-sm dark:text-[var(--text-muted-caption)]">
             <span className="correct-answer-label">{tt("answer.correctAnswerLabel")} </span>
             <span className="correct-answer-word text-[#3b36c4]">{revealedAnswer.join(" / ")}</span>
           </p>
         )}
-      </>
+      </PracticeAttemptFooter>
     );
 
     return (

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Eye } from "lucide-react";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
@@ -24,7 +23,8 @@ import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton, chunkWithMinTail } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
+import { practiceAttemptFooterState } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
@@ -794,17 +794,7 @@ export function LetterGapsExercise({
       // це показують).
       const footer =
         isCorrect === false ? (
-          <div className="practice-attempt-footer">
-            <span className="practice-attempt-dots" aria-hidden="true">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-                />
-              ))}
-            </span>
-            <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
-          </div>
+          <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
         ) : undefined;
       return renderWordCard(wi, {
         detail: undefined,
@@ -825,34 +815,21 @@ export function LetterGapsExercise({
     // letter-rearrangement.tsx. Розкрита відповідь — рядок "Правильне
     // слово" у ТОМУ Ж слоті footer (correct-answer-label/correct-answer-
     // word, той самий вигляд, що Task A), замінює крапки після розкриття.
-    const footer = shouldShowAttemptFooter(isCorrect, itemRevealed) ? (
-      <div className="practice-attempt-footer">
-        <span className="practice-attempt-dots" aria-hidden="true">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-            />
-          ))}
-        </span>
-        <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
-        <button
-          type="button"
-          onClick={() => practiceCheck.reveal(key, true)}
-          disabled={!!practiceCheck.revealPending[key]}
-          aria-label={t("button.showAnswer")}
-          className="practice-reveal-pill"
-        >
-          <Eye size={16} aria-hidden="true" />
-          {t("button.answerShort")}
-        </button>
-      </div>
-    ) : itemRevealed ? (
-      <p className="text-sm dark:text-[var(--text-muted-caption)]">
-        <span className="correct-answer-label">{t("answer.correctWordLabel")} </span>
-        <span className="correct-answer-word text-[#3b36c4]">{itemRevealed.join(", ")}</span>
-      </p>
-    ) : undefined;
+    const footer = (
+      <PracticeAttemptFooter
+        state={practiceAttemptFooterState(isCorrect, itemRevealed)}
+        failedAttempts={attempts}
+        onReveal={() => practiceCheck.reveal(key, true)}
+        revealDisabled={!!practiceCheck.revealPending[key]}
+      >
+        {itemRevealed && (
+          <p className="text-sm dark:text-[var(--text-muted-caption)]">
+            <span className="correct-answer-label">{t("answer.correctWordLabel")} </span>
+            <span className="correct-answer-word text-[#3b36c4]">{itemRevealed.join(", ")}</span>
+          </p>
+        )}
+      </PracticeAttemptFooter>
+    );
     return (
       <div key={wi} className="flex flex-col gap-1.5">
         {renderWordCard(wi, {

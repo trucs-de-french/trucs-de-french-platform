@@ -581,8 +581,8 @@ export function FillBlankExercise({
                 </span>
               )}
               {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceResults[String(i)] === false && (
-                <span className="ml-1 text-xs text-red-600 dark:text-red-400">
-                  {t("status.attemptsCountParen", { n: practiceFailedAttempts[String(i)] ?? 0 })}
+                <span className="ml-1 text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+                  ({t("status.failedAttemptShort", { n: practiceFailedAttempts[String(i)] ?? 0 })})
                 </span>
               )}
               {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceCheck.revealed[String(i)] && (

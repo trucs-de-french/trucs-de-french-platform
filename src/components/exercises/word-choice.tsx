@@ -18,6 +18,7 @@ import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -570,17 +571,7 @@ export function WordChoiceExercise({
         </div>
         {wrongIds.length > 0 && (
           <>
-            <div className="practice-attempt-footer">
-              <span className="practice-attempt-dots" aria-hidden="true">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-                  />
-                ))}
-              </span>
-              <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
-            </div>
+            <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
             <TaskResult
               correct={false}
               toggleTitle={t("panel.correctAnswers")}

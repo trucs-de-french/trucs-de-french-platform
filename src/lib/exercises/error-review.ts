@@ -758,7 +758,36 @@ export function shouldAutoReveal(): false {
 // слово: ..." — показувати крапки спроб ПІСЛЯ розкриття було б зайвим
 // повтором того самого факту.
 export function shouldShowAttemptFooter(isCorrect: boolean | undefined, itemRevealed: unknown): boolean {
-  return isCorrect === false && !itemRevealed;
+  return practiceAttemptFooterState(isCorrect, itemRevealed) === "failed";
+}
+
+// Задача "unify attempt/status footer" — узагальнена версія умови вище,
+// як ОДИН дискримінатор на 4 стани замість окремого booleana на
+// кожен(ПРО кожен тип): "revealed" (відповідь уже розкрита — має
+// пріоритет, той самий порядок перевірки, що й раніше в
+// shouldShowAttemptFooter) > "failed" (остання перевірка невдала) >
+// "correct" (зарахована) > "idle" (ще не перевірялось). Спільний
+// компонент PracticeAttemptFooter (practice-attempt-footer.tsx) бере
+// РІВНО цей стан, щоб 15 типів практики не повторювали один і той
+// самий ternary.
+export type PracticeAttemptFooterState = "idle" | "failed" | "correct" | "revealed";
+
+export function practiceAttemptFooterState(
+  isCorrect: boolean | undefined,
+  itemRevealed: unknown
+): PracticeAttemptFooterState {
+  if (itemRevealed) return "revealed";
+  if (isCorrect === false) return "failed";
+  if (isCorrect === true) return "correct";
+  return "idle";
+}
+
+// Кількість заповнених крапок спроб — та сама межа (3), що вже скрізь
+// інлайн (Math.min(attempts, 3)) у кожному типі практики; винесено в
+// один чистий helper, щоб не повторювати магічне число 15 разів і щоб
+// його можна було протестувати окремо від React-розмітки.
+export function dotsFilledCount(failedAttempts: number): number {
+  return Math.min(failedAttempts, 3);
 }
 
 // Задача "replace red per-pair lines with collapsible answers panel"

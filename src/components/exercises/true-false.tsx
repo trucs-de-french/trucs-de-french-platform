@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Eye } from "lucide-react";
 import type { TrueFalsePublic, TrueFalseDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -17,7 +16,8 @@ import { EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { BUTTON_REVEAL_ANSWER } from "@/lib/button-styles";
+import { practiceAttemptFooterState } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 
@@ -304,31 +304,18 @@ export function TrueFalseExercise({
                 {isCorrect === true && (
                   <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
-                {isCorrect === false && (
-                  <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
-                    <span className="text-red-600 dark:text-red-400">
-                      {t("status.incorrectRetryCount", { n: attempts })}
-                    </span>
-                    {!itemRevealed && (
-                      <button
-                        type="button"
-                        onClick={() => practiceCheck.reveal(s.id, true)}
-                        disabled={!!practiceCheck.revealPending[s.id]}
-                        aria-label={t("button.showAnswer")}
-                        title={t("button.showAnswer")}
-                        className={BUTTON_REVEAL_ANSWER}
-                      >
-                        <Eye size={14} aria-hidden="true" />
-                        {t("button.answerShort")}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {itemRevealed && (
-                  <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
-                  </p>
-                )}
+                <PracticeAttemptFooter
+                  state={practiceAttemptFooterState(isCorrect, itemRevealed)}
+                  failedAttempts={attempts}
+                  onReveal={() => practiceCheck.reveal(s.id, true)}
+                  revealDisabled={!!practiceCheck.revealPending[s.id]}
+                >
+                  {itemRevealed && (
+                    <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
+                      <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
+                    </p>
+                  )}
+                </PracticeAttemptFooter>
               </div>
             );
           })}

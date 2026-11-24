@@ -50,10 +50,7 @@ export const uk = {
 
   "status.correct": "Правильно ✓",
   "status.correctExclaim": "Правильно! ✓",
-  "status.incorrectRetryCount": "Неправильно, спробуйте ще раз (спроб: {n})",
   "status.failedAttemptShort": "Не вдалося · спроба {n}",
-  "status.attemptsCountParen": "(спроб: {n})",
-  "status.attemptsCountLabel": "Спроб: {n}",
   "answer.correctInlineParen": "(правильно: {value})",
   "status.practiceMode": "Режим практики: бали не змінюються.",
   "status.notChosen": "не обрано",

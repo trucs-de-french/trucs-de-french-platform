@@ -15,6 +15,7 @@ import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -250,17 +251,7 @@ export function ImageMatchExercise({
           const itemById = new Map(config.items.map((it) => [it.id, it]));
           return (
             <>
-              <div className="practice-attempt-footer">
-                <span className="practice-attempt-dots" aria-hidden="true">
-                  {[0, 1, 2].map((i) => (
-                    <span
-                      key={i}
-                      className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-                    />
-                  ))}
-                </span>
-                <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
-              </div>
+              <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
               <TaskResult
                 correct={false}
                 toggleTitle={t("panel.correctAnswers")}

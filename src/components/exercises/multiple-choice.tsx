@@ -16,6 +16,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
 import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { useT } from "@/lib/i18n/context";
@@ -260,17 +261,7 @@ export function MultipleChoiceExercise({
     const itemById = new Map(practiceItems.map((it) => [it.id, it]));
     return (
       <>
-        <div className="practice-attempt-footer">
-          <span className="practice-attempt-dots" aria-hidden="true">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-              />
-            ))}
-          </span>
-          <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
-        </div>
+        <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
         <TaskResult
           correct={false}
           toggleTitle={t("panel.correctAnswers")}

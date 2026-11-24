@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Eye } from "lucide-react";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
@@ -30,6 +29,7 @@ import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { usePracticeCheck } from "./use-practice-check";
 import { shouldShowAttemptFooter } from "@/lib/exercises/error-review";
+import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import {
   estimateLetterRearrangementCardRows,
@@ -617,27 +617,12 @@ export function LetterRearrangementExercise({
     // плитки й так це показують).
     const revealedWordDetail = itemRevealed ? buildRevealedWordDetail(itemRevealed[0], orders[wi]) : undefined;
     const footer = shouldShowAttemptFooter(isCorrect, itemRevealed) ? (
-      <div className="practice-attempt-footer">
-        <span className="practice-attempt-dots" aria-hidden="true">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className={`practice-attempt-dot ${i < Math.min(attempts, 3) ? "practice-attempt-dot--filled" : ""}`}
-            />
-          ))}
-        </span>
-        <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: attempts })}</span>
-        <button
-          type="button"
-          onClick={() => practiceCheck.reveal(key, true)}
-          disabled={!!practiceCheck.revealPending[key]}
-          aria-label={t("button.showAnswer")}
-          className="practice-reveal-pill"
-        >
-          <Eye size={16} aria-hidden="true" />
-          {t("button.answerShort")}
-        </button>
-      </div>
+      <PracticeAttemptFooter
+        state="failed"
+        failedAttempts={attempts}
+        onReveal={() => practiceCheck.reveal(key, true)}
+        revealDisabled={!!practiceCheck.revealPending[key]}
+      />
     ) : undefined;
     return renderWordCard(wi, {
       detail: undefined,
