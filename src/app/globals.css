@@ -8217,22 +8217,6 @@ button.scene-bar:active .scene-bar-toggle {
   column-gap: 10px;
   align-items: center;
 }
-@media (max-width: 640px) {
-  .table-fill-row-b-grid {
-    grid-template-columns: 24px minmax(0, 1fr);
-    grid-template-areas: "num given" "input input";
-    row-gap: 6px;
-  }
-  .table-fill-row-b-arrow {
-    display: none;
-  }
-  .table-fill-row-b-grid [data-row-fill-slot="given"] {
-    grid-area: given;
-  }
-  .table-fill-row-b-grid [data-row-fill-slot="input"] {
-    grid-area: input;
-  }
-}
 .table-fill-row-b-num {
   display: flex;
   align-items: center;
@@ -8270,6 +8254,34 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .table-fill-row-b-arrow {
     color: var(--gold-border-dark-35);
+  }
+}
+/* Задача "mobile arrow stays visible before the answer" (owner report) —
+   корінь: .table-fill-row-b-arrow{display:flex} (безумовний, вище) ішов у
+   файлі ПІСЛЯ цього блоку, коли він раніше стояв одразу за .table-fill-
+   row-b-grid — та сама специфічність (один клас), тож на мобільному
+   каскад брав ОСТАННЄ правило в порядку джерела (display:flex), а не
+   display:none усередині @media, незалежно від стану відповіді.
+   grid-template-areas мобільного режиму визначає лише "num given"/"input
+   input" — стрілка (без власної grid-area) потрапляла в НЕЯВНИЙ третій
+   рядок грід-контейнера, під полем. Переставлено СЮДИ (після всіх
+   безумовних правил .table-fill-row-b-arrow) — тепер цей блок останній у
+   порядку джерела, display:none коректно виграє на будь-якій ширині
+   екрана. */
+@media (max-width: 640px) {
+  .table-fill-row-b-grid {
+    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-areas: "num given" "input input";
+    row-gap: 6px;
+  }
+  .table-fill-row-b-arrow {
+    display: none;
+  }
+  .table-fill-row-b-grid [data-row-fill-slot="given"] {
+    grid-area: given;
+  }
+  .table-fill-row-b-grid [data-row-fill-slot="input"] {
+    grid-area: input;
   }
 }
 /* Стек за шириною ВІКНА (не контейнера) — .table-fill-columns-container
