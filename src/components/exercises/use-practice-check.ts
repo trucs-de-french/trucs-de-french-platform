@@ -59,6 +59,28 @@ export function usePracticeCheck(taskId: string) {
   // (сервер сам звіряє лічильник, 403 якщо ще не настав час — викликач
   // відповідає лише за те, щоб не дзвонити занадто рано; fromButton=true
   // — кнопка "Показати відповідь", завжди 200).
+  //
+  // Задача "fix continuous color flicker in the practice answers panel" —
+  // раніше й тут викликався router.refresh(), скопійований із check()
+  // вище без потреби: /api/exercises/practice/reveal НІЧОГО не пише в БД
+  // (лише читає config і повертає правильну відповідь — itemId
+  // навмисно НЕ потрапляє в corrected_item_ids, див. коментар у самому
+  // route.ts), тож серверній моделі (entries/remainingItemIds/
+  // failedAttempts) після reveal нема що оновлювати. Коли панель
+  // відкривається з кількома ще неправильними елементами (wrongIds),
+  // revealWrongItems викликає reveal() для КОЖНОГО з них майже
+  // одночасно — із router.refresh() це означало N паралельних
+  // перезапитів RSC-дерева одразу; aggregateWrongItems сортує рядки
+  // помилок за created_at, і рядки з однаковим таймстемпом (одна
+  // перевірка) повертаються Postgres у БУДЬ-ЯКОМУ порядку між двома
+  // SELECT — тож remainingItemIds (а з ним onlyItemIdsKey, усі 9 items-
+  // типів) реально переставлявся на кожен із N refresh, N разів поспіль,
+  // перезапускаючи pruneStaleResults-ефект і перерендерюючи весь список
+  // (значення кольорів лишались ті самі, pruneStaleResults це вже
+  // гарантує, — та N швидких ререндерів поспіль і є тим самим видимим
+  // "миготінням", що бачив власник на Спробі 4). Без цього виклику
+  // reveal() більше не чіпає серверну модель узагалі — лишається лише
+  // сам setRevealed, звичайний один React-рендер на елемент.
   async function reveal(itemId: string, fromButton: boolean): Promise<string[] | null> {
     setRevealPending((prev) => ({ ...prev, [itemId]: true }));
     try {
@@ -70,7 +92,6 @@ export function usePracticeCheck(taskId: string) {
       if (!res.ok) return null;
       const body = (await res.json()) as { answer: string[] };
       setRevealed((prev) => ({ ...prev, [itemId]: body.answer }));
-      router.refresh();
       return body.answer;
     } finally {
       setRevealPending((prev) => ({ ...prev, [itemId]: false }));
