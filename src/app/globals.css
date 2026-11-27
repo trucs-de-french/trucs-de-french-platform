@@ -269,6 +269,22 @@
   --status-pill-icon-wrong: #ff8a8a;
   --status-pill-icon-partial: #f2c96b;
   --status-pill-icon-done: #6fd391;
+  /* Задача "variant 5: number/letter badges in dark theme" — лише темна
+     тема (світлий дефолт — indigo-градієнт/білий текст — лишається своїми
+     власними літералами на .item-number-badge/.table-fill-row-b-num
+     нижче, без змін, тож тут немає світлої пари цих токенів, той самий
+     принцип, що --card-bg/--card-border вище). --badge-bg — той самий
+     суцільний темно-синій, що вже й так .error-review-card-bg (--dark-
+     blue-fill) — жодного нового літералу. --badge-border — той самий
+     #27338f, що вже скрізь на картках-рядках (table_fill/drag_drop
+     тощо), просто вперше названий. --badge-bg-photo — лише бейджі ПОНАД
+     фото (.image-match-card-badge, image_match/chronological_order
+     image-режим) — напівпрозорий варіант, щоб золота літера лишалась
+     читабельною на світлому фото. */
+  --badge-bg: var(--dark-blue-fill);
+  --badge-border: #27338f;
+  --badge-text: #e9c46a;
+  --badge-bg-photo: rgba(13, 18, 51, 0.88);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
@@ -332,6 +348,10 @@
     --status-pill-icon-wrong: #ff8a8a;
     --status-pill-icon-partial: #f2c96b;
     --status-pill-icon-done: #6fd391;
+    --badge-bg: var(--dark-blue-fill);
+    --badge-border: #27338f;
+    --badge-text: #e9c46a;
+    --badge-bg-photo: rgba(13, 18, 51, 0.88);
   }
 }
 
@@ -8261,14 +8281,37 @@ button.scene-bar:active .scene-bar-toggle {
   font-weight: 700;
   flex-shrink: 0;
 }
+/* Задача "variant 5: number/letter badges in dark theme" — та сама
+   форма, що .item-number-badge (--badge-bg/--badge-border/--badge-text),
+   лише розмір/шрифт лишаються СВОЇМИ (22px/12px, вище) — ця картка мала
+   інший, окремий indigo-варіант і в світлій темі (#ebebfa/#3b36c4, вище,
+   незмінний), тож спільна точка між нею й .item-number-badge — ЛИШЕ
+   набір темних токенів, не сам клас. box-sizing:border-box — рамка не
+   збільшує 22px. */
 .dark .table-fill-row-b-num {
-  background: rgba(91, 86, 230, 0.22);
-  color: #c7c4ff;
+  box-sizing: border-box;
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  color: var(--badge-text);
+  font-weight: 500;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .table-fill-row-b-num {
-    background: rgba(91, 86, 230, 0.22);
-    color: #c7c4ff;
+    box-sizing: border-box;
+    background: var(--badge-bg);
+    border: 1px solid var(--badge-border);
+    color: var(--badge-text);
+    font-weight: 500;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .table-fill-row-b-num {
+    border-width: 0.5px;
+  }
+}
+@media (prefers-color-scheme: dark) and (min-resolution: 2dppx), (prefers-color-scheme: dark) and (-webkit-min-device-pixel-ratio: 2) {
+  :root:not(.light) .table-fill-row-b-num {
+    border-width: 0.5px;
   }
 }
 .table-fill-row-b-arrow {
@@ -8507,22 +8550,54 @@ button.scene-bar:active .scene-bar-toggle {
 .item-number-badge--incorrect {
   background: #dc2626;
 }
-/* Темна тема — тонка суцільна золота рамка (1px, var(--gold-border) =
-   #d9b765) замість колишнього золотого сяйва (box-shadow), яке прибрано;
-   світлий внутрішній контур (inset, не золотий) лишається. box-sizing:
-   border-box — щоб нова рамка не збільшувала зовнішній діаметр кружка
-   (26px лишається 26px). Виключено зі станів --correct/--incorrect
-   (зелений/червоний після перевірки). */
+/* Задача "variant 5: number/letter badges in dark theme" (owner report) —
+   темна тема: суцільний темний фон картки (--badge-bg) + тонка рамка
+   кольору рамок картки (--badge-border), БЕЗ золотого кільця (попередній
+   box-shadow/border нижче прибрані) і БЕЗ indigo-градієнта (попередній
+   background нижче перебитий). Літера/цифра — золота (--badge-text),
+   font-weight 500 (було 800 — лише темна тема, світлий 800 на білому
+   тексті лишається незмінним). box-sizing:border-box — рамка не збільшує
+   зовнішній діаметр кружка (26px лишається 26px скрізь, 22px на
+   .table-fill-row-b-num нижче — розмір кожного місця НЕ змінюється).
+   Виключено зі станів --correct/--incorrect (зелений/червоний після
+   перевірки, лишаються своїми суцільними кольорами, як і раніше). */
 .dark .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
   box-sizing: border-box;
-  border: 1px solid var(--gold-border);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  color: var(--badge-text);
+  font-weight: 500;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
     box-sizing: border-box;
-    border: 1px solid var(--gold-border);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    background: var(--badge-bg);
+    border: 1px solid var(--badge-border);
+    color: var(--badge-text);
+    font-weight: 500;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
+    border-width: 0.5px;
+  }
+}
+@media (prefers-color-scheme: dark) and (min-resolution: 2dppx), (prefers-color-scheme: dark) and (-webkit-min-device-pixel-ratio: 2) {
+  :root:not(.light) .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
+    border-width: 0.5px;
+  }
+}
+/* Бейдж ПОНАД фото (.image-match-card-badge, image_match/chronological_order
+   image-режим) — та сама темна рамка/золота літера, але напівпрозорий фон
+   (--badge-bg-photo), щоб золота літера лишалась читабельною на світлому
+   фото знизу (requirement 2), а не суцільний --badge-bg. Позиція/розмір —
+   image-match-card-badge вище, незмінні. */
+.dark .image-match-card-badge {
+  background: var(--badge-bg-photo);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-card-badge {
+    background: var(--badge-bg-photo);
   }
 }
 /* Слово/фраза розкритої правильної відповіді ("Правильне слово: X",
