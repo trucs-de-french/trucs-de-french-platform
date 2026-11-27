@@ -688,40 +688,43 @@ export function MatchingExercise({
     return (
       <div className={EXERCISE_STACK}>
         <div className="flex flex-col">
-          {leftGroups.map((leftGroup, i) => (
-            <Fragment key={i}>
-              {i > 0 && <div className="matching-flat-group-divider" aria-hidden="true" />}
-              <MatchingBoard
-                leftItems={leftGroup}
-                rightItems={rightGroups[i] ?? []}
-                pairs={practicePairs}
-                selectedLeft={selectedLeftPractice}
-                onClickLeft={practiceClickLeft}
-                onClickRight={practiceClickRight}
-                disabled={false}
-                statusForLeft={(left) => {
-                  const isCorrect = practiceResultByLeft[left];
-                  return isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : undefined;
-                }}
-                usedRights={usedRightsPractice}
-              />
-            </Fragment>
-          ))}
+          {leftGroups.map((leftGroup, i) => {
+            const groupItemIds = leftGroup.map((left) => idByLeft.get(left)).filter((id): id is string => !!id);
+            return (
+              <Fragment key={i}>
+                {i > 0 && <div className="matching-flat-group-divider" aria-hidden="true" />}
+                <div className={RESULT_ROW_GAP_CLASS}>
+                  <MatchingBoard
+                    leftItems={leftGroup}
+                    rightItems={rightGroups[i] ?? []}
+                    pairs={practicePairs}
+                    selectedLeft={selectedLeftPractice}
+                    onClickLeft={practiceClickLeft}
+                    onClickRight={practiceClickRight}
+                    disabled={false}
+                    statusForLeft={(left) => {
+                      const isCorrect = practiceResultByLeft[left];
+                      return isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : undefined;
+                    }}
+                    usedRights={usedRightsPractice}
+                  />
+                  {renderPracticeFooter(leftGroup)}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => submitPractice(leftGroup, groupItemIds, i)}
+                      disabled={practiceCheck.pending}
+                      className={`self-start ${BUTTON_CHECK}`}
+                    >
+                      {practiceCheck.pending ? t("button.checking") : t("button.checkBlock")}
+                    </button>
+                  </div>
+                </div>
+              </Fragment>
+            );
+          })}
         </div>
-
-        {renderPracticeFooter(config.left)}
-
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => submitPractice(config.left, config.pairs.map((p) => p.id))}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
       </div>
     );
   }
