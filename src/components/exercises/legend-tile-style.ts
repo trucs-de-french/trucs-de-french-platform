@@ -73,8 +73,15 @@ export const GOLD_CIRCLE_SIZE = "flex h-7 w-7 shrink-0 items-center justify-cent
 // замість збільшення самого гуртка (видима форма лишається 28px, як у
 // мокапі): 28 + 6*2 = 40.
 export const GOLD_CIRCLE_HIT_AREA_PADDING = "p-[6px]";
+// Задача "remove glow/drop-shadow from hint lightbulb in dark theme"
+// (owner report) — dark:shadow-none прибирає ЛИШЕ темну тему (світла
+// лишає свою тінь незмінною, shadow-[...] вище нічим не зачепили):
+// золотий градієнт/розмір/іконка/позиція — незмінні. Жодного hover/
+// active/:focus-visible стану в самого гуртка немає (HintBulb рендерить
+// звичайну <button>/<span> без власних :hover-правил тут), тож нічого
+// більше чіпати.
 export const GOLD_CIRCLE_AVAILABLE =
-  "bg-gradient-to-b from-[#f6dc8e] to-[#e0aa3e] text-[#6b4a14] shadow-[0_3px_8px_rgba(184,144,47,0.45)]";
+  "bg-gradient-to-b from-[#f6dc8e] to-[#e0aa3e] text-[#6b4a14] shadow-[0_3px_8px_rgba(184,144,47,0.45)] dark:shadow-none";
 export const GOLD_CIRCLE_DONE = "bg-green-100 text-green-600 dark:bg-green-900/70 dark:text-green-300";
 
 // ЕТАП H — сітка картинкових карток-підказок кросворду (ImageClueCard,

@@ -5924,18 +5924,23 @@ button.scene-bar:active .scene-bar-toggle {
   font-weight: 800;
   white-space: nowrap;
 }
+/* Задача "remove border/glow from points pill and hint lightbulb in dark
+   theme" (owner report) — градієнт/розмір/радіус/текст лишаються
+   незмінними, прибрано лише box-shadow (тіньове сяйво + inset-кільце,
+   border тут і так уже none). Пілюля не інтерактивна (немає hover/
+   active/focus-visible стану взагалі), тож тут нема що більше чіпати. */
 .dark .points-pill-gradient {
   background: var(--points-bg);
   border: none;
   color: var(--points-ink);
-  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .points-pill-gradient {
     background: var(--points-bg);
     border: none;
     color: var(--points-ink);
-    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    box-shadow: none;
   }
 }
 .points-pill-star {
