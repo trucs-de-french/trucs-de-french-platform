@@ -24,6 +24,7 @@ import {
   hasVisiblePracticeItems,
   prunePracticeResults,
   shouldShowRevealPill,
+  reorderWordState,
 } from "./error-review";
 
 let failures = 0;
@@ -765,6 +766,45 @@ function assert(condition: boolean, label: string) {
   assert(
     shouldShowRevealPill(undefined, true) === false,
     "neither onReveal nor hideRevealPill matters when onReveal itself is absent -> still hidden"
+  );
+}
+
+// --- reorderWordState (owner report: reorder words colored green/red
+// LIVE while dragging, before any check — too strong a hint) ---
+{
+  // before check -> neutral, regardless of positionCorrect/arrangementChanged
+  assert(reorderWordState(false, true, false) === "neutral", "no check yet, happens to be in the right spot -> neutral, no hint before checking");
+  assert(reorderWordState(false, false, false) === "neutral", "no check yet, wrong spot -> still neutral (nothing to hide, nothing to show)");
+  assert(reorderWordState(false, true, true) === "neutral", "no check yet at all -> neutral regardless of arrangementChangedSinceCheck");
+}
+
+{
+  // after check, mixed results -> correct/wrong per position
+  assert(reorderWordState(true, true, false) === "correct", "checked this exact arrangement, position correct -> correct");
+  assert(reorderWordState(true, false, false) === "wrong", "checked this exact arrangement, position wrong -> wrong");
+}
+
+{
+  // after a move post-check -> back to neutral until the next check
+  assert(
+    reorderWordState(true, true, true) === "neutral",
+    "a check happened, but the student moved a word since -> neutral even though that position used to be correct"
+  );
+  assert(
+    reorderWordState(true, false, true) === "neutral",
+    "a check happened, student moved a word since -> neutral even for a position that used to be wrong"
+  );
+}
+
+{
+  // after a second check -> colored again
+  assert(
+    reorderWordState(true, true, false) === "correct",
+    "a fresh check on the current (post-move) arrangement -> colored again, correct"
+  );
+  assert(
+    reorderWordState(true, false, false) === "wrong",
+    "a fresh check on the current (post-move) arrangement -> colored again, wrong"
   );
 }
 

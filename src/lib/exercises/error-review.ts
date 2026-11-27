@@ -806,6 +806,35 @@ export function shouldShowRevealPill(onReveal: (() => void) | undefined, hideRev
   return !!onReveal && !hideRevealPill;
 }
 
+// Задача "reorder colors words before a check" (owner report) — коренева
+// причина: reorder.tsx мав ДРУГЕ джерело кольору плитки (liveFeedback/
+// correctOrder, учительська опція), що наживо порівнювало поточний
+// порядок з правильним на КОЖЕН рендер, щойно речення хоч раз торкнулись
+// (activated) — задовго до "Перевірити", всупереч правилу "колір лише
+// після перевірки", яке вже дотримують усі інші типи (practiceAnswerForColor
+// тут-таки — той самий принцип гейту). reorderWordState — ОДИН спільний
+// гейт для всіх трьох місць, де reorder рендериться (сценова вправа,
+// інлайн-практика на сторінці сцени, кабінет /cabinet/mistakes/[sceneId] —
+// усі три проходять через ОДИН renderWordCard-еквівалент у reorder.tsx,
+// ReorderSequenceTiles, тож одна зміна тут покриває всі три):
+// - checked=false (ще не було перевірки ЦЬОГО порядку) -> "neutral",
+//   незалежно від positionCorrect/arrangementChangedSinceCheck.
+// - checked=true, arrangementChangedSinceCheck=true (студент посунув
+//   слово ПІСЛЯ перевірки, новий порядок ще не перевірявся) -> "neutral" —
+//   кольори описують лише ПЕРЕВІРЕНИЙ порядок, не живий.
+// - checked=true, arrangementChangedSinceCheck=false -> "correct"/"wrong"
+//   за positionCorrect (той самий, серверний, результат перевірки, що й
+//   раніше — ця функція НЕ рахує правильність сама, лише вирішує, коли
+//   її показувати).
+export function reorderWordState(
+  checked: boolean,
+  positionCorrect: boolean,
+  arrangementChangedSinceCheck: boolean
+): "neutral" | "correct" | "wrong" {
+  if (!checked || arrangementChangedSinceCheck) return "neutral";
+  return positionCorrect ? "correct" : "wrong";
+}
+
 // Задача "attempt footer disappears right after a failed check" (owner
 // report, letter_gaps, інлайн-блок помилок сторінки сцени) — корінь:
 // кожен тип практики (11 items-типів) стежить за onlyItemIdsKey

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ReorderPublic, ReorderDetail, ReorderAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
-import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
+import { WHOLE_TASK_ITEM_ID, reorderWordState } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { SortableTileRow } from "./sortable-tile-row";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -47,8 +47,6 @@ function ReorderSequenceTiles({
   order,
   onChange,
   detail,
-  correctOrder,
-  activated,
   locked,
   points,
   pointsVisible,
@@ -69,16 +67,6 @@ function ReorderSequenceTiles({
   order: string[];
   onChange: (next: string[]) => void;
   detail?: SequenceDetail;
-  // Присутній лише коли вчитель увімкнув liveFeedback (ReorderConfig,
-  // sanitizeReorder) — правильний текст на кожну позицію, дає живе
-  // підсвічування без запиту на сервер (той самий компроміс секретності,
-  // що LetterGapsPublicWord.hiddenLetters).
-  correctOrder?: string[];
-  // Живе підсвічування активується лише ПІСЛЯ першої перестановки в цьому
-  // реченні (onChange у батьківському ReorderExercise) — до того всі
-  // плитки нейтральні, навіть якщо випадково стоять на правильних місцях
-  // (ключується по sequenceId, не скидається подальшими перестановками).
-  activated?: boolean;
   locked: boolean;
   points: number;
   pointsVisible: boolean;
@@ -101,16 +89,25 @@ function ReorderSequenceTiles({
   hintVisible?: boolean;
   onToggleHint?: () => void;
 }) {
-  // Пріоритет: після "Перевірити" — detail (авторитетний серверний
-  // результат, той самий, що показує бали); до перевірки — якщо
-  // liveFeedback увімкнено, порівнюємо ПОЗИЦІЙНО з correctOrder (той самий
-  // принцип, що gradeReorder: studentOrder[i] === correctOrder[i]), наживо,
-  // на кожен рендер (order — пропс, змінюється з кожним drag/click-move).
+  // Задача "reorder colors words before a check" (owner report) — колір
+  // плитки ЛИШЕ з detail (авторитетний серверний результат перевірки
+  // цього Ж порядку): раніше було ДРУГЕ джерело кольору — живе
+  // позиційне порівняння з correctOrder (учительська опція liveFeedback),
+  // що фарбувало плитки ще до "Перевірити", щойно студент хоч раз
+  // торкнувся речення — надто сильна підказка, суперечить правилу "колір
+  // лише після перевірки", яке вже дотримують усі інші типи. detail
+  // передається батьком лише для ПОТОЧНОГО (уже перевіреного) порядку —
+  // onChange (нижче, ReorderExercise) обнуляє detail щойно студент знову
+  // посунув слово, тож arrangementChangedSinceCheck тут завжди false (ця
+  // картка просто НЕ має детейла, доки живий порядок не збігається з
+  // перевіреним) — reorderWordState (error-review.ts) лишається єдиним
+  // гейтом для цього рішення, той самий спільний виклик для сценової
+  // вправи й обох практик (інлайн і кабінет), бо обидві йдуть через ЦЕЙ
+  // самий компонент.
   const { t } = useT();
   function tileState(i: number): "correct" | "incorrect" | undefined {
-    if (detail) return detail.items[i]?.isCorrect ? "correct" : "incorrect";
-    if (correctOrder && activated) return order[i] === correctOrder[i] ? "correct" : "incorrect";
-    return undefined;
+    const state = reorderWordState(!!detail, !!detail?.items[i]?.isCorrect, false);
+    return state === "neutral" ? undefined : state === "correct" ? "correct" : "incorrect";
   }
 
   // До перевірки — лише якщо pointsVisible; після — завжди. Бали
@@ -267,19 +264,6 @@ export function ReorderExercise({
   const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
-  // Живе підсвічування (liveFeedback, correctOrder) активується ПОЗА блоками
-  // та по кожному реченню окремо — лише після першої перестановки в НЬОМУ
-  // (не глобально для всього завдання). Стан піднятий сюди, вище
-  // BlockNavigation/activeBlock, тому переживає перемикання блоків
-  // (CARD_BLOCK_MAX) у межах одного рендеру компонента; скидається лише
-  // разом з усім компонентом — новий mount (нова спроба практики
-  // "Спробувати ще раз" в error-review-block.tsx — expanded false→true,
-  // або перезавантаження сторінки) дає чистий useState знову.
-  const [activated, setActivated] = useState<Record<string, boolean>>({});
-  function activateSequence(id: string) {
-    setActivated((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
-  }
-
   // Підказка (лампочка переклад речення) — той самий принцип, що
   // multiple-choice.tsx: hintShown (перманентний, іде в answer як
   // hintUsed) і hintVisible (лише розкрито/згорнуто зараз), окремі стани.
@@ -380,13 +364,8 @@ export function ReorderExercise({
         key={seq.id}
         number={number}
         order={orders[seq.id] ?? seq.items}
-        onChange={(next) => {
-          setOrders((prev) => ({ ...prev, [seq.id]: next }));
-          activateSequence(seq.id);
-        }}
+        onChange={(next) => setOrders((prev) => ({ ...prev, [seq.id]: next }))}
         detail={seqDetail}
-        correctOrder={seq.correctOrder}
-        activated={!!activated[seq.id]}
         locked={locked}
         points={seq.points}
         pointsVisible={pointsVisible}
@@ -534,13 +513,12 @@ export function ReorderExercise({
                 setPracticeOrders((prev) => ({ ...prev, [seq.id]: next }));
                 // Скидаємо підсвічування з попередньої перевірки — інакше
                 // студент бачить застарілі зелені/червоні кольори після
-                // того, як переставив слова знову, до наступного "Перевірити".
+                // того, як переставив слова знову, до наступного "Перевірити"
+                // (reorderWordState у ReorderSequenceTiles читає лише
+                // detail — undefined тут одразу означає "neutral").
                 setPracticeDetail(undefined);
-                activateSequence(seq.id);
               }}
               detail={practiceDetail?.sequences.find((d) => d.id === seq.id)}
-              correctOrder={seq.correctOrder}
-              activated={!!activated[seq.id]}
               locked={practiceCorrect}
               points={seq.points}
               pointsVisible={false}
