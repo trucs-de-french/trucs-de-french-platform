@@ -14,6 +14,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
+import { normalizeGapBefore } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -44,8 +45,10 @@ function buildDragDropGapRows(
     const blanks = detail.sentences.find((d) => d.id === s.id)?.blanks ?? [];
     const parts: (string | { word: string })[] = [];
     segs.forEach((seg, i) => {
-      if (seg) parts.push(seg);
-      if (i < segs.length - 1) parts.push({ word: blanks[i]?.correctAnswers[0] ?? "" });
+      const isBeforeChip = i < segs.length - 1;
+      const text = isBeforeChip ? normalizeGapBefore(seg) : seg;
+      if (text) parts.push(text);
+      if (isBeforeChip) parts.push({ word: blanks[i]?.correctAnswers[0] ?? "" });
     });
     return { number: si + 1, parts };
   });
@@ -410,8 +413,10 @@ export function DragDropExercise({
                       const revealedWords = practiceCheck.revealed[id] ?? [];
                       const parts: (string | { word: string })[] = [];
                       segs.forEach((seg, bi) => {
-                        if (seg) parts.push(seg);
-                        if (bi < segs.length - 1) parts.push({ word: revealedWords[bi] ?? "" });
+                        const isBeforeChip = bi < segs.length - 1;
+                        const text = isBeforeChip ? normalizeGapBefore(seg) : seg;
+                        if (text) parts.push(text);
+                        if (isBeforeChip) parts.push({ word: revealedWords[bi] ?? "" });
                       });
                       return { number: i + 1, parts };
                     })}

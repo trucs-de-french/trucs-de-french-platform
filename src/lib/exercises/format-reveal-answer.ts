@@ -195,3 +195,23 @@ export function maskMissedCheckboxCells<T extends { studentChecked: boolean; cor
   if (revealed) return cells;
   return cells.map((c) => (!c.studentChecked && c.correctChecked ? { ...c, correctChecked: false } : c));
 }
+
+// Задача "equal gap on both sides of the chip" (TaskResultGapRows —
+// owner report: "du [lait] dans" мав помітно БІЛЬШИЙ відступ зліва, ніж
+// справа) — корінь: CSS margin-left на чипі (попередня задача) додавався
+// ПОВЕРХ уже наявного звичайного пробілу з тексту речення (sentence.split
+// "{{}}" лишає пробіл по обидва боки "{{}}" там, де в реченні справді
+// був пробіл), тож зліва виходило "пробіл + margin", справа — лише
+// "пробіл". Рішення — БЕЗ CSS margin узагалі (прибрано в globals.css):
+// текст перед чипом нормалізується РІВНО до одного пробілу тут, текст
+// ПІСЛЯ чипа лишається незмінним — пунктуація без пробілу (crush "ciel.")
+// і далі лишається приклеєною, звичайне слово з одним пробілом лишається
+// симетричним само по собі, без допомоги margin.
+//
+// НЕ застосовувати до letter_gaps (buildLetterGapsRows/
+// buildGapRowsFromReveal) — там чип завжди УСЕРЕДИНІ слова (буква),
+// пробіл там НІКОЛИ не потрібен з жодної сторони.
+export function normalizeGapBefore(text: string): string {
+  const trimmed = text.replace(/\s+$/, "");
+  return trimmed === "" ? "" : trimmed + " ";
+}

@@ -6873,20 +6873,25 @@ button.scene-bar:active .scene-bar-toggle {
 }
 /* Задача "chip touches preceding text" (TaskResultGapRows — fill_blank/
    drag_drop/word_choice/multiple_choice/letter_gaps) — чип укладений
-   УСЕРЕДИНІ речення (.task-result-gap-text), одразу після тексту, без
-   жодного пробілу в розмітці (речення й так ріжеться рівно по "{{}}").
+   УСЕРЕДИНІ речення (.task-result-gap-text), одразу після тексту.
    Скоуп саме на .task-result-gap-text .task-result-gap-word — НЕ на
    голий клас: той самий .task-result-gap-word усередині
    .task-result-image-row (image_match) і TaskResultCrosswordRows уже
-   розділений власним flex-gap, зайвий margin тут продублював би відступ. */
+   розділений власним flex-gap, зайвий margin тут продублював би відступ.
+   Задача "equal gap on both sides of the chip" — горизонтальний відступ
+   БЕЗ margin (був 8px зліва/0 справа — несиметрично, бо текст-зліва й
+   текст-справа вже й самі несуть по одному звичайному пробілу навколо
+   "{{}}"): нормалізатор normalizeGapBefore (format-reveal-answer.ts)
+   лишає РІВНО один пробіл перед чипом у кожному рядко-будівнику
+   (word_choice/drag_drop/fill_blank/multiple_choice), текст ПІСЛЯ чипа
+   лишається як є (пунктуація — без пробілу, звичайне слово — з одним).
+   Для letter_gaps (той самий клас, буква-чип УСЕРЕДИНІ слова, без
+   жодного пробілу з жодної сторони за визначенням) margin тут був
+   самостійним регресом — прибраний разом з усіма іншими. Лише
+   margin-top лишається (чип на власному рядку при переносі). */
 .task-result-gap-text .task-result-gap-word {
   display: inline-block;
-  margin: 4px 0 0 8px;
-}
-@media (max-width: 640px) {
-  .task-result-gap-text .task-result-gap-word {
-    margin-left: 6px;
-  }
+  margin: 4px 0 0 0;
 }
 .dark .task-result-gap-word {
   background: var(--dark-surface-fill);

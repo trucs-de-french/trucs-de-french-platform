@@ -18,7 +18,7 @@ import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
-import { practiceOptionDetail } from "@/lib/exercises/format-reveal-answer";
+import { practiceOptionDetail, normalizeGapBefore } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
@@ -46,7 +46,7 @@ function buildWordChoiceRows(
     const correctOptions = sentenceDetail?.options.filter((o) => o.correct) ?? [];
     const [before, after] = s.sentence.split("{{}}");
     const parts: (string | { word: string })[] = [
-      before,
+      normalizeGapBefore(before),
       { word: correctOptions.map((o) => o.text).join(" / ") },
       after ?? "",
     ].filter((p) => p !== "");
@@ -605,7 +605,10 @@ export function WordChoiceExercise({
                     const s = wrongSentenceById.get(id);
                     const [before, after] = (s?.sentence ?? "").split("{{}}");
                     const value = (practiceCheck.revealed[id] ?? []).join(" / ");
-                    return { number: i + 1, parts: [before, { word: value }, after ?? ""].filter((p) => p !== "") };
+                    return {
+                      number: i + 1,
+                      parts: [normalizeGapBefore(before), { word: value }, after ?? ""].filter((p) => p !== ""),
+                    };
                   })}
                 />
               )}

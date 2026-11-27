@@ -36,6 +36,7 @@ import { useT } from "@/lib/i18n/context";
 import { normalize } from "@/lib/exercises/grade";
 import { useFitText } from "./use-fit-text";
 import { pruneStaleResults } from "@/lib/exercises/error-review";
+import { normalizeGapBefore } from "@/lib/exercises/format-reveal-answer";
 
 // Мобільний банк (<=640px, texte à trous) — довге слово в пілюлі не
 // обрізається: той самий механізм, що відповіді в task-result.tsx
@@ -98,6 +99,14 @@ function buildFillBlankGapRows(
     const parts: (string | { word: string })[] = pcs.map((p) =>
       "text" in p ? p.text : { word: detail.blanks[p.blank]?.correctAnswers[0] ?? "" }
     );
+    // Задача "equal gap on both sides of the chip" — рівно один пробіл
+    // перед кожним чипом (normalizeGapBefore), текст ПІСЛЯ чипа лишається
+    // як є (пунктуація без пробілу лишається приклеєною).
+    for (let j = 0; j < parts.length - 1; j++) {
+      if (typeof parts[j] === "string" && typeof parts[j + 1] === "object") {
+        parts[j] = normalizeGapBefore(parts[j] as string);
+      }
+    }
     if (typeof parts[0] === "string") parts[0] = parts[0].replace(/^\s+/, "");
     const lastIdx = parts.length - 1;
     if (typeof parts[lastIdx] === "string") parts[lastIdx] = parts[lastIdx].replace(/\s+$/, "");

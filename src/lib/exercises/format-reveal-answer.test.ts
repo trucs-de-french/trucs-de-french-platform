@@ -9,6 +9,7 @@ import {
   buildSortColumnsAnswerColumns,
   practiceOptionDetail,
   maskMissedCheckboxCells,
+  normalizeGapBefore,
 } from "./format-reveal-answer";
 
 let failures = 0;
@@ -211,6 +212,37 @@ function assert(condition: boolean, label: string) {
 
 {
   assert(maskMissedCheckboxCells([], false).length === 0, "no cells -> no crash");
+}
+
+// --- normalizeGapBefore (owner report: "du [lait] dans" had a visibly
+// bigger gap on the left than the right — the fix removes the CSS
+// margin entirely and normalizes the text instead, so both sides come
+// from the SAME kind of space) --------------------------------------
+
+{
+  assert(normalizeGapBefore("boire du") === "boire du ", "a normal trailing word gets exactly one trailing space added");
+}
+
+{
+  assert(
+    normalizeGapBefore("boire du ") === "boire du ",
+    "already exactly one trailing space stays exactly one — no doubling"
+  );
+}
+
+{
+  assert(
+    normalizeGapBefore("boire du   ") === "boire du ",
+    "multiple trailing spaces collapse to exactly one — this is what caused the old double-gap together with the CSS margin"
+  );
+}
+
+{
+  assert(normalizeGapBefore("voler ?") === "voler ? ", "no trailing space at all still gets exactly one added (the original zero-gap bug)");
+}
+
+{
+  assert(normalizeGapBefore("") === "", "an empty 'before' (chip at the very start of the sentence) stays empty — no stray leading space/margin");
 }
 
 if (failures > 0) {
