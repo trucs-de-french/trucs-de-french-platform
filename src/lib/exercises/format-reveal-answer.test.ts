@@ -2,7 +2,6 @@
 // скрипт, той самий принцип, що task-display-name.test.ts.
 // Запуск вручну: npx tsx src/lib/exercises/format-reveal-answer.test.ts
 import {
-  buildGapRowsFromReveal,
   buildTableFillAnswerRowsFromReveal,
   buildMatchingPairRowsFromReveal,
   buildRevealedWordDetail,
@@ -19,28 +18,6 @@ function assert(condition: boolean, label: string) {
     failures++;
     console.error(`FAIL: ${label}`);
   }
-}
-
-// --- buildGapRowsFromReveal (letter_gaps) --------------------------------
-
-{
-  // "bonjour" з прихованими позиціями 0,3,6 (b,j,r) — chars: [null,"o","n",
-  // null,"o","u",null]. reveal для цього слова повертає ПОВНЕ слово.
-  const chars = [[null, "o", "n", null, "o", "u", null] as (string | null)[]];
-  const rows = buildGapRowsFromReveal([0], chars, { 0: "bonjour" });
-  assert(rows.length === 1 && rows[0].number === 1, "one row, numbered from 1");
-  assert(
-    JSON.stringify(rows[0].parts) === JSON.stringify([{ word: "b" }, "on", { word: "j" }, "ou", { word: "r" }]),
-    "hidden positions become {word} spans at the right places, adjacent hidden letters merge"
-  );
-}
-
-{
-  // Слово, чий reveal ще не прийшов (не в кеші) — порожні літери замість
-  // кидання помилки (loading-стан, не crash).
-  const chars = [[null, "a"] as (string | null)[]];
-  const rows = buildGapRowsFromReveal([0], chars, {});
-  assert(JSON.stringify(rows[0].parts) === JSON.stringify([{ word: "" }, "a"]), "missing reveal falls back to an empty letter, not a crash");
 }
 
 // --- buildTableFillAnswerRowsFromReveal (table_fill) ---------------------

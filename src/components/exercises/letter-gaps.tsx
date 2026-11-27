@@ -14,7 +14,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { EXERCISE_STACK, RESULT_ROW_GAP_CLASS } from "@/lib/spacing";
+import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD, splitPhraseUnits } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -40,7 +40,6 @@ import {
   type LetterGapsForcedBreak,
 } from "@/lib/exercises/estimate-card-rows";
 import { pairPracticeItems } from "@/lib/exercises/flat-practice-layout";
-import { buildGapRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -398,9 +397,8 @@ export function LetterGapsExercise({
     if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
     // Задача "unify attempt/reveal behaviour" — без автоматичного
     // розкриття в жодному потоці (shouldAutoReveal, error-review.ts,
-    // завжди false): сцена-вигляд і далі показує відповідь лише через
-    // панель "Правильні відповіді" (reveal(id, true) на відкриття панелі,
-    // revealBlockAnswers нижче), флет — своєю пілюлею "Відповідь" поруч.
+    // завжди false): єдиний спосіб розкрити відповідь — per-card пілюля
+    // "Відповідь" (renderPracticeItem нижче), в обох режимах однаково.
   }
 
   // ==== Гілка блоків (>10 слів) ====
@@ -532,11 +530,10 @@ export function LetterGapsExercise({
       // (інший, непов'язаний механізм підказки, недоречний у ремедіальному
       // повторі помилок).
       hintDisabled?: boolean;
-      // Сцена-вигляд практики (крок 3c) — футер "спроби" (крапки, без
-      // пілюлі "Відповідь": letter_gaps уже має панель "Правильні
-      // відповіді", renderPracticeItem нижче), рендериться усередині
-      // картки, під полями. undefined (флет-практика/реальна вправа) —
-      // нічого не рендериться.
+      // Практика (крапки спроб + пілюля "Відповідь" + рядок "Правильне
+      // слово", той самий вигляд, що letter-rearrangement.tsx) —
+      // рендериться усередині картки, під полями. undefined (реальна
+      // вправа) — нічого не рендериться.
       practiceFooter?: ReactNode;
       // Задача "pack word groups greedily on a line" — ЛИШЕ практика
       // (pairPracticeItems/letterGapsPracticeLayout): ПОВНИЙ набір —
@@ -772,12 +769,17 @@ export function LetterGapsExercise({
   // Одна картка практики + рядок статусу під нею — спільне для плаского
   // режиму (інлайн-картка сцени: крок 5 — 2-колонкова сітка з
   // pairPracticeItems, flatGapOrder) і сцена-вигляду блоків (крок 4:
-  // gapOrderFor активного блоку, нижче). hideReveal — лише
-  // сцена-вигляд (крок 3b): інлайн-кнопка "Показати відповідь"+розкритий
-  // текст замінюються на спільну панель "Правильні відповіді" під блоком
-  // (showToggle-картка TaskResult, той самий компонент, що звичайна
-  // вправа), щоб не дублювати відповідь у двох місцях; лічильник спроб
-  // лишається — у звичайної вправи нема свого еквівалента цього рядка.
+  // gapOrderFor активного блоку, нижче) — ОДНАКОВЕ в обох режимах, той
+  // самий принцип, що letter-rearrangement.tsx (renderPracticeItem там
+  // теж не розрізняє sceneStyle/флет). Задача "per-card reveal for
+  // letter_gaps, match letter_rearrangement" — раніше сцена-вигляд мав
+  // ОКРЕМУ агреговану панель "Правильні відповіді цього блоку" під усім
+  // гридом (hideReveal-гілка, видалена), флет — per-card пілюлю
+  // "Відповідь". Тепер ОБИДВА режими використовують ЛИШЕ per-card пілюлю
+  // (нижче) — той самий .practice-reveal-pill/PracticeAttemptFooter, що
+  // letter_rearrangement, однаковий вигляд рядка "Правильне слово: ..."
+  // (correct-answer-label/correct-answer-word) в обох місцях.
+  //
   // Задача "no holes in the middle of the grid" — layout тепер завжди
   // приходить від pairPracticeItems (flat-practice-layout.ts), в ОБОХ
   // режимах (сцена-вигляд блоків і флет): displayNumber — наскрізна
@@ -792,43 +794,20 @@ export function LetterGapsExercise({
     wi: number,
     layout: { displayNumber: number },
     forcedBreaks: LetterGapsForcedBreak[],
-    gapOrder: GapKey[],
-    hideReveal = false
+    gapOrder: GapKey[]
   ) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
     const itemRevealed = practiceCheck.revealed[key];
 
-    if (hideReveal) {
-      // Сцена-вигляд (крок 3c, "варіант 3 — крапки спроб") — футер
-      // усередині картки, без пілюлі "Відповідь" (панель "Правильні
-      // відповіді", renderBlock() нижче, уже дає відповіді); коректний
-      // елемент — без футера й без тексту "Правильно" (зелені поля й так
-      // це показують).
-      const footer =
-        isCorrect === false ? (
-          <PracticeAttemptFooter state="failed" failedAttempts={attempts} />
-        ) : undefined;
-      return renderWordCard(wi, {
-        detail: undefined,
-        locked: isCorrect === true,
-        gapOrder,
-        hintDisabled: true,
-        cardNumber: layout.displayNumber,
-        practiceFooter: footer,
-        forcedBreaks,
-      });
-    }
-
-    // Задача "unify attempt/reveal behaviour" — флет-режим (на відміну від
-    // сцена-вигляду вище) не має блочної панелі "Правильні відповіді", тож
-    // лишається ЄДИНИМ способом розкрити відповідь: той самий футер
-    // (крапки спроб), що сцена-вигляд, + пілюля "Відповідь" (не кнопка
-    // BUTTON_REVEAL_ANSWER) — той самий .practice-reveal-pill, що
-    // letter-rearrangement.tsx. Розкрита відповідь — рядок "Правильне
-    // слово" у ТОМУ Ж слоті footer (correct-answer-label/correct-answer-
-    // word, той самий вигляд, що Task A), замінює крапки після розкриття.
+    // per-card пілюля "Відповідь" (не кнопка BUTTON_REVEAL_ANSWER) — той
+    // самий .practice-reveal-pill, що letter-rearrangement.tsx. Розкрита
+    // відповідь — рядок "Правильне слово" у ТОМУ Ж слоті footer
+    // (correct-answer-label/correct-answer-word, той самий вигляд, що
+    // letter_rearrangement), замінює крапки після розкриття. Кольори
+    // самих клітинок (gapLiveStatus, вище) не залежать від reveal —
+    // розкриття лише додає текстовий рядок, не чіпає клітинки.
     const footer = (
       <PracticeAttemptFooter
         state={practiceAttemptFooterState(isCorrect, itemRevealed)}
@@ -896,7 +875,7 @@ export function LetterGapsExercise({
     // блок не заповнений цілком).
     // Задача "stay until next open", п.4 — усі слова активного блоку вже
     // "corrected-here": кнопка ховається, зелені картки лишаються самі
-    // по собі (нижче allCorrectInBlock рахується теж, панель відповідей).
+    // по собі.
     const activeAllCorrected =
       activeIndices.length > 0 && activeIndices.every((wi) => practiceResults[String(wi)] === true);
     const sceneCheckButtonEl = activeAllCorrected ? null : (
@@ -909,49 +888,6 @@ export function LetterGapsExercise({
         {practiceCheck.pending ? t("button.checking") : practiceUseBlocks ? t("button.checkBlock") : t("button.check")}
       </button>
     );
-    // Панель "Правильні відповіді" (крок 3b) — та сама TaskResult/
-    // TaskResultGapRows, що звичайна вправа (renderBlock() вище), лише
-    // дані беруть /api/exercises/practice/reveal по елементу (лениво,
-    // лише коли студент розгортає панель — onOpenChange, не на монтуванні
-    // блоку), не detail (практика його не має). Кеш — practiceCheck.revealed
-    // (той самий, що індивідуальна кнопка "Показати відповідь"), тож
-    // згортання/розгортання і router.refresh() нічого не перезапитують
-    // (ЗНОВУ дзвонить лише для СПРАВДІ ще не розкритих id).
-    function revealBlockAnswers(ids: string[]) {
-      for (const id of ids) {
-        if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
-      }
-    }
-    const activeKeys = activeIndices.map(String);
-    const answersLoading = activeKeys.some((key) => practiceCheck.revealPending[key]);
-    const allCorrectInBlock = activeKeys.length > 0 && activeKeys.every((key) => practiceResults[key] === true);
-    const answersPanel = practiceBlockAttempted[activeBlockIndex] ? (
-      <TaskResult
-        key={activeBlockIndex}
-        correct={allCorrectInBlock}
-        hideVerdictChip
-        toggleTitle={t("panel.correctAnswers")}
-        toggleCount={activeIndices.length}
-        onOpenChange={(open) => {
-          if (open) revealBlockAnswers(activeKeys);
-        }}
-      >
-        {answersLoading ? (
-          <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-            {t("panel.loadingAnswers")}
-          </p>
-        ) : (
-          <TaskResultGapRows
-            rows={buildGapRowsFromReveal(
-              activeIndices,
-              config.words.map((w) => w.chars),
-              Object.fromEntries(activeIndices.map((wi) => [wi, practiceCheck.revealed[String(wi)]?.[0]]))
-            )}
-            twoColumn
-          />
-        )}
-      </TaskResult>
-    ) : null;
     return (
       <div className={EXERCISE_STACK}>
         <BlockTabs
@@ -979,31 +915,18 @@ export function LetterGapsExercise({
             onChangeBlock={setPracticeActiveBlock}
             checkButton={sceneCheckButtonEl}
           >
-            {/* Задача "verdict pill almost touching the cards above it" —
-                грід+answersPanel тепер ОДНА спільна обгортка
-                (RESULT_ROW_GAP_CLASS, spacing.ts), не два окремих дитини
-                BlockNavigation: contentRef там — звичайний div БЕЗ gap
-                (щоб не зіпсувати margin-top рядка check/←/→ під ним), тож
-                без цієї обгортки грід і answersPanel торкались одне
-                одного. */}
-            <div className={RESULT_ROW_GAP_CLASS}>
-              <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-                {pairedActiveIndices.map((item) =>
-                  renderPracticeItem(item.id, item, forcedBreaksByWi.get(item.id) ?? [], activeGapOrder, true)
-                )}
-              </div>
-              {answersPanel}
+            <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
+              {pairedActiveIndices.map((item) =>
+                renderPracticeItem(item.id, item, forcedBreaksByWi.get(item.id) ?? [], activeGapOrder)
+              )}
             </div>
           </BlockNavigation>
         ) : (
           <>
-            <div className={RESULT_ROW_GAP_CLASS}>
-              <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-                {pairedActiveIndices.map((item) =>
-                  renderPracticeItem(item.id, item, forcedBreaksByWi.get(item.id) ?? [], activeGapOrder, true)
-                )}
-              </div>
-              {answersPanel}
+            <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
+              {pairedActiveIndices.map((item) =>
+                renderPracticeItem(item.id, item, forcedBreaksByWi.get(item.id) ?? [], activeGapOrder)
+              )}
             </div>
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
@@ -1056,7 +979,7 @@ export function LetterGapsExercise({
       <div className={EXERCISE_STACK}>
         <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
           {flatPracticeLayout.map((item) =>
-            renderPracticeItem(item.id, item, flatForcedBreaksByWi.get(item.id) ?? [], flatGapOrder, false)
+            renderPracticeItem(item.id, item, flatForcedBreaksByWi.get(item.id) ?? [], flatGapOrder)
           )}
         </div>
 

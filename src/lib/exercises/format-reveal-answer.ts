@@ -26,39 +26,6 @@ export function buildRevealedWordDetail(revealedWord: string, currentOrder: stri
   return { letters, isCorrect: letters.every((l) => l.isCorrect) };
 }
 
-export type GapAnswerRow = { number: number; parts: (string | { word: string })[] };
-
-// letter_gaps (позиційний, chars/hiddenLetters) — reveal повертає ПОВНЕ
-// слово (word.word, несанітизований сервером config) в answer[0], а
-// chars (null на місці пропуску) уже є в публічному config студента: i-та
-// позиція full[i] відповідає i-й позиції chars (той самий рядок, лише
-// частина прихована), тож лишається позиційно зіставити.
-export function buildGapRowsFromReveal(
-  wordIndices: number[],
-  charsByIndex: (readonly (string | null)[])[],
-  revealedWordByIndex: Record<number, string | undefined>
-): GapAnswerRow[] {
-  return wordIndices.map((wi, pos) => {
-    const chars = charsByIndex[wi] ?? [];
-    const full = revealedWordByIndex[wi] ?? "";
-    const parts: (string | { word: string })[] = [];
-    for (let i = 0; i < chars.length; i++) {
-      const ch = chars[i];
-      if (ch === null) {
-        const letter = full[i] ?? "";
-        const last = parts[parts.length - 1];
-        if (last && typeof last === "object") last.word += letter;
-        else parts.push({ word: letter });
-      } else {
-        const last = parts[parts.length - 1];
-        if (typeof last === "string") parts[parts.length - 1] = last + ch;
-        else parts.push(ch);
-      }
-    }
-    return { number: pos + 1, parts };
-  });
-}
-
 export type TableFillAnswerRow = {
   number: number;
   left: string;
@@ -231,9 +198,9 @@ export function maskMissedCheckboxCells<T extends { studentChecked: boolean; cor
 // і далі лишається приклеєною, звичайне слово з одним пробілом лишається
 // симетричним само по собі, без допомоги margin.
 //
-// НЕ застосовувати до letter_gaps (buildLetterGapsRows/
-// buildGapRowsFromReveal) — там чип завжди УСЕРЕДИНІ слова (буква),
-// пробіл там НІКОЛИ не потрібен з жодної сторони.
+// НЕ застосовувати до letter_gaps (buildLetterGapsRows, letter-gaps.tsx) —
+// там чип завжди УСЕРЕДИНІ слова (буква), пробіл там НІКОЛИ не потрібен з
+// жодної сторони.
 export function normalizeGapBefore(text: string): string {
   const trimmed = text.replace(/\s+$/, "");
   return trimmed === "" ? "" : trimmed + " ";
