@@ -17,7 +17,7 @@ import { plural } from "@/lib/i18n/plural";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, shownPracticeItemIds, prunePracticeResults } from "@/lib/exercises/error-review";
 import { practiceOptionDetail, normalizeGapBefore } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { HintBulb } from "./hint-bulb";
@@ -146,26 +146,35 @@ export function WordChoiceExercise({
   // false (single.result завжди null у практиці — single.submit тут не
   // викликається), тож toggleSelection/toggleCrossedOut і далі працюють.
   const isPractice = !!practice;
-  const practiceSentences = isPractice
-    ? config.sentences.filter((s) => practice!.onlyItemIds.includes(s.id))
-    : [];
-  const originalIndexOf = new Map(config.sentences.map((s, i) => [s.id, i]));
+  // Задача "stay until next open" — знімок onlyItemIds, заморожений на
+  // монтуванні (shownPracticeItemIds, error-review.ts).
+  const [practiceSnapshotIds] = useState<string[]>(() => practice?.onlyItemIds ?? []);
   const practiceCheck = usePracticeCheck(taskId);
   const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
+  const practiceSentences = isPractice
+    ? config.sentences.filter((s) =>
+        shownPracticeItemIds(practiceSnapshotIds, practice!.onlyItemIds, practiceResults).includes(s.id)
+      )
+    : [];
+  const originalIndexOf = new Map(config.sentences.map((s, i) => [s.id, i]));
   const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+    setPracticeResults((prev) => prunePracticeResults(prev, practice!.onlyItemIds, practiceSnapshotIds));
   }
 
+  // Задача "stay until next open", п.4 — submit/кнопка стосуються лише
+  // ще не "corrected-here" речень.
+  const practiceSentencesToSubmit = practiceSentences.filter((s) => practiceResults[s.id] !== true);
+
   async function submitPractice() {
-    const answer: WordChoiceAnswer = practiceSentences.map(sentenceAnswer);
+    const answer: WordChoiceAnswer = practiceSentencesToSubmit.map(sentenceAnswer);
     const result = await practiceCheck.check(
-      practiceSentences.map((s) => s.id),
+      practiceSentencesToSubmit.map((s) => s.id),
       answer
     );
     if (!result) return;
@@ -309,7 +318,12 @@ export function WordChoiceExercise({
     s: PublicSentence,
     globalIndex: number,
     sentenceDetail: SentenceDetail | undefined,
-    showHintBulb = true
+    showHintBulb = true,
+    // forceLocked — задача "stay until next open", п.2: щойно
+    // "corrected-here" (practiceResults[s.id]===true) речення лишається
+    // видимим, але вже заблокованим, на відміну від звичайного `locked`
+    // вище (завжди false в практиці, single.result там не встановлюється).
+    forceLocked = false
   ) {
     const [before, after] = s.sentence.split("{{}}");
     // Розділовий знак одразу після плитки (". , ; : ! ? ) » …") не
@@ -375,7 +389,7 @@ export function WordChoiceExercise({
                     ? toggleSelection(s.id, o.id, s.multiple)
                     : toggleCrossedOut(s.id, o.id)
                 }
-                disabled={locked}
+                disabled={locked || forceLocked}
                 className={`relative ${glued ? "ml-1 mr-0" : "mx-1"} inline-flex items-center gap-1 align-middle before:absolute before:inset-x-0 before:-inset-y-[5px] before:content-[''] disabled:cursor-not-allowed transition-colors word-choice-pill ${optionClass(s.id, o.id, sentenceDetail)}`}
               >
                 {!sentenceDetail &&
@@ -578,7 +592,7 @@ export function WordChoiceExercise({
               : undefined;
             return (
               <div key={s.id} className="flex flex-col gap-1.5">
-                {renderSentenceCard(s, idx, sentenceDetail, false)}
+                {renderSentenceCard(s, idx, sentenceDetail, false, isCorrect === true)}
               </div>
             );
           })}
@@ -615,17 +629,19 @@ export function WordChoiceExercise({
             </TaskResult>
           </>
         )}
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={submitPractice}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {practiceSentencesToSubmit.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
       </div>
     );
   }

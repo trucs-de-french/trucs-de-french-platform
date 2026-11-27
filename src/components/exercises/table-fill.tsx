@@ -20,7 +20,11 @@ import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton } from "@/lib/exercises/exer
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { practiceAttemptFooterState, pruneStaleResults } from "@/lib/exercises/error-review";
+import {
+  practiceAttemptFooterState,
+  shownPracticeItemIds,
+  prunePracticeResults,
+} from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { buildTableFillAnswerRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
@@ -183,16 +187,9 @@ function TableFillColumnsGrid({ multiColumn, children }: { multiColumn: boolean;
 export type TableFillPracticeProps = {
   onlyItemIds: string[];
   failedAttempts: Record<string, number>;
-  // Сцена-вигляд (openMode="scene", мистейки-сторінка, крок 4) — лише
-  // error-review-block.tsx передає: onlyItemIds вище стає ЗАМОРОЖЕНИМ
-  // знімком помилок на момент відкриття задачі (стабільне членство блоку
-  // на всю сесію, не live remainingItemIds), а плашка+заголовок+блоки
-  // (нижче) замінюють плаский список рядків-карток. correctedItemIds —
-  // підмножина onlyItemIds, вже виправлена ПІСЛЯ знімку (цього сеансу) —
-  // показується "вирішеною" в своєму блоці замість зникнення. Інлайн-
-  // картка сцени (error_correction, без цього поля) лишається пласким
-  // списком без плашки, НЕЗМІННО.
-  scene?: { correctedItemIds: string[] };
+  // Задача "stay until next open" — ЖИВИЙ remainingItemIds (сервер),
+  // окремо від onlyItemIds вище (той самий принцип, що letter-gaps.tsx).
+  liveRemainingItemIds?: string[];
 };
 
 export function TableFillExercise({
@@ -313,29 +310,28 @@ export function TableFillExercise({
   // карток (не таблиця/BlockNavigation), один спільний "Перевірити" на всі
   // показані рядки.
   const isPractice = !!practice;
-  const practiceRowIds = isPractice
-    ? config.rows.map((r) => r.id).filter((id) => practice!.onlyItemIds.includes(id))
-    : [];
-  const practiceRows = config.rows.filter((r) => practiceRowIds.includes(r.id));
+  // Задача "stay until next open" — знімок onlyItemIds, заморожений на
+  // монтуванні (той самий принцип, що letter-gaps.tsx/matching.tsx).
+  const [practiceSnapshotIds] = useState<string[]>(() => practice?.onlyItemIds ?? []);
   const practiceCheck = usePracticeCheck(taskId);
-  // Сцена-вигляд (крок 4) — попередньо "вирішені" елементи (виправлені
-  // ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds,
-  // error-review-block.tsx) засіюються як correct:true одразу при
-  // монтуванні — той самий вигляд ("Правильно" під карткою), що й щойно
-  // перевірений елемент, без повторного запиту.
-  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>(() => {
-    const seed: Record<string, boolean> = {};
-    for (const id of practice?.scene?.correctedItemIds ?? []) seed[id] = true;
-    return seed;
-  });
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
-  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
-  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
-  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
-    setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+  const liveRemainingItemIds = practice?.liveRemainingItemIds ?? practice?.onlyItemIds ?? [];
+  const practiceRowIds = isPractice
+    ? config.rows
+        .map((r) => r.id)
+        .filter((id) => shownPracticeItemIds(practiceSnapshotIds, liveRemainingItemIds, practiceResults).includes(id))
+    : [];
+  const practiceRows = config.rows.filter((r) => practiceRowIds.includes(r.id));
+  // Ключ ефекту — ЖИВИЙ remainingItemIds, не practice.onlyItemIds (той
+  // самий принцип, що letter-gaps.tsx).
+  const liveRemainingItemIdsKey = liveRemainingItemIds.join(",");
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(liveRemainingItemIdsKey);
+  if (isPractice && liveRemainingItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(liveRemainingItemIdsKey);
+    setPracticeResults((prev) => prunePracticeResults(prev, liveRemainingItemIds, practiceSnapshotIds));
   }
 
   // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE рядків, той самий
@@ -343,7 +339,7 @@ export function TableFillExercise({
   // (знімок помилок, не всю вправу). blockCount<=1 — БЕЗ вкладок/футера
   // нижче (той самий built-in захист, що BlockTabs/BlockNavigation уже
   // мають для звичайної вправи), плашка+заголовок лишаються завжди.
-  const isSceneMode = !!practice?.scene;
+  const isSceneMode = !!plaqueText;
   const practiceRowBlocks = isSceneMode ? chunkWithoutSingleton(practiceRows, EXERCISE_BLOCK_SIZE) : [];
   const practiceBlockCount = practiceRowBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
@@ -354,7 +350,11 @@ export function TableFillExercise({
   // (сцена-вигляд); blockIndex — лише сцена-вигляд, позначає цей блок
   // "спробуваним" (чекмарк на вкладці, той самий принцип, що
   // isBlockChecked={(i) => i in blockResults} звичайної вправи).
-  async function submitPractice(rows: Row[], blockIndex?: number) {
+  async function submitPractice(allRows: Row[], blockIndex?: number) {
+    // Задача "stay until next open", п.4 — лише ще не "corrected-here"
+    // рядки йдуть у сам check().
+    const rows = allRows.filter((r) => practiceResults[r.id] !== true);
+    if (rows.length === 0) return;
     const rowIds = rows.map((r) => r.id);
     const practiceSet = new Set(rowIds);
     const cells: TableFillAnswer["cells"] = [];
@@ -777,7 +777,10 @@ export function TableFillExercise({
   if (isPractice && isSceneMode) {
     const activeRows = practiceUseBlocks ? (practiceRowBlocks[practiceActiveBlock] ?? []) : practiceRows;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
-    const sceneCheckButtonEl = (
+    // Задача "stay until next open", п.4 — усі рядки активного блоку вже
+    // "corrected-here": кнопка ховається.
+    const activeAllCorrected = activeRows.length > 0 && activeRows.every((r) => practiceResults[r.id] === true);
+    const sceneCheckButtonEl = activeAllCorrected ? null : (
       <button
         type="button"
         onClick={() => submitPractice(activeRows, activeBlockIndex)}
@@ -890,17 +893,19 @@ export function TableFillExercise({
     return (
       <div className={EXERCISE_STACK}>
         <div className="flex flex-col gap-2">{practiceRows.map((row, i) => renderPracticeRow(row, i + 1))}</div>
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => submitPractice(practiceRows)}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? tt("button.checking") : tt("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {practiceRows.some((r) => practiceResults[r.id] !== true) && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => submitPractice(practiceRows)}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? tt("button.checking") : tt("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
       </div>
     );
   }

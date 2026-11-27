@@ -19,7 +19,11 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
-import { practiceAttemptFooterState, pruneStaleResults } from "@/lib/exercises/error-review";
+import {
+  practiceAttemptFooterState,
+  shownPracticeItemIds,
+  prunePracticeResults,
+} from "@/lib/exercises/error-review";
 import { practiceOptionDetail } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
@@ -125,23 +129,31 @@ export function ListeningExercise({
   // вище: той самий принцип, що table-fill.tsx — плаский список лише
   // помилкових питань, один спільний "Перевірити" на всі показані.
   const isPractice = !!practice;
-  const practiceQuestions = isPractice
-    ? config.questions.filter((q) => practice!.onlyItemIds.includes(q.id))
-    : [];
+  // Задача "stay until next open" — знімок onlyItemIds, заморожений на
+  // монтуванні (shownPracticeItemIds, error-review.ts).
+  const [practiceSnapshotIds] = useState<string[]>(() => practice?.onlyItemIds ?? []);
   const practiceCheck = usePracticeCheck(taskId);
   const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
+  const practiceQuestions = isPractice
+    ? config.questions.filter((q) =>
+        shownPracticeItemIds(practiceSnapshotIds, practice!.onlyItemIds, practiceResults).includes(q.id)
+      )
+    : [];
   const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+    setPracticeResults((prev) => prunePracticeResults(prev, practice!.onlyItemIds, practiceSnapshotIds));
   }
+  // Задача "stay until next open", п.4 — submit/кнопка стосуються лише
+  // ще не "corrected-here" питань.
+  const practiceQuestionsToSubmit = practiceQuestions.filter((q) => practiceResults[q.id] !== true);
   async function submitPractice() {
-    const itemIds = practiceQuestions.map((q) => q.id);
-    const answer: ListeningAnswer = practiceQuestions.map((q) => ({ questionId: q.id, optionId: answers[q.id] }));
+    const itemIds = practiceQuestionsToSubmit.map((q) => q.id);
+    const answer: ListeningAnswer = practiceQuestionsToSubmit.map((q) => ({ questionId: q.id, optionId: answers[q.id] }));
     const r = await practiceCheck.check(itemIds, answer);
     if (!r) return;
     setPracticeResults((prev) => {
@@ -198,7 +210,7 @@ export function ListeningExercise({
                       id: o.id,
                       role: "radio" as const,
                       selected: chosen,
-                      disabled: false,
+                      disabled: isCorrect === true,
                       onClick: () => setAnswers((prev) => ({ ...prev, [q.id]: o.id })),
                       tileClassName: tileClass(q.id, o.id, qDetail),
                       indicatorClassName: indicatorClass(q.id, o.id, qDetail),
@@ -218,17 +230,19 @@ export function ListeningExercise({
           })}
         </div>
 
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={submitPractice}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {practiceQuestionsToSubmit.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
       </div>
     );
   }

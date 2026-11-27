@@ -190,27 +190,17 @@ function ErrorReviewPractice({
   if (!entry.config) return null;
   const isSceneBlockable = !!snapshotIds && SCENE_BLOCKABLE_TASK_TYPES.has(entry.taskType);
   const onlyItemIds = isSceneBlockable ? snapshotIds! : entry.remainingItemIds;
-  // matching — виняток: entry.config.pairs (sanitizeMatchingForPractice,
-  // wrongItemIds, НЕ remainingItemIds — sanitize.ts) уже сам є СТАБІЛЬНИМ
-  // на всю історію завдання (не лише на цю сесію) пулом, з якого
-  // matching.tsx чанкує блоки НАПРЯМУ (не через знімок, config.left/right
-  // мають лишатись позиційно узгодженими з тим, що реально прочанкував
-  // сервер) — тож "вирішені" тут мають рахуватись від УСЬОГО config.pairs,
-  // а не лише від знімку цієї сесії, інакше пара, виправлена в
-  // ПОПЕРЕДНІЙ сесії (до цього відкриття — не входить у знімок), знову
-  // зʼявилась би в блоці як "ще не виправлена". Інші 3 типи — від знімку
-  // (їхній config НЕ скоуплений за id, тож лише знімок визначає і членство
-  // блоку, і що вважати "цією сесією виправленим").
-  const scene = isSceneBlockable
-    ? {
-        correctedItemIds:
-          entry.taskType === "matching"
-            ? ((entry.config as unknown as { pairs?: { id: string }[] }).pairs ?? [])
-                .map((p) => p.id)
-                .filter((id) => !entry.remainingItemIds.includes(id))
-            : snapshotIds!.filter((id) => !entry.remainingItemIds.includes(id)),
-      }
-    : undefined;
+  // Задача "stay until next open" — "corrected-here" (елемент, виправлений
+  // САМЕ цим компонентом/вікном) тепер визначає сам компонент типу зі
+  // своїх ЛОКАЛЬНИХ practiceResults/practiceResultByLeft (ніколи з того,
+  // що зникло з серверного remainingItemIds — це могло статись і в ІНШОМУ
+  // вікні, requirement 3), тож тут більше не потрібно рахувати
+  // "вирішене" заднім числом — лише дати компоненту ЖИВИЙ
+  // remainingItemIds, окремо від onlyItemIds вище (для SCENE_BLOCKABLE
+  // типів у сцена-вигляді onlyItemIds — заморожений повний знімок завдання
+  // для чанкування блоків, НЕ live-набір; для решти (флет-режим чи 7
+  // "живих" типів) обидва однакові).
+  const liveRemainingItemIds = entry.remainingItemIds;
   // Рядок інструкції (FR-жирна/UK-сіра, слайш, роздільник — той самий
   // TaskPanelHeader, що сторінка сцени) — для типів, чия ВЛАСНА гілка тут
   // (switch нижче) НЕ рендерить TaskPanelHeader сама. ОКРЕМО від
@@ -279,7 +269,7 @@ function ErrorReviewPractice({
           pointsVisible={false}
           hidePoints
           plaqueText={plaqueText}
-          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, scene }}
+          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, liveRemainingItemIds }}
         />
       );
     case "letter_rearrangement":
@@ -290,7 +280,7 @@ function ErrorReviewPractice({
           pointsVisible={false}
           hidePoints
           plaqueText={plaqueText}
-          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, scene }}
+          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, liveRemainingItemIds }}
         />
       );
     case "matching":
@@ -301,7 +291,7 @@ function ErrorReviewPractice({
           pointsVisible={false}
           hidePoints
           plaqueText={plaqueText}
-          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, scene }}
+          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, liveRemainingItemIds }}
         />
       );
     case "table_fill":
@@ -312,7 +302,7 @@ function ErrorReviewPractice({
           pointsVisible={false}
           hidePoints
           plaqueText={plaqueText}
-          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, scene }}
+          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, liveRemainingItemIds }}
         />
       );
     case "drag_drop":
@@ -555,7 +545,15 @@ function ErrorReviewCard({
         </div>
       )}
 
-      {isInteractive && !isDone && (
+      {/* RISK 1 ("stay until next open", п.5) — раніше цей блок (і разом з
+          ним кнопка розгортання) зникав ОДРАЗУ, щойно isDone ставав true
+          (live, з entry.status) — картка миттєво замінювалась банером
+          нижче, студент не встигав побачити щойно позеленілі елементи під
+          нею. Поки картка ВІДКРИТА (expanded), кнопка лишається (як
+          "Згорнути") незалежно від isDone — банер з'являється лише ПІСЛЯ
+          згортання, на наступному відкритті вже як звичний "усе
+          виправлено". */}
+      {isInteractive && (!isDone || expanded) && (
         <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 dark:border-[var(--card-border)]">
           <button
             type="button"
@@ -567,14 +565,14 @@ function ErrorReviewCard({
         </div>
       )}
 
-      {isDone && (
+      {isDone && !expanded && (
         <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 text-sm text-green-600 dark:border-[var(--card-border)] dark:text-green-400">
           <Check size={16} aria-hidden />
           {t("errReview.allFixedBanner")}
         </div>
       )}
 
-      {expanded && isInteractive && !isDone && entry.config && (
+      {expanded && entry.config && (
         <div className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-[var(--card-border)] dark:bg-neutral-900/50">
           <ErrorReviewPractice entry={entry} />
         </div>
@@ -597,8 +595,16 @@ function prefersReducedMotion(): boolean {
 function ErrorReviewOpenedTask({ entry, snapshotIds }: { entry: ErrorReviewEntryData; snapshotIds: string[] }) {
   const { t } = useT();
   const { isDone } = errorReviewFlags(entry);
+  // RISK 1 ("stay until next open", п.5) — цей компонент ремонтується
+  // при кожній зміні відкритої задачі (key={taskId} у ErrorReviewBlock),
+  // тож useState-ініціалізатор тут і є "знімок на момент відкриття":
+  // якщо задача відкрилась НЕ готовою (а відкрити готову неможливо —
+  // чип/кнопка "Виправити" зникають, щойно isDone стає true), банер
+  // показує лише НАСТУПНЕ відкриття (новий ремонт, свіжий isDone), а не
+  // той самий кадр, де студент щойно виправив останній елемент.
+  const [wasDoneAtOpen] = useState(isDone);
 
-  if (isDone) {
+  if (wasDoneAtOpen) {
     return (
       <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
         <Check size={16} aria-hidden />

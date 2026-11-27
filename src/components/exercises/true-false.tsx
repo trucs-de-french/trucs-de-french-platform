@@ -16,7 +16,12 @@ import { EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { practiceAttemptFooterState, pruneStaleResults, practiceAnswerForColor } from "@/lib/exercises/error-review";
+import {
+  practiceAttemptFooterState,
+  shownPracticeItemIds,
+  prunePracticeResults,
+  practiceAnswerForColor,
+} from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
@@ -129,30 +134,43 @@ export function TrueFalseExercise({
   // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
   // вище: завжди плаский список, без BlockNavigation.
   const isPractice = !!practice;
-  const practiceStatements = isPractice
-    ? config.statements.filter((s) => practice!.onlyItemIds.includes(s.id))
-    : [];
-  const originalIndexOf = new Map(config.statements.map((s, i) => [s.id, i]));
+  // Задача "stay until next open" — знімок onlyItemIds, заморожений на
+  // монтуванні (shownPracticeItemIds, error-review.ts): без нього щойно
+  // виправлене твердження зникало би одразу, щойно router.refresh()
+  // повертав коротший onlyItemIds.
+  const [practiceSnapshotIds] = useState<string[]>(() => practice?.onlyItemIds ?? []);
   const practiceCheck = usePracticeCheck(taskId);
   const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
+  const practiceStatements = isPractice
+    ? config.statements.filter((s) =>
+        shownPracticeItemIds(practiceSnapshotIds, practice!.onlyItemIds, practiceResults).includes(s.id)
+      )
+    : [];
+  const originalIndexOf = new Map(config.statements.map((s, i) => [s.id, i]));
   const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
   // Коригування стану під час рендеру (React-рекомендований патерн — не
   // useEffect, щоб уникнути react-hooks/set-state-in-effect): коли
   // remainingItemIds змінюється (елемент виправлено й зник після
-  // router.refresh()), скидаємо локальні результати попередньої спроби.
+  // router.refresh()), чистимо ЛИШЕ записи, що вийшли й з "видимого"
+  // набору (prunePracticeResults тримає value===true, доки id лишається
+  // в знімку).
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+    setPracticeResults((prev) => prunePracticeResults(prev, practice!.onlyItemIds, practiceSnapshotIds));
   }
 
+  // Задача "stay until next open", п.4 — submit/кнопка стосуються лише
+  // ще не "corrected-here" тверджень.
+  const practiceStatementsToSubmit = practiceStatements.filter((s) => practiceResults[s.id] !== true);
+
   async function submitPractice() {
-    const answer = practiceStatements.map((s) => ({ id: s.id, value: answers[s.id] }));
+    const answer = practiceStatementsToSubmit.map((s) => ({ id: s.id, value: answers[s.id] }));
     const result = await practiceCheck.check(
-      practiceStatements.map((s) => s.id),
+      practiceStatementsToSubmit.map((s) => s.id),
       answer
     );
     if (!result) return;
@@ -355,7 +373,7 @@ export function TrueFalseExercise({
             const practiceStudentAnswer = practiceAnswerForColor(isCorrect, answers[s.id]);
             return (
               <div key={s.id} className="flex flex-col gap-1.5">
-                {renderStatement(s, idx, undefined, false, practiceCorrectAnswer, practiceStudentAnswer)}
+                {renderStatement(s, idx, undefined, isCorrect === true, practiceCorrectAnswer, practiceStudentAnswer)}
                 <PracticeAttemptFooter
                   state={practiceAttemptFooterState(isCorrect, itemRevealed)}
                   failedAttempts={attempts}
@@ -366,17 +384,19 @@ export function TrueFalseExercise({
             );
           })}
         </div>
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={submitPractice}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {practiceStatementsToSubmit.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
       </div>
     );
   }

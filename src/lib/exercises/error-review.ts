@@ -864,3 +864,76 @@ export function maxFailedAttempts(ids: string[], failedAttempts: Record<string, 
 export function practiceAnswerForColor<T>(isCorrect: boolean | undefined, liveAnswer: T): T | undefined {
   return isCorrect === undefined ? undefined : liveAnswer;
 }
+
+// Задача "stay until next open" (owner report: виправлений елемент миттєво
+// зникав зі списку практики, щойно router.refresh() повертав коротший
+// remainingItemIds — студент не бачив власного успіху). Кожен з 11
+// items-типів тепер заморожує snapshotIds на монтуванні свого блоку
+// практики (useState-ініціалізатор, той самий принцип, що matching.tsx/
+// frozenSceneConfig) — МНОЖИНА/ПОРЯДОК елементів, видимих на момент
+// відкриття, НЕ оновлюється пізнішими refresh. Три статуси елемента
+// всередині цього знімку:
+//
+// - "wrong" — і досі в живих remainingItemIds (сервер ще вважає
+//   неправильним).
+// - "corrected-here" — вийшов із живих remainingItemIds, АЛЕ позначений
+//   правильним check(), що виконав САМЕ цей компонент (resultById[id]===
+//   true — ключ, що кожен тип уже й так веде як practiceResults/
+//   practiceResultByLeft, НІКОЛИ не встановлюється з reveal()). Такий
+//   елемент лишається на екрані зеленим/заблокованим.
+// - "gone" — вийшов із живих remainingItemIds і НЕ позначений тут true
+//   (виправлений в ІНШОМУ вікні/вкладці — RISK 3 нижче — чи в попередній
+//   сесії, ще до цього монтування). Такий елемент студент тут не
+//   виправляв — показувати зеленим НЕ можна (вимога 3 задачі), його
+//   прибирають зі списку на наступному refresh.
+export type PracticeItemStatus = "wrong" | "corrected-here" | "gone";
+
+export function derivePracticeItemStatus(
+  id: string,
+  remainingItemIds: string[],
+  localCorrectById: Record<string, boolean | undefined>
+): PracticeItemStatus {
+  if (remainingItemIds.includes(id)) return "wrong";
+  return localCorrectById[id] === true ? "corrected-here" : "gone";
+}
+
+// Видимий список — snapshotIds (заморожений порядок/членство), за
+// вирахуванням "gone" (requirement 1: рефреш змінює лише СТАТУС елемента,
+// ніколи не змінює порядок і не додає нових — може лише прибрати "gone").
+export function shownPracticeItemIds(
+  snapshotIds: string[],
+  remainingItemIds: string[],
+  localCorrectById: Record<string, boolean | undefined>
+): string[] {
+  return snapshotIds.filter((id) => derivePracticeItemStatus(id, remainingItemIds, localCorrectById) !== "gone");
+}
+
+// RISK 1 (error-review-block.tsx) — чи має обгортка (плашка/панель/банер)
+// лишатись змонтованою як ПРАКТИКА, а не одразу замінюватись банером
+// "усе виправлено": так, доки в знімку лишається бодай один видимий
+// елемент (wrong чи corrected-here) — тобто є що показати студенту, навіть
+// якщо сервер уже каже remainingItemIds:[].
+export function hasVisiblePracticeItems(
+  snapshotIds: string[],
+  remainingItemIds: string[],
+  localCorrectById: Record<string, boolean | undefined>
+): boolean {
+  return shownPracticeItemIds(snapshotIds, remainingItemIds, localCorrectById).length > 0;
+}
+
+// Чистка practiceResults/practiceResultByLeft ПІСЛЯ кожного refresh —
+// на відміну від pruneStaleResults (видаляє все, чого нема в currentIds),
+// тут currentIds рахується як "видимий" набір (shownPracticeItemIds) САМЕ
+// з prev (записи, що вже є в prev, — джерело правди для "чи local true"),
+// тож запис із value===true НІКОЛИ не стирається, доки id лишається в
+// знімку (навіть коли сервер уже прибрав його з remainingItemIds) — це і є
+// механізм, що тримає "corrected-here" видимим. Запис, якого там нема
+// (value!==true, id випав з remainingItemIds — "gone"), прибирається, як і
+// раніше.
+export function prunePracticeResults(
+  prev: Record<string, boolean>,
+  remainingItemIds: string[],
+  snapshotIds: string[]
+): Record<string, boolean> {
+  return pruneStaleResults(prev, shownPracticeItemIds(snapshotIds, remainingItemIds, prev));
+}

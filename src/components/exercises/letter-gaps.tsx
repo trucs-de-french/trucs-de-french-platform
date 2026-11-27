@@ -23,7 +23,11 @@ import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton, chunkWithMinTail } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { practiceAttemptFooterState, pruneStaleResults } from "@/lib/exercises/error-review";
+import {
+  practiceAttemptFooterState,
+  shownPracticeItemIds,
+  prunePracticeResults,
+} from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
@@ -88,16 +92,13 @@ function buildLetterGapsRows(
 export type LetterGapsPracticeProps = {
   onlyItemIds: string[];
   failedAttempts: Record<string, number>;
-  // Сцена-вигляд (openMode="scene", мистейки-сторінка, крок 4) — лише
-  // error-review-block.tsx передає: onlyItemIds вище стає ЗАМОРОЖЕНИМ
-  // знімком помилок на момент відкриття задачі (стабільне членство блоку
-  // на всю сесію, не live remainingItemIds), а плашка+заголовок+блоки
-  // (нижче) замінюють плаский одноколонковий список. correctedItemIds —
-  // підмножина onlyItemIds, вже виправлена ПІСЛЯ знімку (цього сеансу) —
-  // показується "вирішеною" в своєму блоці замість зникнення. Інлайн-
-  // картка сцени (error_correction, без цього поля) лишається пласким
-  // списком без плашки, НЕЗМІННО.
-  scene?: { correctedItemIds: string[] };
+  // Задача "stay until next open" — ЖИВИЙ remainingItemIds (сервер),
+  // окремо від onlyItemIds вище: для сцена-вигляду (plaqueText truthy)
+  // останній — заморожений на рівні ЦІЛОЇ задачі знімок (стабільне
+  // чанкування на блоки), тож потрібен ОКРЕМИЙ живий сигнал, щоб елемент,
+  // виправлений в ІНШОМУ вікні (RISK 3), коректно зник і тут. Для флет-
+  // режиму збігається з onlyItemIds (той самий live-набір).
+  liveRemainingItemIds?: string[];
 };
 
 // Той самий normalize (trim+lowercase, БЕЗ прибирання діакритики), що
@@ -319,28 +320,36 @@ export function LetterGapsExercise({
   // вище: завжди плаский однoколонковий список (вихідний порядок слів, без
   // estimateCardRows-мішання) і без BlockNavigation.
   const isPractice = !!practice;
-  const practiceWordIndices = isPractice
-    ? config.words.map((_, wi) => wi).filter((wi) => practice!.onlyItemIds.includes(String(wi)))
-    : [];
+  // Задача "stay until next open" — знімок onlyItemIds, заморожений на
+  // монтуванні (той самий принцип, що matching.tsx/frozenSceneConfig); для
+  // SCENE_BLOCKABLE-сцена-вигляду onlyItemIds, що сюди приходить, УЖЕ сам
+  // є заморожений на рівні ЦІЛОЇ задачі (error-review-block.tsx) — цей
+  // локальний знімок просто дублює те саме значення, безпечно. liveIds
+  // (practice.liveRemainingItemIds — ЖИВИЙ, requirement 3/RISK 3) окремий
+  // від onlyItemIds САМЕ для цих 4 chunk-based типів (для решти 7 — те
+  // саме значення).
+  const [practiceSnapshotIds] = useState<string[]>(() => practice?.onlyItemIds ?? []);
   const practiceCheck = usePracticeCheck(taskId);
-  // Сцена-вигляд (крок 4) — попередньо "вирішені" елементи (виправлені
-  // ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds,
-  // error-review-block.tsx) засіюються як correct:true одразу при
-  // монтуванні — той самий вигляд ("Правильно" під карткою), що й щойно
-  // перевірений елемент, без повторного запиту.
-  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>(() => {
-    const seed: Record<string, boolean> = {};
-    for (const id of practice?.scene?.correctedItemIds ?? []) seed[id] = true;
-    return seed;
-  });
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
-  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
-  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
-  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
-    setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+  const liveRemainingItemIds = practice?.liveRemainingItemIds ?? practice?.onlyItemIds ?? [];
+  const practiceWordIndices = isPractice
+    ? config.words
+        .map((_, wi) => wi)
+        .filter((wi) => shownPracticeItemIds(practiceSnapshotIds, liveRemainingItemIds, practiceResults).includes(String(wi)))
+    : [];
+  // Ключ ефекту — ЖИВИЙ remainingItemIds (liveRemainingItemIds), не
+  // practice.onlyItemIds: для сцена-вигляду цих 4 типів останній —
+  // заморожений на рівні ЦІЛОЇ задачі (error-review-block.tsx) й ніколи не
+  // змінюється після монтування, тож ефект ніколи не перетриггерився б
+  // (RISK 3 — крос-вікно виправлення — не підхоплювалось би).
+  const liveRemainingItemIdsKey = liveRemainingItemIds.join(",");
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(liveRemainingItemIdsKey);
+  if (isPractice && liveRemainingItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(liveRemainingItemIdsKey);
+    setPracticeResults((prev) => prunePracticeResults(prev, liveRemainingItemIds, practiceSnapshotIds));
   }
 
   // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE слів, той самий
@@ -355,7 +364,7 @@ export function LetterGapsExercise({
   // розмітки). blockCount<=1 — БЕЗ вкладок/футера нижче (той самий
   // built-in захист, що BlockTabs/BlockNavigation уже мають для звичайної
   // вправи), плашка+заголовок лишаються завжди.
-  const isSceneMode = !!practice?.scene;
+  const isSceneMode = !!plaqueText;
   const practiceBlocks = isSceneMode ? chunkWithMinTail(practiceWordIndices, EXERCISE_BLOCK_SIZE, 3) : [];
   const practiceBlockCount = practiceBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
@@ -366,7 +375,12 @@ export function LetterGapsExercise({
   // (сцена-вигляд); blockIndex — лише сцена-вигляд, позначає цей блок
   // "спробуваним" (чекмарк на вкладці, той самий принцип, що
   // isBlockChecked={(i) => i in blockResults} звичайної вправи).
-  async function submitPractice(indices: number[], blockIndex?: number) {
+  async function submitPractice(allIndices: number[], blockIndex?: number) {
+    // Задача "stay until next open", п.4 — лише ще не "corrected-here"
+    // слова йдуть у сам check(); решта (practiceResults[String(wi)]===true)
+    // лишається на екрані, але повторно не відправляється.
+    const indices = allIndices.filter((wi) => practiceResults[String(wi)] !== true);
+    if (indices.length === 0) return;
     const practiceSet = new Set(indices);
     const letters: (string[] | null)[] = config.words.map((_, wi) => (practiceSet.has(wi) ? answers[wi] : null));
     const answer: Omit<LetterGapsAnswer, "letters"> & { letters: (string[] | null)[] } = {
@@ -798,7 +812,7 @@ export function LetterGapsExercise({
         ) : undefined;
       return renderWordCard(wi, {
         detail: undefined,
-        locked: false,
+        locked: isCorrect === true,
         gapOrder,
         hintDisabled: true,
         cardNumber: layout.displayNumber,
@@ -834,7 +848,7 @@ export function LetterGapsExercise({
       <div key={wi} className="flex flex-col gap-1.5">
         {renderWordCard(wi, {
           detail: undefined,
-          locked: false,
+          locked: isCorrect === true,
           gapOrder,
           hintDisabled: true,
           cardNumber: layout.displayNumber,
@@ -880,7 +894,12 @@ export function LetterGapsExercise({
     // хибно блокував кнопку в ЩОЙНО відкритому блоці без жодної введеної
     // літери (задача "owner report": Перевірити блок недоступна, доки
     // блок не заповнений цілком).
-    const sceneCheckButtonEl = (
+    // Задача "stay until next open", п.4 — усі слова активного блоку вже
+    // "corrected-here": кнопка ховається, зелені картки лишаються самі
+    // по собі (нижче allCorrectInBlock рахується теж, панель відповідей).
+    const activeAllCorrected =
+      activeIndices.length > 0 && activeIndices.every((wi) => practiceResults[String(wi)] === true);
+    const sceneCheckButtonEl = activeAllCorrected ? null : (
       <button
         type="button"
         onClick={() => submitPractice(activeIndices, activeBlockIndex)}
@@ -1053,23 +1072,27 @@ export function LetterGapsExercise({
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
 
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => submitPractice(practiceWordIndices)}
-            // Задача "check button pale/disabled" — та сама умова, що вже
-            // виправлена для sceneCheckButtonEl (вище): disabled лише поки
-            // запит у польоті, БЕЗ вимоги "усі слова заповнені". Незаповнені
-            // слова лишаються "ще неправильними" (gradeLetterGaps трактує
-            // порожній answers[wi] як неправильну відповідь, не крашиться) —
-            // той самий принцип, що вже підтверджений сцена-виглядом.
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {/* Задача "stay until next open", п.4 — усі слова вже
+            "corrected-here": кнопка ховається. */}
+        {practiceWordIndices.some((wi) => practiceResults[String(wi)] !== true) && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => submitPractice(practiceWordIndices)}
+              // Задача "check button pale/disabled" — та сама умова, що вже
+              // виправлена для sceneCheckButtonEl (вище): disabled лише поки
+              // запит у польоті, БЕЗ вимоги "усі слова заповнені". Незаповнені
+              // слова лишаються "ще неправильними" (gradeLetterGaps трактує
+              // порожній answers[wi] як неправильну відповідь, не крашиться) —
+              // той самий принцип, що вже підтверджений сцена-виглядом.
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
       </div>
     );
   }

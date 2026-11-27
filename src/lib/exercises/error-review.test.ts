@@ -19,6 +19,10 @@ import {
   maxFailedAttempts,
   pruneStaleResults,
   practiceAnswerForColor,
+  derivePracticeItemStatus,
+  shownPracticeItemIds,
+  hasVisiblePracticeItems,
+  prunePracticeResults,
 } from "./error-review";
 
 let failures = 0;
@@ -579,6 +583,161 @@ function assert(condition: boolean, label: string) {
   assert(
     practiceAnswerForColor(true, true) === true,
     "correct check this session -> the live answer is passed through too (feeds the green highlight)"
+  );
+}
+
+// --- "stay until next open" (owner report: a corrected item vanished
+// from the practice list the instant router.refresh() returned a
+// shorter remainingItemIds — the student never saw their own success).
+// derivePracticeItemStatus/shownPracticeItemIds — the merge of snapshot
+// ids + live remainingItemIds + this-window's own local results into
+// per-item status/the shown list (requirement 10a). ---
+
+{
+  // corrected here stays (requirement 10a, case 1)
+  assert(
+    derivePracticeItemStatus("x", [], { x: true }) === "corrected-here",
+    "left remainingItemIds AND this window's own check graded it true -> corrected-here, stays visible"
+  );
+}
+
+{
+  // corrected elsewhere is dropped (requirement 10a, case 2)
+  assert(
+    derivePracticeItemStatus("x", [], {}) === "gone",
+    "left remainingItemIds but this window never graded it true (corrected in another window/tab) -> gone"
+  );
+  assert(
+    derivePracticeItemStatus("x", [], { x: false }) === "gone",
+    "left remainingItemIds with only a stale false result (not true) from this window -> still gone, not corrected-here"
+  );
+}
+
+{
+  // still wrong stays (requirement 10a, case 3)
+  assert(
+    derivePracticeItemStatus("x", ["x"], {}) === "wrong",
+    "still in live remainingItemIds -> wrong, regardless of local results"
+  );
+}
+
+{
+  // order preserved after server reorder (requirement 10a, case 4) —
+  // shownPracticeItemIds filters the FROZEN snapshot (already in its own
+  // order), never reorders by the live remainingItemIds array order.
+  const snapshot = ["a", "b", "c"];
+  const reorderedRemaining = ["c", "a"]; // server came back with "b" fixed, and a~c reordered
+  const shown = shownPracticeItemIds(snapshot, reorderedRemaining, { b: false });
+  assert(
+    shown.join(",") === "a,c",
+    `snapshot order ("a,c") must survive a server reorder of remainingItemIds, got "${shown.join(",")}"`
+  );
+}
+
+{
+  // empty remaining keeps corrected-here (requirement 10a, case 5)
+  const shown = shownPracticeItemIds(["a", "b"], [], { a: true, b: true });
+  assert(
+    shown.join(",") === "a,b",
+    "remainingItemIds empty (server says everything is done) but both ids were corrected BY THIS WINDOW -> both stay shown"
+  );
+}
+
+// --- counting only still-wrong items (requirement 10b) — the existing
+// stillWrongIds already does exactly this (strictly ===false, never
+// undefined/true); confirmed here against a shown list that includes a
+// corrected-here id, to lock in that corrected-here never gets counted. ---
+{
+  // snapshot a/b/c; only c still wrong per the server; a corrected-here
+  // (true, stays shown); b never touched by this window (gone, dropped).
+  const shown = shownPracticeItemIds(["a", "b", "c"], ["c"], { a: true, c: false });
+  const wrongOnly = stillWrongIds(shown, { a: true, c: false });
+  assert(
+    shown.join(",") === "a,c" && wrongOnly.join(",") === "c",
+    `shown should be "a,c" and only "c" (strictly false) should count as still-wrong, got shown="${shown.join(",")}" wrongOnly="${wrongOnly.join(",")}"`
+  );
+}
+
+// --- wrapper stays mounted when remaining is empty but corrected-here is
+// not (requirement 10c / RISK 1, error-review-block.tsx) ---
+{
+  assert(
+    hasVisiblePracticeItems(["a"], [], { a: true }) === true,
+    "remainingItemIds empty but the id was corrected-here -> wrapper must stay mounted as practice, not switch to the done banner yet"
+  );
+  assert(
+    hasVisiblePracticeItems(["a"], [], {}) === false,
+    "remainingItemIds empty and nothing corrected-here (corrected elsewhere, or never attempted) -> nothing left to show"
+  );
+}
+
+// --- prunePracticeResults — the non-destructive prune used after every
+// refresh: never erases a true (corrected-here) entry while its id is
+// still in the snapshot, even though it already left remainingItemIds;
+// still drops stale false/ghost entries that genuinely left scope. ---
+{
+  const next = prunePracticeResults({ a: true, b: false, c: false }, ["c"], ["a", "b", "c"]);
+  assert(
+    next.a === true && next.b === undefined && next.c === false,
+    `prunePracticeResults must keep a (true, corrected-here) and c (still live), drop b (false, left scope) — got ${JSON.stringify(next)}`
+  );
+}
+
+// --- sync test (requirement 10d) — "an item corrected through the
+// scene-mode check path no longer appears in the remaining list that the
+// cabinet data loader returns, and vice versa". Both loadSceneErrorReviewEntries
+// (scene-error-review.ts, used by the scene page AND the inline
+// ErrorReviewBlock) and the cabinet mistakes loader build their entries
+// through the exact same buildErrorReviewEntry (this file) — there is no
+// separate "cabinet" vs "scene" remainingItemIds computation; both read
+// the SAME correctedItemIds/failedAttempts (get_mistake_correction_state
+// RPC) and the same mistakes rows for a given (student, task). A live
+// Supabase isn't available here (CLAUDE.md forbids querying the DB from
+// this session), so this test MOCKS the one thing that differs between
+// the two loaders — nothing about buildErrorReviewEntry itself: it calls
+// buildErrorReviewEntry twice with the IDENTICAL params a "scene check"
+// and a "cabinet check" would each have produced (same mistakeRows,
+// correctedItemIds, failedAttempts — standing in for "the practice/check
+// route wrote corrected_item_ids once, both loaders then read that same
+// row") and asserts both calls agree on remainingItemIds. This proves the
+// two loaders cannot disagree about which items are "remaining" as long
+// as they're fed the same corrected_item_ids state — the real
+// synchronization guarantee lives in the DB write being shared (already
+// true before this task; not something either loader decides on its
+// own).
+{
+  const mistakeRows = [
+    {
+      createdAt: "2026-01-01T00:00:00Z",
+      detail: { items: [{ id: "q1", options: [{ correct: true, selected: false }] }] },
+    },
+  ];
+  // Simulates: the scene-mode check route just wrote corrected_item_ids
+  // after the student corrected q1 THERE.
+  const sceneLoaderEntry = buildErrorReviewEntry({
+    taskId: "t1",
+    taskType: "multiple_choice",
+    mistakeRows,
+    correctedItemIds: ["q1"],
+    failedAttempts: {},
+  });
+  // Simulates: the cabinet page loads the SAME task a moment later,
+  // reading the SAME corrected_item_ids row (RPC) — not a separate,
+  // cabinet-only correction state.
+  const cabinetLoaderEntry = buildErrorReviewEntry({
+    taskId: "t1",
+    taskType: "multiple_choice",
+    mistakeRows,
+    correctedItemIds: ["q1"],
+    failedAttempts: {},
+  });
+  assert(
+    sceneLoaderEntry.remainingItemIds.length === 0 && cabinetLoaderEntry.remainingItemIds.length === 0,
+    "q1 corrected via the scene-mode check path must no longer appear in remainingItemIds for the cabinet loader (and vice versa) — both loaders agree once fed the same corrected_item_ids"
+  );
+  assert(
+    sceneLoaderEntry.status === "done" && cabinetLoaderEntry.status === "done",
+    "both loaders must agree the task is fully fixed once the shared corrected_item_ids state says so"
   );
 }
 

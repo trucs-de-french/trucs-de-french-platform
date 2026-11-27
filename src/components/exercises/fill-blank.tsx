@@ -35,7 +35,7 @@ import {
 import { useT } from "@/lib/i18n/context";
 import { normalize } from "@/lib/exercises/grade";
 import { useFitText } from "./use-fit-text";
-import { pruneStaleResults } from "@/lib/exercises/error-review";
+import { prunePracticeResults } from "@/lib/exercises/error-review";
 import { normalizeGapBefore } from "@/lib/exercises/format-reveal-answer";
 
 // Мобільний банк (<=640px, texte à trous) — довге слово в пілюлі не
@@ -188,10 +188,20 @@ export function FillBlankExercise({
   // remainingItemIds змінюється (елемент виправлено й зник після
   // router.refresh()), скидаємо локальні результати попередньої спроби, щоб
   // застарілий "✓"/"✕" не лишався на екрані для вже інших елементів.
+  // Задача "stay until next open" — усі blankCount пропусків існують
+  // ЗАВЖДИ (речення не коротшає), тож тут немає "зникнення" картки; бага
+  // проявлялась ІНАКШЕ: pruneStaleResults стирав practiceResults[i]===true
+  // ОДРАЗУ, щойно i випадав з onlyItemIds (виправлено, router.refresh()),
+  // і зелене поле миттєво сіріло назад до нейтрального. allBlankIds —
+  // повний статичний діапазон індексів (не змінюється на цьому монтуванні)
+  // — prunePracticeResults (error-review.ts) лишає true-записи НАЗАВЖДИ,
+  // доки індекс лишається в цьому діапазоні, і далі прибирає false/
+  // непідтверджені, щойно вони випадають з живого onlyItemIds.
+  const allBlankIds = useMemo(() => Array.from({ length: blankCount }, (_, i) => String(i)), [blankCount]);
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+    setPracticeResults((prev) => prunePracticeResults(prev, practice!.onlyItemIds, allBlankIds));
     // Задача "pool shows only what's needed" — щойно розв'язаний пропуск
     // прибирає своє слово з config.wordBank (sanitizeFillBlankForPractice),
     // тож сам масив коротшає й наступні слова зсуваються на інші індекси.
@@ -546,7 +556,9 @@ export function FillBlankExercise({
                     onChange={(e) => updateAnswer(i, e.target.value)}
                     onFocus={() => diacritics.onFocus(String(i))}
                     onBlur={diacritics.onBlur}
-                    disabled={isPractice ? practiceCheck.pending : !!result}
+                    disabled={
+                      isPractice ? practiceCheck.pending || practiceResults[String(i)] === true : !!result
+                    }
                     // placeholder — переклад (поки лампочку не натиснули й
                     // поле порожнє) переважає дефолтний "впишіть слово";
                     // title — повний переклад, навіть якщо truncate обрізав
@@ -642,17 +654,23 @@ export function FillBlankExercise({
       )}
 
       {isPractice ? (
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={submitPractice}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        // Задача "stay until next open", п.4 — practiceSet (живий, лише
+        // ще неправильні) порожній: кнопка/помилка ховаються, зелені поля
+        // вище (RISK 1, error-review-block.tsx тримає обгортку
+        // змонтованою) лишаються видимі самі по собі.
+        practiceSet.size > 0 && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )
       ) : (
         <div className="flex flex-col gap-3">
           {!result ? (

@@ -15,7 +15,7 @@ import { ChoiceQuestionCard } from "./choice-question-card";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
-import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, shownPracticeItemIds, prunePracticeResults } from "@/lib/exercises/error-review";
 import { practiceOptionDetail, practiceRowCorrect } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
@@ -178,30 +178,54 @@ export function MultipleChoiceExercise({
   // onlyItemIds випадково довший за CARD_BLOCK_MAX (на практиці
   // remainingItemIds — залишок помилок, рідко великий).
   const isPractice = !!practice;
-  const practiceItems = isPractice
-    ? config.items.filter((it) => practice!.onlyItemIds.includes(it.id))
-    : [];
-  // originalIndexOf — щоб .item-number-badge/aria-label лишались
-  // ОРИГІНАЛЬНИМИ номерами питань вправи, а не позицією у звуженому
-  // практичному підсписку.
-  const originalIndexOf = new Map(config.items.map((it, i) => [it.id, i]));
+  // Задача "stay until next open" — знімок onlyItemIds, заморожений на
+  // монтуванні цього блоку практики (useState-ініціалізатор, той самий
+  // принцип, що frozenSceneConfig у matching.tsx): без нього елемент,
+  // щойно виправлений ЦИМ check(), зникав би з practiceItems одразу, щойно
+  // router.refresh() повертав коротший practice.onlyItemIds — студент не
+  // встигав побачити власний успіх. shownPracticeItemIds (error-review.ts)
+  // лишає елемент видимим, доки він "wrong" (і досі в живому onlyItemIds)
+  // чи "corrected-here" (practiceResults[id]===true — ЦЕЙ компонент щойно
+  // зарахував його правильним); "gone" (виправлений в ІНШОМУ вікні/
+  // вкладці, RISK 3) коректно прибирається.
+  const [practiceSnapshotIds] = useState<string[]>(() => practice?.onlyItemIds ?? []);
   const practiceCheck = usePracticeCheck(taskId);
   const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
+  const practiceItems = isPractice
+    ? config.items.filter((it) =>
+        shownPracticeItemIds(practiceSnapshotIds, practice!.onlyItemIds, practiceResults).includes(it.id)
+      )
+    : [];
+  // originalIndexOf — щоб .item-number-badge/aria-label лишались
+  // ОРИГІНАЛЬНИМИ номерами питань вправи, а не позицією у звуженому
+  // практичному підсписку.
+  const originalIndexOf = new Map(config.items.map((it, i) => [it.id, i]));
   const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
-  // Коли remainingItemIds змінюється (елемент виправлено й зник після
-  // router.refresh()) — скидаємо локальні результати попередньої спроби,
-  // щоб застарілий "✓"/"✕" не лишався на екрані для вже інших елементів.
+  // Коли remainingItemIds змінюється — чистимо ЛИШЕ записи, що вийшли й з
+  // "видимого" набору (prunePracticeResults: тримає value===true, доки
+  // id лишається в знімку, навіть коли сервер уже прибрав його з
+  // remainingItemIds — саме це тримає "corrected-here" зеленим).
   useEffect(() => {
-    if (isPractice) setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+    if (isPractice) setPracticeResults((prev) => prunePracticeResults(prev, practice!.onlyItemIds, practiceSnapshotIds));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPractice, onlyItemIdsKey]);
 
+  // Задача "stay until next open", п.4 — кнопка "Перевірити" й сам
+  // check() стосуються лише ще неправильних елементів: вже "corrected-
+  // here" (practiceResults[id]===true) елементи лишаються на екрані
+  // (practiceItems вище), але повторно НЕ відправляються. На відміну від
+  // stillWrongIds (строго === false, для панелі відповідей/футера
+  // спроб — там undefined/ще не перевірене НЕ рахується), тут потрібні й
+  // ще НЕ перевірені елементи (undefined) — усе, що не є ПІДТВЕРДЖЕНО
+  // правильним.
+  const practiceItemsToSubmit = practiceItems.filter((it) => practiceResults[it.id] !== true);
+
   async function submitPractice() {
-    const answer = practiceItems.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] }));
-    const result = await practiceCheck.check(practiceItems.map((it) => it.id), answer);
+    const answer = practiceItemsToSubmit.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] }));
+    const result = await practiceCheck.check(practiceItemsToSubmit.map((it) => it.id), answer);
     if (!result) return;
     setPracticeResults((prev) => {
       const next = { ...prev };
@@ -238,9 +262,16 @@ export function MultipleChoiceExercise({
             : undefined;
           return (
             <div key={item.id} className="flex flex-col gap-1.5">
+              {/* Задача "stay until next open", п.2 — щойно elementElement
+                  (isCorrect===true, "corrected-here") locked:true: студент
+                  і далі МІГ перевіряти, лишаючи повторну спробу відкритою
+                  для isCorrect===false/undefined, але правильна відповідь
+                  тепер заблокована (елемент лишається на екрані, не
+                  зникає, тож редагування вже зарахованого вибору
+                  заборонене). */}
               {config.display === "dropdown"
-                ? renderDropdownRow(item, idx, itemDetail, false, false, isCorrect)
-                : renderItem(item, idx, itemDetail, false, false)}
+                ? renderDropdownRow(item, idx, itemDetail, false, isCorrect === true, isCorrect)
+                : renderItem(item, idx, itemDetail, false, isCorrect === true)}
             </div>
           );
         })}
@@ -1013,17 +1044,23 @@ export function MultipleChoiceExercise({
     return (
       <div className={EXERCISE_STACK}>
         {renderPracticeList()}
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={submitPractice}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {/* Задача "stay until next open", п.4 — усі елементи "corrected-
+            here" (нічого ще неперевіреного/неправильного не лишилось):
+            кнопка "Перевірити" й помилка запиту ховаються, зелені картки
+            вище лишаються видимими самі по собі. */}
+        {practiceItemsToSubmit.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
       </div>
     );

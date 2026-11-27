@@ -17,7 +17,7 @@ import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 import { buildMatchingPairRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
-import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
@@ -56,7 +56,12 @@ export type MatchingPracticeProps = {
   // плашки, НЕЗМІННО — її власний config.left/right скоуплений на
   // remainingItemIds теж, але БЕЗ заморожування (сторінка сцени, не
   // торкається цього фіксу).
-  scene?: { correctedItemIds: string[] };
+  // Задача "stay until next open" — ЖИВИЙ remainingItemIds (сервер),
+  // окремо від onlyItemIds вище (той самий принцип, що letter-gaps.tsx) —
+  // для RISK 3 (виправлення в ІНШОМУ вікні), щоб "gone"-пара (п.3 задачі)
+  // коректно зникла навіть попри frozenSceneConfig (нижче) тепер
+  // ЗАВЖДИ замороженого на монтуванні.
+  liveRemainingItemIds?: string[];
 };
 
 export function MatchingExercise({
@@ -118,81 +123,72 @@ export function MatchingExercise({
   // review.remainingItemIds, page.tsx: sanitizeMatchingForPractice), без
   // BlockNavigation.
   const isPractice = !!practice;
-  const isSceneMode = !!practice?.scene;
-  // Фікс "pre-corrected pairs напіввирішені" (owner report, сцена-вигляд) —
-  // заморожений на монтуванні зріз config.left/right/pairs, а не живий
-  // config: scene-error-review.ts тепер масштабує matching-конфіг під
-  // review.remainingItemIds (ЖИВИЙ, звужується після кожної перевірки в
-  // цій сесії), а не під ПОВНИЙ, ніколи не звужуваний wrongItemIds
-  // (MatchingPracticeProps вище). Заморожуючи тут (а не лишаючи сервер на
-  // ПОВНОМУ пулі, як раніше) отримуємо ОБИДВА: пари, виправлені ДО
-  // відкриття, взагалі не потрапляють у заморожений зріз (бо їх уже нема
-  // в ПЕРШОМУ, живому remainingItemIds, з якого сервер будує конфіг саме
-  // на монтуванні компонента); пари, виправлені ПІД ЧАС цієї сесії,
-  // лишаються в замороженому зрізі (і далі показуються "вирішеними" —
-  // practiceResultByLeft/practicePairs нижче, незалежні від конфіга) —
-  // заморожений зріз просто не оновлюється пізнішими router.refresh() (та
-  // сама ідея, що snapshot у error-review-block.tsx для інших 3 типів,
-  // лише тут заморожується увесь зріз конфіга, не просто список id).
-  // Реopen (закрити й знову відкрити цю саму задачу) ремонтує компонент
-  // (expandedTaskId-перехід в ErrorReviewBlock) — заморозка береться
-  // наново, свіжа. Флет-режим (isSceneMode===false) — null, завжди
-  // читає живий config напряму, той самий принцип, що раніше.
-  const [frozenSceneConfig] = useState<{ left: string[]; right: string[]; pairs: MatchingPublic["pairs"] } | null>(
-    () => (isSceneMode ? { left: config.left, right: config.right, pairs: config.pairs } : null)
-  );
-  // idByLeft/leftById — локальна адресація між left-текстом (яким керують
-  // клік-хендлери) і pair.id (яким адресуються practice/check,
-  // practice/reveal і failedAttempts/revealed). Сцена-вигляд читає із
-  // замороженого зрізу вище (не живого config.pairs), інакше ці мапи
-  // звужувались би слідом за живим config на кожному router.refresh(), і
-  // activeItemIds (нижче, submitPractice) загубив би id щойно виправленої
-  // в ЦІЙ сесії пари, щойно вона випала б із НОВОГО (живого) config.pairs.
-  const effectivePairs = frozenSceneConfig?.pairs ?? config.pairs;
+  const isSceneMode = !!plaqueText;
+  // Задача "stay until next open" — заморожений на МОНТУВАННІ зріз
+  // config.left/right/pairs, тепер у ЗАВЖДИ (не лише сцена-вигляд, як
+  // раніше): флет-режим мав ТОЙ САМИЙ баг (config.left/right/pairs тут
+  // уже звужені СЕРВЕРОМ до review.remainingItemIds на КОЖЕН рендер, той
+  // самий принцип, що drag-drop.tsx/image-match.tsx), тож щойно виправлена
+  // пара зникала з флет-списку одразу на router.refresh(). Реopen
+  // (закрити й знову відкрити задачу) ремонтує компонент — заморозка
+  // береться наново, свіжа.
+  const [frozenSceneConfig] = useState<{ left: string[]; right: string[]; pairs: MatchingPublic["pairs"] }>(() => ({
+    left: config.left,
+    right: config.right,
+    pairs: config.pairs,
+  }));
+  const effectivePairs = frozenSceneConfig.pairs;
   const idByLeft = useMemo(() => new Map(effectivePairs.map((p) => [p.left, p.id])), [effectivePairs]);
   const leftById = useMemo(() => new Map(effectivePairs.map((p) => [p.id, p.left])), [effectivePairs]);
   const [practicePairs, setPracticePairs] = useState<Record<string, string>>({});
   const [selectedLeftPractice, setSelectedLeftPractice] = useState<string | null>(null);
-  // Сцена-вигляд (крок 4) — попередньо "вирішені" ліві елементи
-  // (виправлені ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds
-  // — pair.id, мапуються на left-текст через leftById вище) засіюються як
-  // correct:true одразу при монтуванні — та сама зелена підсвітка на
-  // MatchingBoard, що й щойно перевірена пара. Для matching тепер завжди
-  // порожній набір (config уже не містить виправлених ДО відкриття пар
-  // узагалі, error-review-block.tsx — нічого седити), лишено як
-  // безпечний no-op, не найменша зміна.
-  const [practiceResultByLeft, setPracticeResultByLeft] = useState<Record<string, boolean>>(() => {
-    const seed: Record<string, boolean> = {};
-    for (const id of practice?.scene?.correctedItemIds ?? []) {
-      const left = leftById.get(id);
-      if (left) seed[left] = true;
-    }
-    return seed;
-  });
+  const [practiceResultByLeft, setPracticeResultByLeft] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
   const practiceCheck = usePracticeCheck(taskId);
-  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
-  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
-  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
-    setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    // practiceResultByLeft keys on LEFT TEXT, not pair id (onlyItemIds вище) —
-    // чистимо за frozenSceneConfig.left (сцена-вигляд, заморожений) чи
-    // config.left (флет, живий, уже скоуплений сервером) — той самий
-    // набір лівих, що й leftItems, рендерені зараз, лише правильний ключ
-    // для цього state.
-    setPracticeResultByLeft((prev) => pruneStaleResults(prev, frozenSceneConfig?.left ?? config.left));
+  // Задача "stay until next open", RISK 3 — ЖИВИЙ remainingItemIds
+  // (сервер), окремо від frozenSceneConfig вище (заморожений раз і
+  // назавжди): пара, виправлена в ІНШОМУ вікні/вкладці (requirement 3),
+  // має зникнути й тут, щойно це вікно саме це підхопить.
+  const liveRemainingItemIds = practice?.liveRemainingItemIds ?? practice?.onlyItemIds ?? [];
+  const liveRemainingItemIdsKey = liveRemainingItemIds.join(",");
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(liveRemainingItemIdsKey);
+  if (isPractice && liveRemainingItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(liveRemainingItemIdsKey);
+    // practiceResultByLeft keys on LEFT TEXT, not pair id — чистимо лише
+    // записи, що вийшли й з "видимого" набору (live wrong АБО
+    // "corrected-here" — value===true), той самий принцип, що
+    // prunePracticeResults (error-review.ts), лише тут inline (ключ —
+    // left-текст, не id).
+    setPracticeResultByLeft((prev) => {
+      const next: Record<string, boolean> = {};
+      for (const [left, value] of Object.entries(prev)) {
+        const id = idByLeft.get(left);
+        const stillWrong = id ? liveRemainingItemIds.includes(id) : false;
+        if (stillWrong || value === true) next[left] = value;
+      }
+      return next;
+    });
   }
+
+  // Задача "stay until next open" — "gone" ліві (пара виправлена в
+  // ІНШОМУ вікні, requirement 3): прибираються з блоків/флет-списку,
+  // решта frozenSceneConfig.left лишається у СТАБІЛЬНОМУ порядку.
+  const shownLeft = frozenSceneConfig.left.filter((left) => {
+    const id = idByLeft.get(left);
+    const stillWrong = id ? liveRemainingItemIds.includes(id) : false;
+    return stillWrong || practiceResultByLeft[left] === true;
+  });
 
   // Сцена-вигляд (крок 4) — блоки по чанках chunkMatchingPairs, той самий
   // helper, що звичайна вправа (leftBlocks/rightBlocks вище), лише тут —
-  // на замороженому зрізі (frozenSceneConfig вище), не на живому config.
-  // blockCount<=1 — БЕЗ вкладок/футера нижче (той самий built-in захист,
-  // що BlockTabs/BlockNavigation уже мають), плашка+заголовок лишаються
-  // завжди.
-  const practiceLeftBlocks = frozenSceneConfig ? chunkMatchingPairs(frozenSceneConfig.left) : [];
-  const practiceRightBlocks = frozenSceneConfig ? chunkMatchingPairs(frozenSceneConfig.right) : [];
+  // на замороженому (і "gone"-відфільтрованому вище) зрізі, не на живому
+  // config. blockCount<=1 — БЕЗ вкладок/футера нижче (той самий built-in
+  // захист, що BlockTabs/BlockNavigation уже мають), плашка+заголовок
+  // лишаються завжди.
+  const practiceLeftBlocks = isSceneMode ? chunkMatchingPairs(shownLeft) : [];
+  const practiceRightBlocks = isSceneMode ? chunkMatchingPairs(frozenSceneConfig.right) : [];
   const practiceBlockCount = practiceLeftBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
   const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);
@@ -240,7 +236,12 @@ export function MatchingExercise({
   // цього підмножини (той самий принцип, що плаский режим — ненадіслані
   // lefts просто не входять у answer, а не йдуть як right:""). blockIndex —
   // лише сцена-вигляд, позначає цей блок "спробуваним".
-  async function submitPractice(leftItems: string[], itemIds: string[], blockIndex?: number) {
+  async function submitPractice(allLeftItems: string[], blockIndex?: number) {
+    // Задача "stay until next open", п.4 — лише ще не "corrected-here"
+    // пари йдуть у сам check().
+    const leftItems = allLeftItems.filter((left) => practiceResultByLeft[left] !== true);
+    if (leftItems.length === 0) return;
+    const itemIds = leftItems.map((left) => idByLeft.get(left)).filter((id): id is string => !!id);
     const leftSet = new Set(leftItems);
     const answer: MatchingAnswer = Object.entries(practicePairs)
       .filter(([left]) => leftSet.has(left))
@@ -549,8 +550,8 @@ export function MatchingExercise({
   }
 
   if (isPractice && isSceneMode) {
-    const activeLeft = practiceUseBlocks ? (practiceLeftBlocks[practiceActiveBlock] ?? []) : frozenSceneConfig!.left;
-    const activeRight = practiceUseBlocks ? (practiceRightBlocks[practiceActiveBlock] ?? []) : frozenSceneConfig!.right;
+    const activeLeft = practiceUseBlocks ? (practiceLeftBlocks[practiceActiveBlock] ?? []) : shownLeft;
+    const activeRight = practiceUseBlocks ? (practiceRightBlocks[practiceActiveBlock] ?? []) : frozenSceneConfig.right;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
     const activeItemIds = activeLeft.map((left) => idByLeft.get(left)).filter((id): id is string => !!id);
     // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
@@ -561,10 +562,14 @@ export function MatchingExercise({
     // кнопку в блоках без жодної з'єднаної пари (задача "owner report":
     // Перевірити блок недоступна в блоках 1/2, доступна лише в 3-му, де
     // щось уже було з'єднано).
-    const sceneCheckButtonEl = (
+    // Задача "stay until next open", п.4 — усі пари активного блоку вже
+    // "corrected-here": кнопка ховається.
+    const activeAllCorrected =
+      activeLeft.length > 0 && activeLeft.every((left) => practiceResultByLeft[left] === true);
+    const sceneCheckButtonEl = activeAllCorrected ? null : (
       <button
         type="button"
-        onClick={() => submitPractice(activeLeft, activeItemIds, activeBlockIndex)}
+        onClick={() => submitPractice(activeLeft, activeBlockIndex)}
         disabled={practiceCheck.pending}
         className={practiceUseBlocks ? "exercise-block-check-btn btn-check" : `self-start ${BUTTON_CHECK}`}
       >
@@ -683,13 +688,17 @@ export function MatchingExercise({
     // весь config.left/right — лише leftItems/rightItems тепер звужені до
     // групи, решта (pairs/selectedLeft/onClick*/statusForLeft/usedRights)
     // незмінні.
-    const leftGroups = chunkMatchingPairs(config.left);
-    const rightGroups = chunkMatchingPairs(config.right);
+    // shownLeft (заморожений + "gone"-відфільтрований, вище) — не живий
+    // config.left (той самий баг, що й сцена-вигляд мав до цієї задачі).
+    const leftGroups = chunkMatchingPairs(shownLeft);
+    const rightGroups = chunkMatchingPairs(frozenSceneConfig.right);
     return (
       <div className={EXERCISE_STACK}>
         <div className="flex flex-col">
           {leftGroups.map((leftGroup, i) => {
-            const groupItemIds = leftGroup.map((left) => idByLeft.get(left)).filter((id): id is string => !!id);
+            // Задача "stay until next open", п.4 — усі пари групи вже
+            // "corrected-here": кнопка ховається.
+            const groupAllCorrected = leftGroup.every((left) => practiceResultByLeft[left] === true);
             return (
               <Fragment key={i}>
                 {i > 0 && <div className="matching-flat-group-divider" aria-hidden="true" />}
@@ -709,16 +718,18 @@ export function MatchingExercise({
                     usedRights={usedRightsPractice}
                   />
                   {renderPracticeFooter(leftGroup)}
-                  <div className="flex flex-col gap-2">
-                    <button
-                      type="button"
-                      onClick={() => submitPractice(leftGroup, groupItemIds, i)}
-                      disabled={practiceCheck.pending}
-                      className={`self-start ${BUTTON_CHECK}`}
-                    >
-                      {practiceCheck.pending ? t("button.checking") : t("button.checkBlock")}
-                    </button>
-                  </div>
+                  {!groupAllCorrected && (
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => submitPractice(leftGroup, i)}
+                        disabled={practiceCheck.pending}
+                        className={`self-start ${BUTTON_CHECK}`}
+                      >
+                        {practiceCheck.pending ? t("button.checking") : t("button.checkBlock")}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </Fragment>
             );

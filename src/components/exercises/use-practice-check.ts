@@ -1,7 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+// RISK 3 ("stay until next open", п.7) — модульний (не per-hook) таймер:
+// кожен items-тип монтує СВІЙ usePracticeCheck, тож без спільного замка
+// одна подія focus/visibilitychange викликала б N router.refresh() одразу
+// (N — кількість змонтованих практик на сторінці, зазвичай 1, але
+// теоретично можливо кілька). Один модульний timestamp гарантує РІВНО один
+// refresh на весь документ у межах дебаунс-вікна, незалежно від кількості
+// хуків.
+let lastVisibilityRefreshAt = 0;
+const VISIBILITY_REFRESH_DEBOUNCE_MS = 1000;
 
 export type PracticeCheckResponse = {
   results: { itemId: string; correct: boolean }[];
@@ -97,6 +107,35 @@ export function usePracticeCheck(taskId: string) {
       setRevealPending((prev) => ({ ...prev, [itemId]: false }));
     }
   }
+
+  // RISK 3 ("stay until next open", п.7) — друге вікно/вкладка з тим
+  // самим завданням може виправити елементи, поки ЦЕ вікно лишається
+  // відкритим: щойно воно знову стає видимим/у фокусі, один
+  // router.refresh() (дебаунс ~1с, пропускається, поки САМЕ ЦЕЙ хук має
+  // check()/reveal() у польоті — pending/revealPending вище) підхоплює
+  // свіжий remainingItemIds. shownPracticeItemIds/prunePracticeResults
+  // (error-review.ts) уже гарантують, що елемент, виправлений ІНШИМ
+  // вікном (не local practiceResults цього компонента), після цього
+  // refresh коректно піде в "gone" (requirement 3), а не лишиться
+  // хибно зеленим — і що pruneStaleResults/reveal() самі не
+  // перезапускають цей самий цикл (той самий router.refresh()-less
+  // reveal(), що вже виправлено в задачі "flicker").
+  useEffect(() => {
+    function maybeRefresh() {
+      if (document.visibilityState !== "visible") return;
+      if (pending || Object.values(revealPending).some(Boolean)) return;
+      const now = Date.now();
+      if (now - lastVisibilityRefreshAt < VISIBILITY_REFRESH_DEBOUNCE_MS) return;
+      lastVisibilityRefreshAt = now;
+      router.refresh();
+    }
+    window.addEventListener("focus", maybeRefresh);
+    document.addEventListener("visibilitychange", maybeRefresh);
+    return () => {
+      window.removeEventListener("focus", maybeRefresh);
+      document.removeEventListener("visibilitychange", maybeRefresh);
+    };
+  }, [router, pending, revealPending]);
 
   return { check, pending, error, reveal, revealed, revealPending };
 }

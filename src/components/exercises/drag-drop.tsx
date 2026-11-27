@@ -13,7 +13,7 @@ import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } fro
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { BUTTON_CHECK } from "@/lib/button-styles";
-import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, prunePracticeResults } from "@/lib/exercises/error-review";
 import { normalizeGapBefore } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
@@ -83,7 +83,7 @@ export type DragDropPracticeProps = {
 
 export function DragDropExercise({
   taskId,
-  config,
+  config: configProp,
   plaqueText,
   pointsVisible,
   onResult,
@@ -103,6 +103,21 @@ export function DragDropExercise({
   isDelf?: boolean;
   practice?: DragDropPracticeProps;
 }) {
+  // Задача "stay until next open" — config.sentences/config.bank тут УЖЕ
+  // звужені СЕРВЕРОМ до review.remainingItemIds на КОЖЕН рендер (comment
+  // на DragDropPracticeProps вище) — на відміну від multiple_choice/
+  // fill_blank/true_false/word_choice (клієнт сам фільтрує ПОВНИЙ config
+  // практики за onlyItemIds), тут немає ОКРЕМОГО повного config, з якого
+  // можна локально відфільтрувати "видиме". Заморожуємо ввесь config на
+  // монтуванні (той самий принцип, що matching.tsx/frozenSceneConfig) —
+  // щойно виправлене речення БІЛЬШЕ не випадає із цього ЗАМОРОЖЕНОГО
+  // config на router.refresh(), а не лише з onlyItemIds (useTilePlacement
+  // нижче й так розраховує totalBlanks лише ОДИН раз, на монтуванні —
+  // живий, що не заморожений, totalBlanks зсунув би offsets/placed-індекси
+  // щойно речення випадало з конфіга, навіть без цієї задачі). Поза
+  // практикою (practice falsy) — звичайний живий config, без змін.
+  const [frozenPracticeConfig] = useState<DragDropPublic>(() => configProp);
+  const config = practice ? frozenPracticeConfig : configProp;
   // Банк СПІЛЬНИЙ на всю вправу (не по реченню) — тож пропуски всіх речень
   // живуть в одному спільному "слот-просторі" одного useTilePlacement, а не
   // в окремому хуку на речення (інакше кожен виклик знав би про зайнятість
@@ -213,21 +228,33 @@ export function DragDropExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeSentenceResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+    // config (заморожений, вище) ніколи не коротшає — snapshotIds тут
+    // просто ВЕСЬ config.sentences, той самий, що submitPractice/wrongIds
+    // уже й так читають.
+    setPracticeSentenceResults((prev) =>
+      prunePracticeResults(prev, practice!.onlyItemIds, config.sentences.map((s) => s.id))
+    );
   }
 
+  // Задача "stay until next open", п.4 — submit/кнопка стосуються лише
+  // ще не "corrected-here" речень.
+  const practiceSentencesToSubmit = config.sentences.filter((s) => practiceSentenceResults[s.id] !== true);
+
   async function submitPractice() {
-    const itemIds = config.sentences.map((s) => s.id);
-    const answer: DragDropAnswer = config.sentences.map((s, si) => ({
-      sentenceId: s.id,
-      words: Array.from({ length: blankCounts[si] }, (_, i) => {
-        const p = placed[offsets[si] + i];
-        return p !== null ? config.bank[p] : "";
-      }),
-      hintedWords: Array.from({ length: blankCounts[si] }, (_, i) => i).filter((i) =>
-        translationHints.has(offsets[si] + i)
-      ),
-    }));
+    const itemIds = practiceSentencesToSubmit.map((s) => s.id);
+    const answer: DragDropAnswer = practiceSentencesToSubmit.map((s) => {
+      const si = config.sentences.findIndex((x) => x.id === s.id);
+      return {
+        sentenceId: s.id,
+        words: Array.from({ length: blankCounts[si] }, (_, i) => {
+          const p = placed[offsets[si] + i];
+          return p !== null ? config.bank[p] : "";
+        }),
+        hintedWords: Array.from({ length: blankCounts[si] }, (_, i) => i).filter((i) =>
+          translationHints.has(offsets[si] + i)
+        ),
+      };
+    });
     const r = await practiceCheck.check(itemIds, answer);
     if (!r) return;
     setPracticeSentenceResults((prev) => {
@@ -427,17 +454,19 @@ export function DragDropExercise({
           );
         })()}
 
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={submitPractice}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {practiceSentencesToSubmit.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
       </div>
     );
   }

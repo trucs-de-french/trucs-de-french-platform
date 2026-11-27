@@ -14,7 +14,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { BUTTON_CHECK } from "@/lib/button-styles";
-import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
+import { stillWrongIds, maxFailedAttempts, prunePracticeResults } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
@@ -56,7 +56,7 @@ export type ImageMatchPracticeProps = {
 
 export function ImageMatchExercise({
   taskId,
-  config,
+  config: configProp,
   plaqueText,
   onResult,
   hidePoints,
@@ -70,6 +70,15 @@ export function ImageMatchExercise({
   hidePoints?: boolean;
   practice?: ImageMatchPracticeProps;
 }) {
+  // Задача "stay until next open" — той самий принцип, що drag-drop.tsx:
+  // config.items/config.bank тут УЖЕ звужені СЕРВЕРОМ до review.
+  // remainingItemIds на кожен рендер, тож заморожуємо на монтуванні, щоб
+  // щойно виправлена картинка не випадала з config одразу на
+  // router.refresh() (і щоб useTilePlacement(config.items.length, ...)
+  // нижче, розрахований лише ОДИН раз на монтуванні, не розійшовся з
+  // живим, що міг би коротшати, config.items.length).
+  const [frozenPracticeConfig] = useState<ImageMatchPublic>(() => configProp);
+  const config = practice ? frozenPracticeConfig : configProp;
   const { t, lang } = useT();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ImageMatchDetail | undefined;
@@ -122,15 +131,21 @@ export function ImageMatchExercise({
   const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
   if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeItemResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+    setPracticeItemResults((prev) =>
+      prunePracticeResults(prev, practice!.onlyItemIds, config.items.map((item) => item.id))
+    );
   }
 
+  // Задача "stay until next open", п.4 — submit/кнопка стосуються лише
+  // ще не "corrected-here" картинок.
+  const practiceItemsToSubmit = config.items.filter((item) => practiceItemResults[item.id] !== true);
+
   async function submitPractice() {
-    const itemIds = config.items.map((item) => item.id);
-    const answer: ImageMatchAnswer = config.items.map((item, i) => ({
-      itemId: item.id,
-      name: placed[i] !== null ? config.bank[placed[i] as number] : "",
-    }));
+    const itemIds = practiceItemsToSubmit.map((item) => item.id);
+    const answer: ImageMatchAnswer = practiceItemsToSubmit.map((item) => {
+      const i = config.items.findIndex((x) => x.id === item.id);
+      return { itemId: item.id, name: placed[i] !== null ? config.bank[placed[i] as number] : "" };
+    });
     const r = await practiceCheck.check(itemIds, answer);
     if (!r) return;
     setPracticeItemResults((prev) => {
@@ -279,17 +294,19 @@ export function ImageMatchExercise({
           );
         })()}
 
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={submitPractice}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {practiceItemsToSubmit.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
       </div>

@@ -28,7 +28,11 @@ import { EXERCISE_BLOCK_SIZE, chunkWithoutSingleton, chunkWithMinTail } from "@/
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { usePracticeCheck } from "./use-practice-check";
-import { shouldShowAttemptFooter, pruneStaleResults } from "@/lib/exercises/error-review";
+import {
+  shouldShowAttemptFooter,
+  shownPracticeItemIds,
+  prunePracticeResults,
+} from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import {
@@ -49,16 +53,9 @@ type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangem
 export type LetterRearrangementPracticeProps = {
   onlyItemIds: string[];
   failedAttempts: Record<string, number>;
-  // Сцена-вигляд (openMode="scene", мистейки-сторінка, крок 4) — лише
-  // error-review-block.tsx передає: onlyItemIds вище стає ЗАМОРОЖЕНИМ
-  // знімком помилок на момент відкриття задачі (стабільне членство блоку
-  // на всю сесію, не live remainingItemIds), а плашка+заголовок+блоки
-  // (нижче) замінюють плаский одноколонковий список. correctedItemIds —
-  // підмножина onlyItemIds, вже виправлена ПІСЛЯ знімку (цього сеансу) —
-  // показується "вирішеною" в своєму блоці замість зникнення. Інлайн-
-  // картка сцени (error_correction, без цього поля) лишається пласким
-  // списком без плашки, НЕЗМІННО.
-  scene?: { correctedItemIds: string[] };
+  // Задача "stay until next open" — ЖИВИЙ remainingItemIds (сервер),
+  // окремо від onlyItemIds вище (той самий принцип, що letter-gaps.tsx).
+  liveRemainingItemIds?: string[];
 };
 
 export function LetterRearrangementExercise({
@@ -246,28 +243,29 @@ export function LetterRearrangementExercise({
   // "застарілим" між рендерами); renderWordCard все одно лишає захисний
   // `if (!word) return null` на випадок відсутнього слова.
   const isPractice = !!practice;
-  const practiceWordIndices = isPractice
-    ? config.words.map((_, wi) => wi).filter((wi) => practice!.onlyItemIds.includes(String(wi)))
-    : [];
+  // Задача "stay until next open" — знімок onlyItemIds, заморожений на
+  // монтуванні (той самий принцип, що letter-gaps.tsx/matching.tsx).
+  const [practiceSnapshotIds] = useState<string[]>(() => practice?.onlyItemIds ?? []);
   const practiceCheck = usePracticeCheck(taskId);
-  // Сцена-вигляд (крок 4) — попередньо "вирішені" елементи (виправлені
-  // ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds,
-  // error-review-block.tsx) засіюються як correct:true одразу при
-  // монтуванні — той самий вигляд ("Правильно" під карткою), що й щойно
-  // перевірений елемент, без повторного запиту.
-  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>(() => {
-    const seed: Record<string, boolean> = {};
-    for (const id of practice?.scene?.correctedItemIds ?? []) seed[id] = true;
-    return seed;
-  });
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
-  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
-  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
-  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
-    setPrevOnlyItemIdsKey(onlyItemIdsKey);
-    setPracticeResults((prev) => pruneStaleResults(prev, practice!.onlyItemIds));
+  const liveRemainingItemIds = practice?.liveRemainingItemIds ?? practice?.onlyItemIds ?? [];
+  const practiceWordIndices = isPractice
+    ? config.words
+        .map((_, wi) => wi)
+        .filter((wi) => shownPracticeItemIds(practiceSnapshotIds, liveRemainingItemIds, practiceResults).includes(String(wi)))
+    : [];
+  // Ключ ефекту — ЖИВИЙ remainingItemIds, не practice.onlyItemIds (той
+  // самий принцип, що letter-gaps.tsx — у сцена-вигляді onlyItemIds —
+  // заморожений на рівні ЦІЛОЇ задачі, ніколи не змінюється після
+  // монтування).
+  const liveRemainingItemIdsKey = liveRemainingItemIds.join(",");
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(liveRemainingItemIdsKey);
+  if (isPractice && liveRemainingItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(liveRemainingItemIdsKey);
+    setPracticeResults((prev) => prunePracticeResults(prev, liveRemainingItemIds, practiceSnapshotIds));
   }
 
   // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE слів, той самий
@@ -281,7 +279,7 @@ export function LetterRearrangementExercise({
   // blockCount<=1 — БЕЗ вкладок/футера нижче (той самий built-in захист,
   // що BlockTabs/BlockNavigation уже мають для звичайної вправи),
   // плашка+заголовок лишаються завжди.
-  const isSceneMode = !!practice?.scene;
+  const isSceneMode = !!plaqueText;
   const practiceBlocks = isSceneMode ? chunkWithMinTail(practiceWordIndices, EXERCISE_BLOCK_SIZE, 3) : [];
   const practiceBlockCount = practiceBlocks.length;
   const practiceUseBlocks = practiceBlockCount > 1;
@@ -292,7 +290,11 @@ export function LetterRearrangementExercise({
   // (сцена-вигляд); blockIndex — лише сцена-вигляд, позначає цей блок
   // "спробуваним" (чекмарк на вкладці, той самий принцип, що
   // isBlockChecked={(i) => i in blockResults} звичайної вправи).
-  async function submitPractice(indices: number[], blockIndex?: number) {
+  async function submitPractice(allIndices: number[], blockIndex?: number) {
+    // Задача "stay until next open", п.4 — лише ще не "corrected-here"
+    // слова йдуть у сам check().
+    const indices = allIndices.filter((wi) => practiceResults[String(wi)] !== true);
+    if (indices.length === 0) return;
     const practiceSet = new Set(indices);
     const words: (string[] | null)[] = config.words.map((_, wi) => (practiceSet.has(wi) ? orders[wi] : null));
     const answer: Omit<LetterRearrangementAnswer, "words"> & { words: (string[] | null)[] } = {
@@ -626,7 +628,7 @@ export function LetterRearrangementExercise({
     ) : undefined;
     return renderWordCard(wi, {
       detail: undefined,
-      locked: false,
+      locked: isCorrect === true,
       hintDisabled: true,
       cardNumber: layout.displayNumber,
       revealedWordDetail,
@@ -653,7 +655,11 @@ export function LetterRearrangementExercise({
     const pairedActiveIndices = pairPracticeItems(
       activeIndices.map((wi, i) => ({ id: wi, cardClass: activeLayouts[i].cardClass, lines: activeLayouts[i].lines }))
     );
-    const sceneCheckButtonEl = (
+    // Задача "stay until next open", п.4 — усі слова активного блоку вже
+    // "corrected-here": кнопка ховається.
+    const activeAllCorrected =
+      activeIndices.length > 0 && activeIndices.every((wi) => practiceResults[String(wi)] === true);
+    const sceneCheckButtonEl = activeAllCorrected ? null : (
       <button
         type="button"
         onClick={() => submitPractice(activeIndices, activeBlockIndex)}
@@ -757,17 +763,19 @@ export function LetterRearrangementExercise({
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
 
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => submitPractice(practiceWordIndices)}
-            disabled={practiceCheck.pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {practiceCheck.pending ? t("button.checking") : t("button.check")}
-          </button>
-          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
-        </div>
+        {practiceWordIndices.some((wi) => practiceResults[String(wi)] !== true) && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => submitPractice(practiceWordIndices)}
+              disabled={practiceCheck.pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
+            </button>
+            {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+          </div>
+        )}
       </div>
     );
   }
