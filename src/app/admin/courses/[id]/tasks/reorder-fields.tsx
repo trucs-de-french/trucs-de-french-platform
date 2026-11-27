@@ -212,7 +212,6 @@ export const ReorderFields = forwardRef<
   const [sequences, setSequences] = useState<ReorderSequence[]>(
     initialConfig?.sequences?.length ? initialConfig.sequences : [emptySequence()]
   );
-  const [liveFeedback, setLiveFeedback] = useState(initialConfig?.liveFeedback !== false);
   const [hintsReducePoints, setHintsReducePoints] = useState(
     initialConfig?.hintsReducePoints ?? isNewTask ?? false
   );
@@ -238,7 +237,6 @@ export const ReorderFields = forwardRef<
       subInstructions: initialConfig?.subInstructions,
       subInstructionsEn: initialConfig?.subInstructionsEn,
       sequences,
-      liveFeedback,
       hintsReducePoints,
     }),
   }));
@@ -380,23 +378,6 @@ export const ReorderFields = forwardRef<
         Переставлення слів у РЕЧЕННІ — порядок слів, визначений нижче, і є правильною відповіддю,
         студенту вони покажуться перемішаними. (Не плутати з хронологічним порядком — там про
         послідовність ПОДІЙ, тут про порядок СЛІВ.)
-      </p>
-
-      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
-        <input
-          type="checkbox"
-          name="reorder_live_feedback"
-          value="true"
-          checked={liveFeedback}
-          onChange={(e) => setLiveFeedback(e.target.checked)}
-        />
-        Підсвічувати правильні слова під час виконання
-      </label>
-      <p className={HINT_TEXT}>
-        Студент бачить, яке слово вже на своєму місці, одразу під час перетягування, до
-        натискання «Перевірити». Технічно це означає, що правильний порядок передається
-        студенту разом із завданням (видимий у запитах браузера) — зручно для навчальних вправ,
-        вимикайте для контрольних робіт.
       </p>
 
       <div className="flex flex-col gap-3">

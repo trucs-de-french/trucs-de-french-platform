@@ -656,13 +656,20 @@ export function resolveReorderPoints(sequence: ReorderSequence): number {
   return sequence.points ?? 1;
 }
 
+// Задача "correct order reaching the client before a check" — раніше тут
+// була умова liveFeedback, що (за замовчуванням, для БУДЬ-ЯКОГО завдання
+// без явного поля) додавала sequences[].correctOrder — НЕперемішаний
+// правильний порядок — прямо в публічний config, видимий студенту в
+// мережевих запитах/React-пропсах ще ДО "Перевірити". Прибрано цілком:
+// correctOrder більше ніколи не йде в ReorderPublic, незалежно від
+// жодного поля конфіга. items нижче лишається ЄДИНИМ джерелом порядку
+// для студента — перемішаним (shuffle), gradeReorder звіряє з серверним
+// ReorderSequence.items (не публічним), той самий шлях, що вже був.
 export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
-  const liveFeedback = config.liveFeedback !== false;
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
     subInstructionsEn: config.subInstructionsEn,
-    liveFeedback,
     hintsReducePoints: !!config.hintsReducePoints,
     hintLegend: config.hintLegend,
     // shuffle ОКРЕМО на кожну послідовність — інакше плитки з різних речень
@@ -677,9 +684,6 @@ export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
         points: resolveReorderPoints(s),
         imageUrl: s.imageUrl,
         audioUrl: s.audioUrl,
-        // s.items — уже правильний порядок (ReorderSequence), копіюється
-        // без змін, НЕ той самий масив, що перемішаний items вище.
-        ...(liveFeedback ? { correctOrder: s.items } : {}),
         ...(hint ? { hint } : {}),
       };
     }),

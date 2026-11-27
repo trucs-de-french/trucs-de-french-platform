@@ -493,22 +493,20 @@ export type ReorderSequence = {
   // Опційний переклад речення українською — той самий принцип, що
   // MultipleChoiceItem.hint/WordChoiceSentence.hint: лампочка-підказка на
   // картці, половина балів послідовності, якщо її бодай раз відкрили
-  // (hintsReducePoints нижче). Не секрет (на відміну від correctOrder) —
-  // sanitizeReorder копіює без змін у ReorderPublic.
+  // (hintsReducePoints нижче).
   hint?: string;
 };
 export type ReorderConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
-  // liveFeedback — undefined теж "true" (старі завдання без цього поля
-  // отримують живе підсвічування без міграції БД): коли true,
-  // sanitizeReorder додає ReorderPublicSequence.correctOrder — той самий
-  // компроміс, що LetterGapsPublicWord.hiddenLetters/CrosswordPublic.solution
-  // (рішення йде студенту одразу, щоб клієнт підсвічував правильність
-  // наживо, без запиту на сервер). Вимкнути (false) для завдань, де
-  // порядок має лишатись секретом до "Перевірити" (контрольні роботи).
-  liveFeedback?: boolean;
+  // liveFeedback — задача "dead admin option liveFeedback" — видалено
+  // (учительська опція "підсвічувати наживо": sanitizeReorder більше
+  // ніколи не додає sequences[].correctOrder, незалежно від цього поля).
+  // Старі завдання в БД можуть ще мати цей ключ у збереженому config
+  // JSON — тут немає окремої схеми валідації, яка відхиляла б зайві
+  // ключі, тож він просто мовчки ігнорується (нічого його більше не
+  // читає).
   sequences: ReorderSequence[];
   // Той самий принцип, що MultipleChoiceConfig.hintsReducePoints —
   // "елемент" тут ПОСЛІДОВНІСТЬ (та сама гранулярність, що points).
@@ -1056,22 +1054,21 @@ export type ReorderPublic = {
   instructions?: string;
   subInstructions?: string;
   subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
-  // liveFeedback — не секрет сам по собі (лише прапорець режиму
-  // відображення); визначає, чи sequences[].correctOrder присутній нижче.
-  liveFeedback: boolean;
   // items перемішано, окремо на кожну послідовність; imageUrl/audioUrl —
   // те саме, що в ReorderSequence, копіюється без змін (sanitizeReorder).
-  // correctOrder — правильний порядок текстів цієї послідовності (лише
-  // коли liveFeedback), у тому самому порядку, що gradeReorder звіряє
-  // позиційно (items.length однакова довжина) — дає клієнту підсвічувати
-  // кожне слово одразу під час перетягування, без запиту на сервер.
+  // Задача "correct order reaching the client before a check" — раніше
+  // тут був і liveFeedback (прапорець), і sequences[].correctOrder
+  // (правильний, НЕперемішаний порядок, відкритий студенту ще до
+  // "Перевірити", коли вчителька увімкнула цю опцію — за замовчуванням
+  // увімкнену для будь-якого завдання без явного поля) — обидва прибрані
+  // цілком: sanitizeReorder більше НІКОЛИ не надсилає правильний порядок,
+  // лише перемішаний items.
   sequences: {
     id: string;
     items: string[];
     points: number;
     imageUrl?: string;
     audioUrl?: string;
-    correctOrder?: string[];
     hint?: string;
   }[];
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка

@@ -346,7 +346,6 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         ...(subInstructionsEn ? { subInstructionsEn } : {}),
         sequences: parseJsonField(formData.get("reorder_sequences")),
-        liveFeedback: formData.get("reorder_live_feedback") === "true",
         hintsReducePoints: formData.get("reorder_hints_reduce_points") === "true",
         ...(reorderHintLegend ? { hintLegend: reorderHintLegend } : {}),
       };

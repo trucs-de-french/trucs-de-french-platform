@@ -1,7 +1,8 @@
 // Немає тестового фреймворку в проєкті (package.json) — простий assert-
 // скрипт, той самий принцип, що error-review.test.ts.
 // Запуск вручну: npx tsx src/lib/exercises/sanitize.test.ts
-import { filterWordBank, sanitizeChronologicalOrder } from "./sanitize";
+import { filterWordBank, sanitizeChronologicalOrder, sanitizeReorder } from "./sanitize";
+import type { ReorderConfig } from "./types";
 
 let failures = 0;
 function assert(condition: boolean, label: string) {
@@ -128,6 +129,41 @@ function assert(condition: boolean, label: string) {
   assert(out.mode === "mixed", "mode:mixed sanitizer output keeps mode as mixed");
   assert(item.content === "https://images.trucsdefrench.com/pic.jpeg", "mode:mixed item keeps its image URL in content");
   assert(item.text === "Le chat", "mode:mixed item keeps its caption in text, separate from content");
+}
+
+// --- sanitizeReorder (задача "dead admin option liveFeedback" /
+// "correct order reaching the client before a check") -------------------
+
+{
+  // Легасі config, збережений ДО видалення liveFeedback — ключ і досі
+  // лежить у JSON (жодної БД-миграції не було, навмисно), sanitizeReorder
+  // більше не читає його: парситься й рендериться (тут — produces output)
+  // без помилки, і correctOrder НІКОЛИ не потрапляє в публічний вихід,
+  // незалежно від значення застарілого ключа.
+  const legacyConfig = {
+    liveFeedback: true,
+    sequences: [{ id: "s1", items: ["Je", "mange", "une", "pomme"] }],
+  } as unknown as ReorderConfig;
+  const out = sanitizeReorder(legacyConfig);
+  assert(out.sequences.length === 1, "legacy config with a stray liveFeedback key still sanitizes to one sequence, no crash");
+  assert(
+    !("correctOrder" in out.sequences[0]),
+    "correctOrder is never emitted, even for a legacy config whose liveFeedback was true"
+  );
+  assert(!("liveFeedback" in out), "liveFeedback itself is never echoed back in the public config either");
+  assert(
+    out.sequences[0].items.length === 4 && out.sequences[0].items.every((w) => legacyConfig.sequences[0].items.includes(w)),
+    "the shuffled items are still exactly the same 4 words, just reordered"
+  );
+}
+
+{
+  // Та сама гарантія для config БЕЗ liveFeedback узагалі (сучасний
+  // формат, після видалення поля зі схеми) — correctOrder і тут
+  // відсутній.
+  const modernConfig: ReorderConfig = { sequences: [{ id: "s1", items: ["Il", "pleut"] }] };
+  const out = sanitizeReorder(modernConfig);
+  assert(!("correctOrder" in out.sequences[0]), "no liveFeedback field at all -> still no correctOrder leak");
 }
 
 if (failures > 0) {
