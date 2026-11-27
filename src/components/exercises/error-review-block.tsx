@@ -572,8 +572,29 @@ function ErrorReviewCard({
         </div>
       )}
 
+      {/* Задача "dark theme: inline error-review panel near-black
+          background" (owner report) — корінь не лише в dark:bg-
+          neutral-900/50 (Tailwind, видалено), а в тому, що цей div не
+          мав ЖОДНОГО предка .glass-block/.scene-bar: усі --glass-*
+          токени (globals.css: ".dark .glass-block, .dark .scene-bar")
+          скоуплені лише на ці два класи — цей div тож мав undefined
+          --glass-panel-bg (контейнер), --glass-item-bg/--glass-text
+          (кожна .glass-item-card картка вправи всередині, той самий
+          клас, що вживають true_false/multiple_choice/reorder/
+          chronological_order і реальна вправа, і практика), на відміну
+          від кабінету (/cabinet/mistakes/[sceneId]), де практика сидить
+          прямо під GlassBlock (glass-block.tsx) — ЙОГО .glass-block-
+          panel коректно дає всі --glass-* нащадкам. Клас glass-block
+          нижче — ЛИШЕ scoping (сам по собі не має ані background, ані
+          margin/padding/display у globals.css, перевірено — додає РІВНО
+          ті самі кастомні властивості, що кабінетний GlassBlock, нічого
+          в розкладці не зсуває) — тепер і контейнер (dark:bg-[var(--glass-
+          panel-bg)] нижче), і кожна .glass-item-card картка вправи
+          всередині резолвлять ТОЧНО ті самі токени (--glass-panel-bg/
+          --glass-item-bg/--glass-text), що кабінет, замість одного
+          точкового патчу на сам контейнер. */}
       {expanded && entry.config && (
-        <div className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-[var(--card-border)] dark:bg-neutral-900/50">
+        <div className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 glass-block dark:border-[var(--card-border)] dark:bg-[var(--glass-panel-bg)]">
           <ErrorReviewPractice entry={entry} />
         </div>
       )}
