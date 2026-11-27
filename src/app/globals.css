@@ -10634,15 +10634,23 @@ button.scene-bar:active .scene-bar-toggle {
   background: #fff;
   border-color: var(--gold-border-90);
 }
+/* Задача "matching idle dots match the inactive block tab" (owner
+   report) — fill тепер той самий --dark-surface-fill-glass, що .dark
+   .block-tab--inactive (globals.css, "Блок 2/3/4..." поруч із активним
+   "Блок 1"), а не окремий яскравий periwinkle. border-color НЕ міняємо
+   (requirement: "не додавати нову рамку" — крапка вже мала свою, лишає
+   її): #b3bfe0 лишається — саме цей контур (не fill) тримає крапку
+   видимою кружком на картці/між колонками (контраст рамки проти картки
+   ~8:1, fill-vs-fill сам по собі впав би нижче 1.2:1 — звіт у коміті). */
 .dark .matching-dot--default,
 .dark .matching-dot--paired-empty {
-  background: #7f9cf0;
+  background: var(--dark-surface-fill-glass);
   border-color: #b3bfe0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .matching-dot--default,
   :root:not(.light) .matching-dot--paired-empty {
-    background: #7f9cf0;
+    background: var(--dark-surface-fill-glass);
     border-color: #b3bfe0;
   }
 }
