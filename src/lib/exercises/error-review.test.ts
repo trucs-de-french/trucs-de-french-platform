@@ -23,6 +23,7 @@ import {
   shownPracticeItemIds,
   hasVisiblePracticeItems,
   prunePracticeResults,
+  shouldShowRevealPill,
 } from "./error-review";
 
 let failures = 0;
@@ -738,6 +739,32 @@ function assert(condition: boolean, label: string) {
   assert(
     sceneLoaderEntry.status === "done" && cabinetLoaderEntry.status === "done",
     "both loaders must agree the task is fully fixed once the shared corrected_item_ids state says so"
+  );
+}
+
+// --- shouldShowRevealPill (owner report: "Відповідь" pill in the
+// cabinet true_false footer adds nothing with only two options) ---
+{
+  const noop = () => {};
+  assert(
+    shouldShowRevealPill(noop, undefined) === true,
+    "onReveal present, hideRevealPill not set -> pill shows (unchanged default for every other type/flow)"
+  );
+  assert(
+    shouldShowRevealPill(noop, false) === true,
+    "onReveal present, hideRevealPill explicitly false -> pill shows"
+  );
+  assert(
+    shouldShowRevealPill(noop, true) === false,
+    "onReveal present but hideRevealPill true (true_false, cabinet) -> pill hidden"
+  );
+  assert(
+    shouldShowRevealPill(undefined, undefined) === false,
+    "no onReveal at all (e.g. letter_gaps/letter_rearrangement/table_fill scene-mode, answer panel handles reveal instead) -> pill hidden, same as before this prop existed"
+  );
+  assert(
+    shouldShowRevealPill(undefined, true) === false,
+    "neither onReveal nor hideRevealPill matters when onReveal itself is absent -> still hidden"
   );
 }
 

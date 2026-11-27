@@ -790,6 +790,22 @@ export function dotsFilledCount(failedAttempts: number): number {
   return Math.min(failedAttempts, 3);
 }
 
+// Задача "hide reveal pill for true_false in the cabinet" — true_false
+// має лише два варіанти (Vrai/Faux): червоний неправильний вибір уже сам
+// показує, що правильна відповідь — другий, тож золота пілюля
+// "Відповідь" (з іконкою ока) у /cabinet/mistakes/[sceneId] (openMode=
+// "scene") нічого не додає. PracticeAttemptFooter (practice-attempt-
+// footer.tsx) рахує РІВНО цю умову: пілюля рендериться лише коли
+// onReveal реально переданий (інші типи й так іноді не передають його —
+// letter_gaps/letter_rearrangement/table_fill у сцена-вигляді, де
+// відповідь розкриває окрема панель, не ця пілюля) І hideRevealPill не
+// встановлений (true_false у сцена-вигляді, задача). Винесено в чисту
+// функцію, а не inline `!!onReveal && !hideRevealPill` у компоненті —
+// щоб рішення можна було протестувати незалежно від React.
+export function shouldShowRevealPill(onReveal: (() => void) | undefined, hideRevealPill: boolean | undefined): boolean {
+  return !!onReveal && !hideRevealPill;
+}
+
 // Задача "attempt footer disappears right after a failed check" (owner
 // report, letter_gaps, інлайн-блок помилок сторінки сцени) — корінь:
 // кожен тип практики (11 items-типів) стежить за onlyItemIdsKey

@@ -347,6 +347,13 @@ export function TrueFalseExercise({
     );
   }
 
+  // Задача "hide reveal pill for true_false in the cabinet" — лише
+  // /cabinet/mistakes/[sceneId] (openMode="scene", plaqueText truthy, той
+  // самий сигнал, що інші типи вже використовують для "чи це сцена-
+  // вигляд"); інлайн-блок на сторінці сцени (plaqueText undefined)
+  // лишається з пілюлею, незмінно.
+  const isSceneMode = !!plaqueText;
+
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
@@ -377,8 +384,14 @@ export function TrueFalseExercise({
                 <PracticeAttemptFooter
                   state={practiceAttemptFooterState(isCorrect, itemRevealed)}
                   failedAttempts={attempts}
-                  onReveal={() => practiceCheck.reveal(s.id, true)}
+                  // Кабінет (isSceneMode) — ні пілюлі, ні самого
+                  // reveal-виклику: onReveal узагалі не передається, тож
+                  // practiceCheck.reveal() для true_false тут ніколи не
+                  // викликається (requirement 2 — немає API-запиту,
+                  // немає залежного стану/панелі).
+                  onReveal={isSceneMode ? undefined : () => practiceCheck.reveal(s.id, true)}
                   revealDisabled={!!practiceCheck.revealPending[s.id]}
+                  hideRevealPill={isSceneMode}
                 />
               </div>
             );

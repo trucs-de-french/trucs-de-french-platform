@@ -3,7 +3,7 @@
 import { type ReactNode } from "react";
 import { Eye } from "lucide-react";
 import { useT } from "@/lib/i18n/context";
-import { dotsFilledCount, type PracticeAttemptFooterState } from "@/lib/exercises/error-review";
+import { dotsFilledCount, shouldShowRevealPill, type PracticeAttemptFooterState } from "@/lib/exercises/error-review";
 
 // Задача "unify attempt/status footer" — ОДИН спільний компонент для
 // рядка-статусу практики (крапки спроб + "Спроба N" + компактна пілюля
@@ -39,6 +39,11 @@ export function PracticeAttemptFooter({
   onReveal,
   revealDisabled,
   correctLabel,
+  // Задача "hide reveal pill for true_false in the cabinet" — true_false
+  // передає true лише в openMode="scene" (лише два варіанти, червоний
+  // неправильний вибір уже сам показує правильний). Інші типи/потоки —
+  // undefined, поведінка як раніше.
+  hideRevealPill,
   children,
 }: {
   state: PracticeAttemptFooterState;
@@ -46,6 +51,7 @@ export function PracticeAttemptFooter({
   onReveal?: () => void;
   revealDisabled?: boolean;
   correctLabel?: string;
+  hideRevealPill?: boolean;
   children?: ReactNode;
 }) {
   const { t } = useT();
@@ -73,7 +79,7 @@ export function PracticeAttemptFooter({
         ))}
       </span>
       <span className="practice-attempt-label">{t("status.failedAttemptShort", { n: failedAttempts })}</span>
-      {onReveal && (
+      {shouldShowRevealPill(onReveal, hideRevealPill) && (
         <button
           type="button"
           onClick={onReveal}
