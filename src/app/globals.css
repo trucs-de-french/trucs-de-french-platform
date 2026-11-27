@@ -7786,18 +7786,19 @@ button.scene-bar:active .scene-bar-toggle {
   outline: 2px solid #f6dc8e;
   outline-offset: 2px;
 }
-/* Темна тема — тонке золоте кільце ДОДАТКОВО до тіні (та сама панель-
-   приклеєна мова, що .block-tab--active/.ws-sheet): пілюля/кнопки з
-   однаковим градієнтом в обох темах інакше губились би на темній панелі
-   без жодного контуру. */
+/* Задача "remove border/box-shadow from indigo-gradient buttons in dark
+   theme" (owner report) — колишнє золоте кільце (ДОДАТКОВО до тіні)
+   прибрано цілком, разом із самою тінню: градієнт/розмір/радіус
+   лишаються незмінними. :focus-visible (нижче) не торкається — окремий
+   outline, не box-shadow. */
 .dark .exercise-block-prev-btn,
 .dark .exercise-block-next-btn {
-  box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 6px 18px rgba(59, 54, 196, 0.3);
+  box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .exercise-block-prev-btn,
   :root:not(.light) .exercise-block-next-btn {
-    box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 6px 18px rgba(59, 54, 196, 0.3);
+    box-shadow: none;
   }
 }
 .dark .exercise-block-prev-btn:disabled,
@@ -7813,13 +7814,13 @@ button.scene-bar:active .scene-bar-toggle {
 @media (hover: hover) {
   .dark .exercise-block-prev-btn:not(:disabled):hover,
   .dark .exercise-block-next-btn:not(:disabled):hover {
-    box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 8px 22px rgba(59, 54, 196, 0.45);
+    box-shadow: none;
   }
 }
 @media (hover: hover) and (prefers-color-scheme: dark) {
   :root:not(.light) .exercise-block-prev-btn:not(:disabled):hover,
   :root:not(.light) .exercise-block-next-btn:not(:disabled):hover {
-    box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 8px 22px rgba(59, 54, 196, 0.45);
+    box-shadow: none;
   }
 }
 /* Мобільний рядок (ЕТАП M, п.3, фікс: label clipping) — "Перевірити
@@ -7888,16 +7889,23 @@ button.scene-bar:active .scene-bar-toggle {
   box-shadow: 0 3px 8px rgba(59, 54, 196, 0.28);
   transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
+/* Задача "remove border/box-shadow from indigo-gradient buttons in dark
+   theme" (owner report) — градієнт/розмір/радіус/текст лишаються
+   незмінними, прибрано лише box-shadow (і золоте inset-кільце, і
+   тіньове сяйво — тут не було жодного справжнього border, "рамка" й так
+   малювалась через box-shadow inset, тож border:none вище вже й так
+   чинний). :focus-visible (нижче) НЕ торкається — то окремий outline,
+   не box-shadow, лишається для клавіатурної навігації. */
 .dark .btn-check {
   background: linear-gradient(135deg, #2f2c6b, #4b46da);
   color: #eef0ff;
-  box-shadow: 0 2px 6px rgba(217, 183, 101, 0.25), inset 0 0 0 1px rgba(130, 160, 240, 0.35);
+  box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .btn-check {
     background: linear-gradient(135deg, #2f2c6b, #4b46da);
     color: #eef0ff;
-    box-shadow: 0 2px 6px rgba(217, 183, 101, 0.25), inset 0 0 0 1px rgba(130, 160, 240, 0.35);
+    box-shadow: none;
   }
 }
 @media (hover: hover) {
@@ -7907,13 +7915,13 @@ button.scene-bar:active .scene-bar-toggle {
   }
   .dark .btn-check:not(:disabled):hover {
     filter: brightness(1.08);
-    box-shadow: 0 3px 9px rgba(217, 183, 101, 0.32), inset 0 0 0 1px rgba(130, 160, 240, 0.4);
+    box-shadow: none;
   }
 }
 @media (hover: hover) and (prefers-color-scheme: dark) {
   :root:not(.light) .btn-check:not(:disabled):hover {
     filter: brightness(1.08);
-    box-shadow: 0 3px 9px rgba(217, 183, 101, 0.32), inset 0 0 0 1px rgba(130, 160, 240, 0.4);
+    box-shadow: none;
   }
 }
 .btn-check:not(:disabled):active {
@@ -7921,11 +7929,11 @@ button.scene-bar:active .scene-bar-toggle {
   box-shadow: 0 1px 4px rgba(59, 54, 196, 0.24);
 }
 .dark .btn-check:not(:disabled):active {
-  box-shadow: 0 1px 3px rgba(217, 183, 101, 0.18), inset 0 0 0 1px rgba(130, 160, 240, 0.3);
+  box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .btn-check:not(:disabled):active {
-    box-shadow: 0 1px 3px rgba(217, 183, 101, 0.18), inset 0 0 0 1px rgba(130, 160, 240, 0.3);
+    box-shadow: none;
   }
 }
 .btn-check:focus-visible {
@@ -8682,18 +8690,24 @@ button.scene-bar:active .scene-bar-toggle {
 }
 /* "Correction des erreurs" (error-review-block.tsx) — ЛИШЕ кнопка
    "Виправити N"/"Спробувати ще раз"/"Згорнути" і заповнення прогрес-бару
-   цього блоку: той самий індиго-градієнт + золоте сяйво, що
-   .item-number-badge вище, через ОКРЕМІ класи (.error-review-fix-button/
-   .error-review-progress-fill), щоб не чіпати спільний STUDENT_BUTTON_PRIMARY
-   (bg-brand) й інші вправи, які його використовують. */
+   цього блоку: той самий індиго-градієнт, що .item-number-badge вище,
+   через ОКРЕМІ класи (.error-review-fix-button/.error-review-progress-
+   fill), щоб не чіпати спільний STUDENT_BUTTON_PRIMARY (bg-brand) й інші
+   вправи, які його використовують.
+   Задача "remove border/box-shadow from indigo-gradient buttons in dark
+   theme" (owner report) — колишнє золоте сяйво+inset-кільце прибрані
+   цілком (normal/hover), градієнт лишається. :focus-visible нижче — НЕ
+   торкається: це окремий, навмисно box-shadow-кільце (не outline, сам
+   outline тут явно none) фокус-індикатор для клавіатурної навігації
+   (accessibility), а не декоративна тінь — лишається незмінним. */
 .dark .error-review-fix-button {
   background: linear-gradient(135deg, #2f2c6b, #4b46da);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
+  box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .error-review-fix-button {
     background: linear-gradient(135deg, #2f2c6b, #4b46da);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
+    box-shadow: none;
   }
 }
 .dark .error-review-fix-button:focus-visible {
@@ -8709,13 +8723,13 @@ button.scene-bar:active .scene-bar-toggle {
 @media (hover: hover) {
   .dark .error-review-fix-button:hover {
     background: linear-gradient(135deg, #3a36a0, #5a55e6);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 3px 12px rgba(217, 183, 101, 0.38);
+    box-shadow: none;
   }
 }
 @media (prefers-color-scheme: dark) and (hover: hover) {
   :root:not(.light) .error-review-fix-button:hover {
     background: linear-gradient(135deg, #3a36a0, #5a55e6);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 3px 12px rgba(217, 183, 101, 0.38);
+    box-shadow: none;
   }
 }
 .dark .error-review-progress-fill {
