@@ -172,6 +172,29 @@ export function practiceOptionDetail(
   return undefined;
 }
 
+// Задача "multiple_choice dropdown: unanswered item painted green" —
+// renderDropdownRow (multiple-choice.tsx) малює ОДНУ пілюлю-стан на весь
+// рядок (не по варіанту, як chipClass/tileClass/optionClass у решти
+// режимів) і раніше рахувала її сама: itemDetail.options.every(o =>
+// o.correct === o.selected). Для СПРАВЖНЬОГО detail звичайної вправи це
+// правильно (завжди є реально correct:true варіант). Для СИНТЕТИЧНОГО
+// practiceOptionDetail вище (isCorrect===false гілка) УСІ варіанти мають
+// correct:false навмисно (не розкривати відповідь) — якщо студент нічого
+// не обрав, selected теж false на кожному, "false===false" тримається
+// на кожній опції, і .every() хибно повертав true (зелений рядок із
+// порожньою відповіддю). Ця функція замінює той перерахунок у практиці:
+// колір рядка йде НАПРЯМУ від уже гейтованого серверного вердикту
+// (isCorrect з practiceResults), а не від options-масиву — порожня жива
+// відповідь ніколи не дає зелений, навіть коли isCorrect лишився
+// застарілим true з попередньої спроби (студент встиг очистити вибір
+// до того, як router.refresh() прибрав елемент зі списку виправлених).
+// revealed НЕ бере участі взагалі — відкриття/закриття тоглу "Відповідь"
+// ніяк не змінює isCorrect, що передається сюди (лишається false).
+export function practiceRowCorrect(isCorrect: boolean | undefined, hasLiveAnswer: boolean): boolean | null {
+  if (isCorrect === undefined) return null;
+  return isCorrect && hasLiveAnswer;
+}
+
 // Задача "checkbox_grid: in-place marking instead of panel/pill" —
 // checkbox-grid.tsx рендерить і сітку, і легенду з ОДНОГО спільного
 // `detail` (той самий компонент/розмітка для сцени й практики), яка

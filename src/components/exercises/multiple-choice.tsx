@@ -16,7 +16,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { stillWrongIds, maxFailedAttempts, pruneStaleResults } from "@/lib/exercises/error-review";
-import { practiceOptionDetail } from "@/lib/exercises/format-reveal-answer";
+import { practiceOptionDetail, practiceRowCorrect } from "@/lib/exercises/format-reveal-answer";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
@@ -239,7 +239,7 @@ export function MultipleChoiceExercise({
           return (
             <div key={item.id} className="flex flex-col gap-1.5">
               {config.display === "dropdown"
-                ? renderDropdownRow(item, idx, itemDetail, false, false)
+                ? renderDropdownRow(item, idx, itemDetail, false, false, isCorrect)
                 : renderItem(item, idx, itemDetail, false, false)}
             </div>
           );
@@ -719,11 +719,24 @@ export function MultipleChoiceExercise({
     index: number,
     itemDetail: ItemDetail | undefined,
     showHintBulb = true,
-    locked = !!itemDetail
+    locked = !!itemDetail,
+    // practiceIsCorrect — лише практика (renderPracticeList нижче) передає
+    // ЦЕ (вже гейтований practiceResults[item.id], НЕ похідне від
+    // itemDetail.options) — див. practiceRowCorrect, format-reveal-
+    // answer.ts: itemDetail.options.every(o.correct===o.selected) хибно
+    // давав true для порожньої (нічого не обрано) відповіді, бо
+    // practiceOptionDetail навмисно ставить correct:false на ВСІ варіанти,
+    // доки isCorrect!==true. Звичайна вправа (renderItems нижче) не
+    // передає цей аргумент — її обчислення кольору лишається незмінним.
+    practiceIsCorrect?: boolean
   ) {
     const sel = selections[item.id] ?? [];
     const hasHintBulb = showHintBulb && !!item.hint;
-    const isCorrect = itemDetail ? itemDetail.options.every((o) => o.correct === o.selected) : null;
+    const isCorrect = itemDetail
+      ? practiceIsCorrect !== undefined
+        ? practiceRowCorrect(practiceIsCorrect, sel.length > 0)
+        : itemDetail.options.every((o) => o.correct === o.selected)
+      : null;
     const selectState: CustomSelectState = isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : "neutral";
 
     // Речення для dropdown могло містити рівно один маркер "{{}}" (адмінка:

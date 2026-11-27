@@ -8,6 +8,7 @@ import {
   buildRevealedWordDetail,
   buildSortColumnsAnswerColumns,
   practiceOptionDetail,
+  practiceRowCorrect,
   maskMissedCheckboxCells,
   normalizeGapBefore,
 } from "./format-reveal-answer";
@@ -180,6 +181,46 @@ function assert(condition: boolean, label: string) {
   const options = [{ id: "o1", text: "chien" }];
   const out = practiceOptionDetail(options, [], false, ["chien"])!;
   assert(out[0].correct === true && out[0].selected === false, "revealed with no student selection at all: correct option still marked correct:true, not a crash");
+}
+
+// --- practiceRowCorrect (owner report: "multiple_choice dropdown painted
+// an unanswered item green" — renderDropdownRow recomputed the row's
+// whole-row color from itemDetail.options.every(o.correct===o.selected),
+// which is vacuously true when the student selected nothing AND
+// practiceOptionDetail's isCorrect===false branch forces correct:false on
+// every option. This helper replaces that recomputation in practice: the
+// row color comes straight from the already-gated server verdict
+// (isCorrect) plus whether the live answer is actually non-empty, never
+// from re-deriving "correctness" out of a synthetic per-option array.) ---
+
+{
+  assert(practiceRowCorrect(false, false) === false, "empty answer after a check -> red, never green");
+}
+
+{
+  assert(
+    practiceRowCorrect(true, false) === false,
+    "stale correct result (e.g. from a prior attempt) with the live answer since cleared to empty -> red, not green"
+  );
+}
+
+{
+  assert(practiceRowCorrect(true, true) === true, "a real non-empty correct answer -> green");
+}
+
+{
+  // Розкриття (practiceCheck.reveal) ніяк не впливає на isCorrect, яке
+  // сюди передається — елемент потрапляє в reveal лише коли він і так
+  // вже isCorrect===false (stillWrongIds), тож колір лишається тим самим
+  // до й після відкриття тоглу "Відповідь".
+  const beforeReveal = practiceRowCorrect(false, true);
+  const afterReveal = practiceRowCorrect(false, true);
+  assert(beforeReveal === false && afterReveal === false, "opening the answers toggle (reveal) never changes the row color");
+}
+
+{
+  assert(practiceRowCorrect(undefined, false) === null, "before any check at all -> neutral, regardless of whether anything is selected");
+  assert(practiceRowCorrect(undefined, true) === null, "before any check, even with a live selection already made -> still neutral");
 }
 
 // --- maskMissedCheckboxCells (checkbox_grid, owner report: "in-place
