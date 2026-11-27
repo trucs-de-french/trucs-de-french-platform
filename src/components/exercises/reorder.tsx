@@ -16,7 +16,6 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab } from "./task-result";
-import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
@@ -308,9 +307,6 @@ export function ReorderExercise({
   );
   const [practiceDetail, setPracticeDetail] = useState<ReorderDetail | undefined>(undefined);
   const [practiceCorrect, setPracticeCorrect] = useState(false);
-  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
-    practice?.failedAttempts ?? {}
-  );
 
   async function submitPractice() {
     const answer: ReorderAnswer = config.sequences.map((s) => ({
@@ -322,10 +318,11 @@ export function ReorderExercise({
     const correct = result.results[0]?.correct ?? false;
     setPracticeCorrect(correct);
     setPracticeDetail(result.detail as ReorderDetail | undefined);
-    setPracticeFailedAttempts(result.failedAttempts);
-    // Задача "unify attempt/reveal behaviour" — без автоматичного
-    // розкриття (shouldAutoReveal, error-review.ts, завжди false), лише
-    // кнопкою "Відповідь" (BUTTON_REVEAL_ANSWER, reveal(id, true)).
+    // Задача "footer under the cards is redundant" — result.failedAttempts
+    // більше нікуди не йде (футер із крапками спроб видалено, картка й так
+    // показує повний правильний порядок одразу після будь-якої перевірки) —
+    // сервер і далі рахує спроби (/api/exercises/practice/check, незмінно),
+    // лише цей клієнт більше не тримає копію локально, яку ніде не читав.
   }
 
   // Картки (послідовності) — поріг блоку CARD_BLOCK_MAX=5, той самий
@@ -514,7 +511,6 @@ export function ReorderExercise({
   }
 
   if (isPractice) {
-    const attempts = practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0;
     return (
       <div className={EXERCISE_STACK}>
         {!practiceCorrect && (
@@ -571,33 +567,16 @@ export function ReorderExercise({
           {practiceCorrect && (
             <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{tt("status.correctExclaim")}</p>
           )}
-          {practiceDetail && !practiceCorrect && (
-            // Задача "answers panel must match the scene exercise" —
-            // reorder.tsx (нормальний режим, TaskResult вище, однаковий
-            // для whole/блочного режимів) НЕ має власної панелі "Правильні
-            // відповіді" взагалі (порядок і так видно кольором плиток,
-            // секрету розкривати нема) — на відміну від sort_columns/
-            // chronological_order, тут нема scene-еталону для панелі,
-            // тож практика теж НЕ отримує окрему TaskResult-панель: та
-            // сама пілюля "Відповідь" на самому футері (onReveal), той
-            // самий принцип, що true_false/listening (per-item, без
-            // панелі) — лише на весь WHOLE_TASK_ITEM_ID, не на елемент.
-            //
-            // Задача "remove redundant verdict pill/panel" — рядок
-            // "Правильний порядок: …" уже є в самій картці (ReorderSequenceTiles,
-            // detail=practiceDetail, вище) ПІСЛЯ будь-якої перевірки —
-            // окремий текст тут (revealedAnswer.join) лише повторював би
-            // ту саму інформацію вдруге. Футер лишається в стані "failed"
-            // (крапки+підпис+пілюля) незалежно від revealedAnswer — пілюля
-            // й далі викликає reveal() (той самий API), просто вже нема що
-            // показати в самому футері понад те, що й так видно в картці.
-            <PracticeAttemptFooter
-              state="failed"
-              failedAttempts={attempts}
-              onReveal={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
-              revealDisabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
-            />
-          )}
+          {/* Задача "footer under the cards is redundant" — reorder.tsx
+              показує "Правильний порядок: …" ПРЯМО в картці
+              (ReorderSequenceTiles, detail=practiceDetail вище) одразу
+              після будь-якої перевірки, без жодного reveal — футер
+              (крапки+підпис+пілюля "Відповідь") під картками не додавав
+              нічого понад це (пілюля й так уже не мала власного тексту
+              для показу, задача "remove redundant verdict pill/panel"),
+              лише займав місце. Прибрано повністю: check/reveal API не
+              чіпали (jsx-рендер, не викликали reveal() регулярно й
+              раніше — пілюля просто ніколи не мала що показати). */}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
 

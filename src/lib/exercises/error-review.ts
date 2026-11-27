@@ -847,3 +847,20 @@ export function stillWrongIds(ids: string[], resultById: Record<string, boolean 
 export function maxFailedAttempts(ids: string[], failedAttempts: Record<string, number | undefined>): number {
   return ids.reduce((max, id) => Math.max(max, failedAttempts[id] ?? 0), 0);
 }
+
+// Задача "highlight only after the check" (true_false owner report) —
+// корінь була передача ЖИВОГО вибору студента (answers[id]) напряму в
+// колір-функцію (trueFalseOptionClass), без перевірки, чи ця сесія вже
+// РЕАЛЬНО перевіряла елемент: щойно студент клікав Vrai/Faux, кнопка
+// миттєво фарбувалась червоною, ще до "Перевірити" — колір-функція сама
+// по собі правильна (studentAnswer!=null і так мав означати "невдала
+// спроба"), просто їй передавали значення, якого там ще не мало бути.
+// Цей helper — ОДИН явний гейт: доки ця сесія не має isCorrect для
+// елемента (ще не перевірявся), жива відповідь НЕ йде в колір-функцію
+// взагалі (undefined — завжди "ще не перевірялось"/"лише вибір").
+// multiple_choice/word_choice/listening вже мали цей самий гейт
+// УСЕРЕДИНІ practiceOptionDetail (isCorrect===true/false напряму) —
+// true_false був єдиним, хто обходив його.
+export function practiceAnswerForColor<T>(isCorrect: boolean | undefined, liveAnswer: T): T | undefined {
+  return isCorrect === undefined ? undefined : liveAnswer;
+}

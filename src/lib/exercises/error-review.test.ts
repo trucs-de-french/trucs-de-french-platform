@@ -18,6 +18,7 @@ import {
   stillWrongIds,
   maxFailedAttempts,
   pruneStaleResults,
+  practiceAnswerForColor,
 } from "./error-review";
 
 let failures = 0;
@@ -554,6 +555,30 @@ function assert(condition: boolean, label: string) {
   assert(
     [...out].join(",") === "0",
     "letter_gaps: word 1 was genuinely fixed in an older row and must stay out of the wrong set, even though the newest row didn't re-cover it"
+  );
+}
+
+// --- practiceAnswerForColor (owner report, true_false: "already shows
+// red Vrai/Faux buttons... before 'Перевірити' was pressed" — the root
+// cause was passing the student's live selection straight into the
+// color function without first checking whether THIS session has
+// actually graded the item; this is the exact gate that was missing) --
+
+{
+  assert(
+    practiceAnswerForColor(undefined, true) === undefined,
+    "not checked yet this session (isCorrect undefined) -> the live selection never reaches the color function, no matter what was clicked"
+  );
+}
+
+{
+  assert(
+    practiceAnswerForColor(false, true) === true,
+    "failed check this session -> the live answer is passed through for coloring (the student's own wrong pick turns red)"
+  );
+  assert(
+    practiceAnswerForColor(true, true) === true,
+    "correct check this session -> the live answer is passed through too (feeds the green highlight)"
   );
 }
 

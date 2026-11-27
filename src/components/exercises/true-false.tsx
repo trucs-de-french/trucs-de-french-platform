@@ -16,7 +16,7 @@ import { EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { practiceAttemptFooterState, pruneStaleResults } from "@/lib/exercises/error-review";
+import { practiceAttemptFooterState, pruneStaleResults, practiceAnswerForColor } from "@/lib/exercises/error-review";
 import { PracticeAttemptFooter } from "./practice-attempt-footer";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
@@ -172,12 +172,21 @@ export function TrueFalseExercise({
   // TrueFalseDetail): correctAnswer, щойно відомий без витоку — або явне
   // розкриття (practiceCheck.reveal), або сам факт isCorrect:true (студент
   // і так уже знає свій, правильний, вибір).
+  // practiceStudentAnswer — задача "highlight only after the check": БЕЗ
+  // цього параметра кнопка читала би answers[s.id] напряму (ЛИШЕ вибір,
+  // ще до "Перевірити") і trueFalseOptionClass трактував би будь-який
+  // вибір як "неправильна спроба" (червоний) — колір з'являвся одразу на
+  // клік, ще до першого check(). Викликач передає answers[s.id] СЮДИ
+  // лише коли ця сесія вже мала реальну перевірку цього твердження
+  // (isCorrect !== undefined), інакше undefined — trueFalseOptionClass
+  // тоді падає в "ще не перевірялось" (просто --selected, не колір).
   function renderStatement(
     s: PublicStatement,
     globalIndex: number,
     d: TrueFalseDetail["statements"][number] | undefined,
     locked: boolean,
-    practiceCorrectAnswer?: boolean
+    practiceCorrectAnswer?: boolean,
+    practiceStudentAnswer?: boolean | null
   ) {
     const showTab = !hidePoints && (isDelf || unevenById.get(s.id)) && (pointsVisible || !!d);
     return (
@@ -211,7 +220,7 @@ export function TrueFalseExercise({
                 val,
                 answers[s.id] === val,
                 d ? d.correctAnswer : practiceCorrectAnswer,
-                d ? d.studentAnswer : answers[s.id]
+                d ? d.studentAnswer : practiceStudentAnswer
               )}`}
             >
               {val ? "Vrai" : "Faux"}
@@ -338,9 +347,15 @@ export function TrueFalseExercise({
               : isCorrect === true
                 ? answers[s.id]
                 : undefined;
+            // practiceStudentAnswer — undefined, доки це твердження не
+            // пройшло РЕАЛЬНУ перевірку в цій сесії (practiceAnswerForColor,
+            // error-review.ts) — інакше answers[s.id] вибір без цього
+            // гейту фарбував би кнопку червоним одразу на клік, ще до
+            // "Перевірити" (задача "highlight only after the check").
+            const practiceStudentAnswer = practiceAnswerForColor(isCorrect, answers[s.id]);
             return (
               <div key={s.id} className="flex flex-col gap-1.5">
-                {renderStatement(s, idx, undefined, false, practiceCorrectAnswer)}
+                {renderStatement(s, idx, undefined, false, practiceCorrectAnswer, practiceStudentAnswer)}
                 <PracticeAttemptFooter
                   state={practiceAttemptFooterState(isCorrect, itemRevealed)}
                   failedAttempts={attempts}
