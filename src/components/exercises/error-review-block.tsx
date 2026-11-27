@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Check, List } from "lucide-react";
+import { Check, List, XCircle, Contrast, CheckCircle2 } from "lucide-react";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
@@ -113,11 +113,27 @@ function truncateChipLabel(text: string, max = 14): string {
   return `${text.slice(0, max - 1).trimEnd()}…`;
 }
 
-const STATUS_PILL_CLASS: Record<ErrorReviewStatus, string> = {
-  not_started:
-    "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-600 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)] dark:text-neutral-300",
-  partial: "border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-  done: "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950/30 dark:text-green-300",
+// Задача "variant C: neutral pill with a colored icon" (owner report:
+// старий суцільно-кольоровий пілюля-фон у темній темі зливався з рядком) —
+// ОДНА нейтральна форма пілюлі для всіх трьох статусів (однаковий
+// --status-pill-bg/--border/--text, globals.css), статус читається з
+// ТЕКСТУ (уже каже статус) і З ФОРМИ іконки (X-у-колі/половина
+// кола/галочка-в-колі) — колір іконки лише підсилює, ніколи не єдиний
+// носій інформації (requirement 7). Lucide — та сама бібліотека, що Check/
+// List вище: Contrast — єдина в наборі іконка, що вже саме цей вигляд
+// "коло, розділене навпіл" (коло-рамка + внутрішня напів-дуга, обидві БЕЗ
+// заливки — stroke style, не filled, те, що просив дизайн), найближчий
+// наявний еквівалент "half-filled circle", жодної такої іконки з такою
+// назвою в lucide немає.
+const STATUS_PILL_ICON: Record<ErrorReviewStatus, typeof XCircle> = {
+  not_started: XCircle,
+  partial: Contrast,
+  done: CheckCircle2,
+};
+const STATUS_PILL_ICON_CLASS: Record<ErrorReviewStatus, string> = {
+  not_started: "error-review-status-pill-icon--wrong",
+  partial: "error-review-status-pill-icon--partial",
+  done: "error-review-status-pill-icon--done",
 };
 const STATUS_PILL_KEY: Record<ErrorReviewStatus, "errReview.notFixed" | "errReview.partiallyFixed" | "errReview.fixed"> = {
   not_started: "errReview.notFixed",
@@ -127,10 +143,13 @@ const STATUS_PILL_KEY: Record<ErrorReviewStatus, "errReview.notFixed" | "errRevi
 
 function StatusPill({ status }: { status: ErrorReviewStatus }) {
   const { t } = useT();
+  const Icon = STATUS_PILL_ICON[status];
   return (
-    <span
-      className={`error-review-status-pill shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_PILL_CLASS[status]}`}
-    >
+    <span className="error-review-status-pill shrink-0">
+      {/* aria-hidden — текст нижче вже сам каже статус (requirement 7),
+          іконка лише ілюстрація, колір ніколи не єдиний носій інформації
+          (форма теж різна на кожен статус). */}
+      <Icon size={15} strokeWidth={2} aria-hidden="true" className={STATUS_PILL_ICON_CLASS[status]} />
       {t(STATUS_PILL_KEY[status])}
     </span>
   );

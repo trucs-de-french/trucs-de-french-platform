@@ -112,6 +112,21 @@
   --neutral-result-text: #8f8870;
 }
 
+/* Задача "variant C: neutral pill with a colored icon" (Робота над
+   помилками, StatusPill, error-review-block.tsx) — ОДНА нейтральна форма
+   пілюлі для всіх трьох статусів ("Не виправлено"/"Частково"/
+   "Виправлено"): лише колір ІКОНКИ розрізняє їх (текст уже сам каже
+   статус). Світла тема; темна — поруч із --correct-border-dark/
+   --wrong-border-dark (той самий принцип "result-токени поруч"). */
+:root {
+  --status-pill-bg: #ffffff;
+  --status-pill-border: #d9c98e;
+  --status-pill-text: #2c2850;
+  --status-pill-icon-wrong: #c24848;
+  --status-pill-icon-partial: #c88a10;
+  --status-pill-icon-done: #2f8f4e;
+}
+
 /* Пілюлі балів і текстові поля вправ — лише темна тема (світлий дефолт не
    визначений: ці токени читаються лише dark:-утилітами/.dark-правилами
    нижче, світла тема на них не посилається взагалі). --points-* —
@@ -245,6 +260,15 @@
   --neutral-result-bg: #2b2d33;
   --neutral-result-border: #3f4147;
   --neutral-result-text: rgba(229, 229, 229, 0.6);
+  /* Задача "variant C: neutral pill with a colored icon" — пілюля
+     лишається ПОМІТНО світлішою за фон рядка (requirement 3), не
+     зливається, на відміну від старого суцільно-кольорового фону. */
+  --status-pill-bg: #1b2258;
+  --status-pill-border: #4655b8;
+  --status-pill-text: #e4e6fb;
+  --status-pill-icon-wrong: #ff8a8a;
+  --status-pill-icon-partial: #f2c96b;
+  --status-pill-icon-done: #6fd391;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
@@ -302,6 +326,12 @@
     --neutral-result-bg: #2b2d33;
     --neutral-result-border: #3f4147;
     --neutral-result-text: rgba(229, 229, 229, 0.6);
+    --status-pill-bg: #1b2258;
+    --status-pill-border: #4655b8;
+    --status-pill-text: #e4e6fb;
+    --status-pill-icon-wrong: #ff8a8a;
+    --status-pill-icon-partial: #f2c96b;
+    --status-pill-icon-done: #6fd391;
   }
 }
 
@@ -8603,6 +8633,42 @@ button.scene-bar:active .scene-bar-toggle {
     background: linear-gradient(90deg, #3a36a0, #4b46da);
     box-shadow: 0 0 8px rgba(217, 183, 101, 0.28);
   }
+}
+/* Задача "variant C: neutral pill with a colored icon" (owner report:
+   старий суцільно-кольоровий фон пілюлі зливався з темним фоном рядка) —
+   ОДНА нейтральна форма для всіх трьох статусів ("Не виправлено"/
+   "Частково"/"Виправлено", StatusPill, error-review-block.tsx): лише
+   колір ІКОНКИ розрізняє їх (сам текст уже каже статус, requirement 7).
+   28px висота/999px радіус/13px горизонтальний відступ/13px текст — та
+   сама serif-гарнітура, що й завжди (жодного нового font-family, успадковує
+   звичну тексту сторінки). gap:6px — відстань іконка-текст. */
+.error-review-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 1px solid var(--status-pill-border);
+  background: var(--status-pill-bg);
+  color: var(--status-pill-text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .error-review-status-pill {
+    border-width: 0.5px;
+  }
+}
+.error-review-status-pill-icon--wrong {
+  color: var(--status-pill-icon-wrong);
+}
+.error-review-status-pill-icon--partial {
+  color: var(--status-pill-icon-partial);
+}
+.error-review-status-pill-icon--done {
+  color: var(--status-pill-icon-done);
 }
 /* "Correction des erreurs" row card (error-review-block.tsx): .glass-card-
    shadow above is .light-only (no dark rule at all), and the row div used
