@@ -275,14 +275,33 @@
      нижче, без змін, тож тут немає світлої пари цих токенів, той самий
      принцип, що --card-bg/--card-border вище). --badge-bg — той самий
      суцільний темно-синій, що вже й так .error-review-card-bg (--dark-
-     blue-fill) — жодного нового літералу. --badge-border — той самий
-     #27338f, що вже скрізь на картках-рядках (table_fill/drag_drop
-     тощо), просто вперше названий. --badge-bg-photo — лише бейджі ПОНАД
-     фото (.image-match-card-badge, image_match/chronological_order
-     image-режим) — напівпрозорий варіант, щоб золота літера лишалась
-     читабельною на світлому фото. */
+     blue-fill) — жодного нового літералу. --badge-bg-photo — лише
+     бейджі ПОНАД фото (.image-match-card-badge, image_match/
+     chronological_order image-режим) — напівпрозорий варіант, щоб
+     золота літера лишалась читабельною на світлому фото.
+
+     Задача "badge border matches card border" (owner report) —
+     --badge-border нижче раніше був окремий літерал #27338f: та рамка
+     справді збігається з table_fill's .table-fill-row-b, АЛЕ табличка
+     рядка — виняток, не правило. Переважна більшість карток, що носять
+     бейдж (.glass-item-card — true_false/multiple_choice/drag_drop/
+     reorder/chronological_order/word_choice/listening/image_match/
+     checkbox_grid/crossword-картка-підказки/letter_gaps-letter_
+     rearrangement word-картки/phonetics/vocab_quiz, і той самий клас
+     усередині практики — .glass-item-card.border: var(--glass-item-
+     border-width,1px) solid var(--glass-item-border) — .dark .glass-
+     block/.scene-bar вище: --glass-item-border: var(--card-border))
+     ТА рядок-картка самого error-review (.error-review-card-shadow div,
+     dark:border-[var(--card-border)], error-review-block.tsx) — ОБИДВІ
+     зрештою читають САМЕ --card-border (var(--lavender-card) =
+     rgba(130,160,240,.42)), не #27338f. --card-border визначений
+     ГЛОБАЛЬНО (не всередині .glass-block/.scene-bar, той самий
+     :root.dark-блок, що й цей), тож резолвиться скрізь однаково —
+     сцена, інлайн-практика, кабінет — без винятків. Вказуємо var()
+     напряму (не копію значення), щоб бейдж автоматично йшов за
+     карткою, якщо --card-border колись зміниться. */
   --badge-bg: var(--dark-blue-fill);
-  --badge-border: #27338f;
+  --badge-border: var(--card-border);
   --badge-text: #e9c46a;
   --badge-bg-photo: rgba(13, 18, 51, 0.88);
 }
@@ -349,7 +368,7 @@
     --status-pill-icon-partial: #f2c96b;
     --status-pill-icon-done: #6fd391;
     --badge-bg: var(--dark-blue-fill);
-    --badge-border: #27338f;
+    --badge-border: var(--card-border);
     --badge-text: #e9c46a;
     --badge-bg-photo: rgba(13, 18, 51, 0.88);
   }
