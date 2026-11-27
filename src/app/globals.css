@@ -3942,6 +3942,65 @@ button, input, textarea, select, label, nav, aside {
     color: rgba(246, 220, 139, 0.6);
   }
 }
+/* Задача "vocab quiz progress counter, variant B" (owner report) —
+   ЛИШЕ темна тема, ЛИШЕ "1 / 52" лічильник питання (CounterPill,
+   task-panel-header.tsx: .counter-pill, що РЕАЛЬНО містить .counter-
+   pill-current/-total — :has() відрізняє його від bare .counter-pill
+   vocab-quiz.tsx рендерить на екрані результату, "X правильних з Y",
+   звичайний текст без цих вкладених span, той bare варіант лишається на
+   .dark .counter-pill вище, НЕЗМІННИЙ). Фон/рамка — ті самі токени, що
+   бейджі літер/цифр (--badge-bg/--badge-border, той самий --card-border,
+   що вже й так рамка карток-варіантів цієї вправи, ANSWER_CHIP_DEFAULT:
+   dark:border-[var(--card-border)] — підтверджено той самий обчислений
+   колір). Текст — --badge-text (золото) для ОБОХ частин: раніше
+   .counter-pill-total була тьмянішою (rgba(246,220,139,.6)) — у variant
+   B обидві частини однаково золоті, різницю лишає лише font-weight. */
+.dark .counter-pill:has(.counter-pill-current) {
+  height: 40px;
+  padding: 0 20px;
+  background: var(--badge-bg);
+  border-color: var(--badge-border);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .counter-pill:has(.counter-pill-current) {
+    height: 40px;
+    padding: 0 20px;
+    background: var(--badge-bg);
+    border-color: var(--badge-border);
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .counter-pill:has(.counter-pill-current) {
+    border-width: 0.5px;
+  }
+}
+@media (prefers-color-scheme: dark) and (min-resolution: 2dppx), (prefers-color-scheme: dark) and (-webkit-min-device-pixel-ratio: 2) {
+  :root:not(.light) .counter-pill:has(.counter-pill-current) {
+    border-width: 0.5px;
+  }
+}
+.dark .counter-pill:has(.counter-pill-current) .counter-pill-current {
+  color: var(--badge-text);
+  font-weight: 500;
+  font-size: 18px;
+}
+.dark .counter-pill:has(.counter-pill-current) .counter-pill-total {
+  color: var(--badge-text);
+  font-weight: 400;
+  font-size: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .counter-pill:has(.counter-pill-current) .counter-pill-current {
+    color: var(--badge-text);
+    font-weight: 500;
+    font-size: 18px;
+  }
+  :root:not(.light) .counter-pill:has(.counter-pill-current) .counter-pill-total {
+    color: var(--badge-text);
+    font-weight: 400;
+    font-size: 16px;
+  }
+}
 .task-panel-header-divider {
   height: 1px;
   margin-top: 14px;
